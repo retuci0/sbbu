@@ -2,9 +2,9 @@
 
 
 void renderText(SDL_Renderer* r, TTF_Font* font, const std::string& text, int x, int y, SDL_Color color) {
-    if (!font || text.empty()) return;
+    if (!font || text.empty()) { return; }
     SDL_Surface* surf = TTF_RenderText_Solid(font, text.c_str(), color);
-    if (!surf) return;
+    if (!surf) { return; }
     SDL_Texture* tex = SDL_CreateTextureFromSurface(r, surf);
     if (tex) {
         SDL_Rect dst = {x, y, surf->w, surf->h};

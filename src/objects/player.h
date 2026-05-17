@@ -11,14 +11,14 @@
 
 class Platform;
 
-enum class Status { 
-    IDLE, 
-    WALKING, 
-    JUMPING, 
-    ATTACKING, 
-    DAMAGED 
-};
 
+enum class Status {
+    IDLE,
+    WALKING,
+    JUMPING,
+    ATTACKING,
+    DAMAGED
+};
 
 class Player {
 public:
@@ -42,8 +42,11 @@ public:
     // animation
     float currentSpriteIndex = 0.f;
 
-    // sound (non-owning pointers)
-    Mix_Chunk* damage_sound = nullptr;
+    // player color indicator (drawn above head)
+    SDL_Color color = {255, 255, 255, 255};
+
+    // sound (non-owning pointer)
+    Mix_Chunk* damageSound = nullptr;
 
     Player() = default;
     void init(int x, int y, const Character* ch, const std::string& playerName, Mix_Chunk* dmgSound);

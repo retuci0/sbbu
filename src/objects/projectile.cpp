@@ -10,14 +10,19 @@ Projectile::Projectile(SDL_Texture* imgLeft, SDL_Texture* imgRight, int x, int y
 }
 
 void Projectile::move() {
-    if (direction == Facing::LEFT) rect.x -= static_cast<int>(velocity);
-    else rect.x += static_cast<int>(velocity);
+    if (direction == Facing::LEFT) { 
+        rect.x -= static_cast<int>(velocity); 
+    } else { 
+        rect.x += static_cast<int>(velocity); 
+    }
 }
 
 void Projectile::draw(SDL_Renderer* r) {
     move();
     SDL_Texture* tex = (direction == Facing::LEFT) ? img_left : img_right;
-    if (tex) SDL_RenderCopy(r, tex, nullptr, &rect);
+    if (tex) { 
+        SDL_RenderCopy(r, tex, nullptr, &rect); 
+    }
 }
 
 void Projectile::drawHitboxes(SDL_Renderer* r) const {

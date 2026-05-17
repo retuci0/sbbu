@@ -16,11 +16,11 @@ static constexpr int OK_X = 860, OK_Y = 750, OK_W = 200, OK_H = 70;
 
 // map value [0, 2] to x position on slider
 static int valToX(float v) {
-    return SL_X + static_cast<int>(v / 2.f * SL_W);
+    return SL_X + static_cast<int>(v / 2.0f * SL_W);
 }
 // map x position to value [0, 2]
 static float xToVal(int x) {
-    return std::clamp((x - SL_X) / static_cast<float>(SL_W) * 2.f, 0.f, 2.f);
+    return std::clamp((x - SL_X) / static_cast<float>(SL_W) * 2.0f, 0.0f, 2.0f);
 }
 
 static void drawSlider(SDL_Renderer* r, TTF_Font* font, const std::string& label, float val, int slY) {
@@ -48,19 +48,19 @@ VolumeResult runVolumeScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Fo
     while (running) {
         SDL_Event ev;
         while (SDL_PollEvent(&ev)) {
-            if (ev.type == SDL_QUIT)          { running = false; break; }
+            if (ev.type == SDL_QUIT) { running = false; break; }
             if (ev.type == SDL_MOUSEBUTTONDOWN && ev.button.button == SDL_BUTTON_LEFT) {
-                int mx = ev.button.x, my = ev.button.y;
+                int mouseX = ev.button.x, mouseY = ev.button.y;
                 SDL_Rect okBtn = {OK_X, OK_Y, OK_W, OK_H};
-                if (pointInRect(mx, my, okBtn))             { running = false; break; }
-                if (std::abs(my - (SL_SFX_Y   + SL_H/2)) < HANDLE_R * 2) dragging = 1;
-                if (std::abs(my - (SL_MUSIC_Y  + SL_H/2)) < HANDLE_R * 2) dragging = 2;
+                if (pointInRect(mouseX, mouseY, okBtn)) { running = false; break; }
+                if (std::abs(mouseY - (SL_SFX_Y   + SL_H / 2)) < HANDLE_R * 2) { dragging = 1; }
+                if (std::abs(mouseY - (SL_MUSIC_Y + SL_H / 2)) < HANDLE_R * 2) { dragging = 2; }
             }
-            if (ev.type == SDL_MOUSEBUTTONUP)   dragging = 0;
+            if (ev.type == SDL_MOUSEBUTTONUP) { dragging = 0; }
             if (ev.type == SDL_MOUSEMOTION && dragging) {
                 float val = xToVal(ev.motion.x);
-                if (dragging == 1) sfx   = val;
-                else               music = val;
+                if (dragging == 1) { sfx   = val; }
+                else               { music = val; }
             }
         }
 

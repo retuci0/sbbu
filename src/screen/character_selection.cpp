@@ -3,8 +3,8 @@
 #include "../misc/common.h"
 
 #include <SDL2/SDL.h>
-
 #include <SDL2/SDL_rect.h>
+
 #include <array>
 
 
@@ -29,16 +29,19 @@ SelectionResult runCharacterSelection(
     const std::string& defaultName2, const Character* defaultChar2)
 {
     auto findIdx = [&](const Character* ch) -> int {
-        for (int i = 0; i < 4; ++i) if (chars[i] == ch) return i;
+        for (int i = 0; i < 4; ++i) {
+            if (chars[i] == ch) { return i; }
+        }
         return 0;
     };
-    int sel1 = findIdx(defaultChar1);
-    int sel2 = findIdx(defaultChar2);
+    int selectedChar1 = findIdx(defaultChar1);
+    int selectedChar2 = findIdx(defaultChar2);
 
     std::string name1 = defaultName1;
     std::string name2 = defaultName2;
 
     int activeField = 0;
+    bool nameError  = false;  // shown when both players have the same name
 
     SDL_StartTextInput();
     bool running = true;
@@ -46,41 +49,62 @@ SelectionResult runCharacterSelection(
     while (running) {
         SDL_Event ev;
         while (SDL_PollEvent(&ev)) {
-            if (ev.type == SDL_QUIT) { running = false; break; }
+            if (ev.type == SDL_QUIT) {
+                running = false;
+                break;
+            }
 
             if (ev.type == SDL_KEYDOWN) {
                 if (ev.key.keysym.sym == SDLK_RETURN) {
-                    running = false;
+                    // resolve empty names before validating
+                    std::string n1 = name1.empty() ? "player 1" : name1;
+                    std::string n2 = name2.empty() ? "player 2" : name2;
+                    if (n1 == n2) {
+                        nameError = true;
+                    } else {
+                        running = false;
+                    }
                 } else if (ev.key.keysym.sym == SDLK_BACKSPACE) {
-                    if (activeField == 1 && !name1.empty()) name1.pop_back();
-                    if (activeField == 2 && !name2.empty()) name2.pop_back();
+                    nameError = false;
+                    if (activeField == 1 && !name1.empty()) { name1.pop_back(); }
+                    if (activeField == 2 && !name2.empty()) { name2.pop_back(); }
                 }
             }
             if (ev.type == SDL_TEXTINPUT) {
-                if (activeField == 1 && name1.size() < 16) name1 += ev.text.text;
-                if (activeField == 2 && name2.size() < 16) name2 += ev.text.text;
+                nameError = false;
+                if (activeField == 1 && name1.size() < 16) { name1 += ev.text.text; }
+                if (activeField == 2 && name2.size() < 16) { name2 += ev.text.text; }
             }
             if (ev.type == SDL_MOUSEBUTTONDOWN && ev.button.button == SDL_BUTTON_LEFT) {
-                int mx = ev.button.x, my = ev.button.y;
+                int mouseX = ev.button.x, mouseY = ev.button.y;
 
                 for (int i = 0; i < 4; ++i) {
                     SDL_Rect box = {COL1_X, ROW_START_Y + i * ROW_STEP, BOX_W, BOX_H};
-                    if (pointInRect(mx, my, box)) sel1 = i;
+                    if (pointInRect(mouseX, mouseY, box)) { selectedChar1 = i; }
                 }
                 for (int i = 0; i < 4; ++i) {
                     SDL_Rect box = {COL2_X, ROW_START_Y + i * ROW_STEP, BOX_W, BOX_H};
-                    if (pointInRect(mx, my, box)) sel2 = i;
+                    if (pointInRect(mouseX, mouseY, box)) { selectedChar2 = i; }
                 }
-                SDL_Rect nf1 = {NAME_BOX_X1, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H};
-                SDL_Rect nf2 = {NAME_BOX_X2, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H};
-                activeField = pointInRect(mx, my, nf1) 
+
+                SDL_Rect nameField1 = {NAME_BOX_X1, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H};
+                SDL_Rect nameField2 = {NAME_BOX_X2, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H};
+                activeField = pointInRect(mouseX, mouseY, nameField1)
                         ? 1
-                        : pointInRect(mx, my, nf2) 
-                            ? 2 
+                        : pointInRect(mouseX, mouseY, nameField2)
+                            ? 2
                             : 0;
 
                 SDL_Rect startBtn = {START_BTN_X, START_BTN_Y, START_BTN_W, START_BTN_H};
-                if (pointInRect(mx, my, startBtn)) running = false;
+                if (pointInRect(mouseX, mouseY, startBtn)) {
+                    std::string n1 = name1.empty() ? "player 1" : name1;
+                    std::string n2 = name2.empty() ? "player 2" : name2;
+                    if (n1 == n2) {
+                        nameError = true;
+                    } else {
+                        running = false;
+                    }
+                }
             }
         }
 
@@ -95,37 +119,42 @@ SelectionResult runCharacterSelection(
         };
 
         for (int i = 0; i < 4; ++i) {
-            // P1
-            SDL_Color bg1 = (sel1 == i) ? SDL_Color{80,150,80,255} : SDL_Color{60,60,60,255};
+            SDL_Color bgColor1 = (selectedChar1 == i) ? SDL_Color{80, 150, 80, 255} : SDL_Color{60, 60, 60, 255};
             renderButton(renderer, font, charNames[i],
-                         COL1_X, ROW_START_Y + i * ROW_STEP, BOX_W, BOX_H, bg1, WHITE);
-            // P2
-            SDL_Color bg2 = (sel2 == i) ? SDL_Color{80,150,80,255} : SDL_Color{60,60,60,255};
+                         COL1_X, ROW_START_Y + i * ROW_STEP, BOX_W, BOX_H, bgColor1, WHITE);
+
+            SDL_Color bgColor2 = (selectedChar2 == i) ? SDL_Color{80, 150, 80, 255} : SDL_Color{60, 60, 60, 255};
             renderButton(renderer, font, charNames[i],
-                         COL2_X, ROW_START_Y + i * ROW_STEP, BOX_W, BOX_H, bg2, WHITE);
+                         COL2_X, ROW_START_Y + i * ROW_STEP, BOX_W, BOX_H, bgColor2, WHITE);
         }
 
         // character icons
-        if (chars[sel1] && chars[sel1]->icon) {
+        if (chars[selectedChar1] && chars[selectedChar1]->icon) {
             SDL_Rect iconRect1 = { 500, ROW_START_Y, 125, 57 };
-            SDL_RenderCopy(renderer, chars[sel1]->icon, nullptr, &iconRect1);
+            SDL_RenderCopy(renderer, chars[selectedChar1]->icon, nullptr, &iconRect1);
         }
-        if (chars[sel2] && chars[sel2]->icon) {
+        if (chars[selectedChar2] && chars[selectedChar2]->icon) {
             SDL_Rect iconRect2 = { 1450, ROW_START_Y, 125, 57 };
-            SDL_RenderCopy(renderer, chars[sel2]->icon, nullptr, &iconRect2);
+            SDL_RenderCopy(renderer, chars[selectedChar2]->icon, nullptr, &iconRect2);
         }
 
         renderText(renderer, font, "Enter name:", COL1_X, NAME_BOX_Y - 40, WHITE);
         renderText(renderer, font, "Enter name:", COL2_X, NAME_BOX_Y - 40, WHITE);
 
-        SDL_Color nf1bg = (activeField == 1) ? SDL_Color{100,100,180,255} : SDL_Color{60,60,60,255};
-        SDL_Color nf2bg = (activeField == 2) ? SDL_Color{100,100,180,255} : SDL_Color{60,60,60,255};
-        renderButton(renderer, font, name1, NAME_BOX_X1, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H, nf1bg, WHITE);
-        renderButton(renderer, font, name2, NAME_BOX_X2, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H, nf2bg, WHITE);
+        SDL_Color nameField1Bg = (activeField == 1) ? SDL_Color{100, 100, 180, 255} : SDL_Color{60, 60, 60, 255};
+        SDL_Color nameField2Bg = (activeField == 2) ? SDL_Color{100, 100, 180, 255} : SDL_Color{60, 60, 60, 255};
+        renderButton(renderer, font, name1, NAME_BOX_X1, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H, nameField1Bg, WHITE);
+        renderButton(renderer, font, name2, NAME_BOX_X2, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H, nameField2Bg, WHITE);
+
+        // name validation error
+        if (nameError) {
+            renderText(renderer, font, "player names must be different!",
+                       START_BTN_X - 60, START_BTN_Y - 40, {255, 80, 80, 255});
+        }
 
         renderButton(renderer, titleFont, "start game",
                      START_BTN_X, START_BTN_Y, START_BTN_W, START_BTN_H,
-                     {50,180,50,255}, WHITE);
+                     {50, 180, 50, 255}, WHITE);
 
         SDL_RenderPresent(renderer);
         SDL_Delay(16);
@@ -133,8 +162,8 @@ SelectionResult runCharacterSelection(
 
     SDL_StopTextInput();
 
-    if (name1.empty()) name1 = "player 1";
-    if (name2.empty()) name2 = "player 2";
+    if (name1.empty()) { name1 = "player 1"; }
+    if (name2.empty()) { name2 = "player 2"; }
 
-    return { chars[sel1], chars[sel2], name1, name2 };
+    return { chars[selectedChar1], chars[selectedChar2], name1, name2 };
 }

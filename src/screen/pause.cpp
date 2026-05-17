@@ -20,11 +20,11 @@ PauseAction drawPauseScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Fon
 
     // hit-test mouse clicks
     if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
-        int mx = event.button.x, my = event.button.y;
-        if (pointInRect(mx, my, resume)) return PauseAction::RESUME;
-        if (pointInRect(mx, my, quit))   return PauseAction::QUIT;
-        if (pointInRect(mx, my, chChar)) return PauseAction::CHANGE_CHARACTERS;
-        if (pointInRect(mx, my, chVol))  return PauseAction::CHANGE_VOLUME;
+        int mouseX = event.button.x, mouseY = event.button.y;
+        if (pointInRect(mouseX, mouseY, resume)) { return PauseAction::RESUME; }
+        if (pointInRect(mouseX, mouseY, quit))   { return PauseAction::QUIT; }
+        if (pointInRect(mouseX, mouseY, chChar)) { return PauseAction::CHANGE_CHARACTERS; }
+        if (pointInRect(mouseX, mouseY, chVol))  { return PauseAction::CHANGE_VOLUME; }
     }
     return PauseAction::NONE;
 }

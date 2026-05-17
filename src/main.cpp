@@ -1,4 +1,7 @@
+#define SDL_MAIN_HANDLED
+
 #include "game.h"
+
 #include <filesystem>
 #include <fstream>
 #include <ctime>
@@ -8,7 +11,7 @@ static const char* CRASH_TEXT =
     "something went wrong!\n"
     "please report this crash log at https://github.com/retuci0/super-bert-bros-ultimate\n";
 
-int main() {
+int main(int argc, char** argv) {
     try {
         Game game;
         game.init();

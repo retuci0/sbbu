@@ -1,5 +1,7 @@
 #include "platform.h"
+
 #include "../misc/common.h"
+
 
 Platform::Platform(SDL_Texture* bigTex, SDL_Texture* smallTex, int x, int y, int w, int h, PlatformSize size) {
     if (size == PlatformSize::BIG) {
@@ -12,7 +14,9 @@ Platform::Platform(SDL_Texture* bigTex, SDL_Texture* smallTex, int x, int y, int
 }
 
 void Platform::draw(SDL_Renderer* r) const {
-    if (image) SDL_RenderCopy(r, image, nullptr, &rect);
+    if (image) { 
+        SDL_RenderCopy(r, image, nullptr, &rect); 
+    }
 }
 
 void Platform::drawHitboxes(SDL_Renderer* r) const {

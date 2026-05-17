@@ -9,23 +9,23 @@
 struct CharacterStats {
     std::string name;
     std::string description;
-    int   health            = 100;
-    int   damage            = 5;
-    int   projectile_damage = 3;
-    float velocity          = 5.0f;
-    float jump_velocity     = 11.0f;
-    float crit_chance       = 0.2f;
-    float gravity           = 0.5f;
-    float terminal_velocity = 20.0f;
-    float weight            = 1.0f;  // lower = less knockback
+    int   health           = 100;
+    int   damage           = 5;
+    int   projectileDamage = 3;
+    float velocity         = 5.0f;
+    float jumpVelocity     = 11.0f;
+    float critChance       = 0.2f;
+    float gravity          = 0.5f;
+    float terminalVelocity = 20.0f;
+    float weight           = 1.0f;  // lower = less knockback
 };
 
 struct Character {
     CharacterStats stats;
 
     // only right-facing frames are stored
-    std::vector<SDL_Texture*> walk_frames;  // 5 frames
-    std::vector<SDL_Texture*> jump_frames;  // 5 frames
+    std::vector<SDL_Texture*> walkFrames;  // 5 frames
+    std::vector<SDL_Texture*> jumpFrames;  // 5 frames
     SDL_Texture* idle   = nullptr;
     SDL_Texture* attack = nullptr;
     SDL_Texture* damage = nullptr;

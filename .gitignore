@@ -24,6 +24,8 @@
 *.out
 *.app
 
+*.zip
+
 CMakeLists.txt.user
 CMakeCache.txt
 CMakeFiles
@@ -41,3 +43,7 @@ CMakeUserPresets.json
 *-prefix/
 
 todo.txt
+crash_logs/
+
+run.sh
+win.sh

@@ -10,27 +10,29 @@
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
+
 #include <vector>
 #include <string>
 
+
 struct Resources {
-    SDL_Texture* platform_image       = nullptr;
-    SDL_Texture* small_platform_image = nullptr;
-    SDL_Texture* projectile_image     = nullptr;
-    SDL_Texture* heart_image          = nullptr;
-    SDL_Texture* bg_image             = nullptr;
+    SDL_Texture* platformImage      = nullptr;
+    SDL_Texture* smallPlatformImage = nullptr;
+    SDL_Texture* projectileImage    = nullptr;
+    SDL_Texture* heartImage         = nullptr;
+    SDL_Texture* bgImage            = nullptr;
 
-    TTF_Font* title_font = nullptr;
-    TTF_Font* font       = nullptr;
+    TTF_Font* titleFont = nullptr;
+    TTF_Font* font      = nullptr;
 
-    Mix_Chunk* jump_sound       = nullptr;
-    Mix_Chunk* jump_sound2      = nullptr;
-    Mix_Chunk* death_sound      = nullptr;
-    Mix_Chunk* projectile_sound = nullptr;
-    Mix_Chunk* void_death_sound = nullptr;
-    Mix_Chunk* damage_sound     = nullptr;
-    Mix_Chunk* game_end_sound   = nullptr;
-    Mix_Music* music            = nullptr;
+    Mix_Chunk* jumpSound      = nullptr;
+    Mix_Chunk* jumpSound2     = nullptr;
+    Mix_Chunk* deathSound     = nullptr;
+    Mix_Chunk* projectileSound = nullptr;
+    Mix_Chunk* voidDeathSound = nullptr;
+    Mix_Chunk* damageSound    = nullptr;
+    Mix_Chunk* gameEndSound   = nullptr;
+    Mix_Music* music          = nullptr;
 
     Character bert;
     Character berrota;
@@ -62,17 +64,17 @@ private:
     bool hitbox  = false;
     bool paused  = false;
 
-    int p1_cooldown = 0;
-    int p2_cooldown = 0;
+    int p1Cooldown = 0;
+    int p2Cooldown = 0;
 
-    std::vector<Projectile> p1_proj;
-    std::vector<Projectile> p2_proj;
+    std::vector<Projectile> p1Proj;
+    std::vector<Projectile> p2Proj;
 
     Player player1, player2;
     std::vector<Platform> platforms;
 
-    float sfx_volume   = 1.0f;
-    float music_volume = 1.0f;
+    float sfxVolume   = 1.0f;
+    float musicVolume = 1.0f;
 
     void loadResources();
     void setupPlayers(const Character* c1, const std::string& n1,
