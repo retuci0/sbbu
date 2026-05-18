@@ -1,6 +1,7 @@
-#include "platform.h"
+#include "Platform.h"
 
-#include "../misc/common.h"
+#include "../misc/Common.h"
+#include "../misc/Renderer.h"
 
 
 Platform::Platform(SDL_Texture* bigTex, SDL_Texture* smallTex, int x, int y, int w, int h, PlatformSize size) {
@@ -20,5 +21,5 @@ void Platform::draw(SDL_Renderer* r) const {
 }
 
 void Platform::drawHitboxes(SDL_Renderer* r) const {
-    outlineRect(r, rect.x, rect.y, rect.w, rect.h, BLUE);
+    Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, BLUE, 2);
 }

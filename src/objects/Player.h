@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../misc/characters.h"
-#include "../misc/common.h"
+#include "../misc/Characters.h"
+#include "../misc/Common.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
@@ -45,7 +45,7 @@ public:
     // player color indicator (drawn above head)
     SDL_Color color = {255, 255, 255, 255};
 
-    // sound (non-owning pointer)
+    // non-owning
     Mix_Chunk* damageSound = nullptr;
 
     Player() = default;

@@ -3,8 +3,6 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
-#include <string>
-
 
 // colors
 
@@ -50,15 +48,3 @@ inline SDL_Rect makeRect(int x, int y, int w, int h) {
 inline bool pointInRect(int px, int py, const SDL_Rect& r) {
     return px >= r.x && px < r.x + r.w && py >= r.y && py < r.y + r.h;
 }
-
-// renders a string
-void renderText(SDL_Renderer* r, TTF_Font* font, const std::string& text, int x, int y, SDL_Color color);
-
-// renders a filled rect
-void fillRect(SDL_Renderer* r, int x, int y, int w, int h, Uint8 red, Uint8 green, Uint8 blue, Uint8 alpha = 255);
-
-// renders an outlined rect
-void outlineRect(SDL_Renderer* r, int x, int y, int w, int h, SDL_Color color, int thickness = 2);
-
-// returns a button's rect for hit testing
-SDL_Rect renderButton(SDL_Renderer* r, TTF_Font* font, const std::string& text, int x, int y, int w, int h, SDL_Color bg, SDL_Color fg);

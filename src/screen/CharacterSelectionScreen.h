@@ -1,0 +1,49 @@
+#pragma once
+
+#include "Screen.h"
+#include "../misc/Characters.h"
+
+#include <SDL2/SDL_ttf.h>
+
+#include <string>
+
+
+struct CharacterSelectionResult {
+    const Character* char1;
+    const Character* char2;
+    std::string name1;
+    std::string name2;
+    SDL_Color color1;
+    SDL_Color color2;
+};
+
+class CharacterSelectionScreen : public Screen {
+public:
+    CharacterSelectionScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, const Character* chars[4],
+                             const std::string& defaultName1, const Character* defaultChar1,
+                             const std::string& defaultName2, const Character* defaultChar2);
+
+    void handleEvent(const SDL_Event& e) override;
+    void update() override;
+    void render(SDL_Renderer* renderer) override;
+    bool isFinished() const { return finished; }
+    CharacterSelectionResult getResult() const { return result; }
+
+private:
+    SDL_Renderer* renderer;
+    TTF_Font* titleFont;
+    TTF_Font* font;
+    const Character** chars;
+
+    int selectedChar1, selectedChar2;
+    std::string name1, name2;
+    SDL_Color color1, color2;
+    int activeField = 0;  // 0 = none, 1 = name1, 2 = name2, 3 = color1, 4 = color2
+    bool nameError = false;
+    bool finished = false;
+    CharacterSelectionResult result;
+
+    int findIdx(const Character* ch) const;
+    void pickColorFor(int player);  // 1 or 2
+    void setDefaultColors();
+};

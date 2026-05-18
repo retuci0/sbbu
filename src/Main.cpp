@@ -1,6 +1,6 @@
 #define SDL_MAIN_HANDLED
 
-#include "game.h"
+#include "Game.h"
 
 #include <filesystem>
 #include <fstream>
@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
         return 0;
     } catch (const std::exception& e) {
         std::time_t now = std::time(nullptr);
-        std::tm* tm     = std::localtime(&now);
+        std::tm* tm = std::localtime(&now);
 
         char filename[256];
         std::snprintf(filename, sizeof(filename),
@@ -39,7 +39,7 @@ int main(int argc, char** argv) {
         }
 
         // also print to stderr so it's visible in a terminal
-        std::fprintf(stderr, "CRASH: %s\nWritten to %s\n", e.what(), filename);
+        std::fprintf(stderr, "CRASH: %s\nwritten to %s\n", e.what(), filename);
         return 1;
     }
 }

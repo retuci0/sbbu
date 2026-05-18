@@ -2,8 +2,6 @@
 
 #include <SDL2/SDL.h>
 
-#include <string>
-
 
 enum class PlatformSize {
     BIG,
@@ -13,7 +11,7 @@ enum class PlatformSize {
 class Platform {
 public:
     SDL_Texture* image = nullptr;  // non-owning
-    SDL_Rect     rect  = {};
+    SDL_Rect rect = {};
 
     Platform(SDL_Texture* bigTex, SDL_Texture* smallTex, int x, int y, int w, int h, PlatformSize size);
 

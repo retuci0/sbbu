@@ -1,7 +1,9 @@
-#include "player.h"
+#include "Player.h"
 
-#include "platform.h"
-#include "../misc/common.h"
+#include "Platform.h"
+#include "../misc/Common.h"
+
+#include "../misc/Renderer.h"
 
 #include <algorithm>
 
@@ -200,13 +202,13 @@ void Player::draw(SDL_Renderer* r) const {
             break;
     }
 
-    // colored indicator above the player's head so each player is easy to tell apart
-    fillRect(r,
+    Renderer::fillRect(r,
         rect.x + rect.w / 2 - 8, rect.y - 10,
         16, 5,
-        color.r, color.g, color.b, color.a);
+        color.r, color.g, color.b, color.a
+    );
 }
 
 void Player::drawHitboxes(SDL_Renderer* r) const {
-    outlineRect(r, rect.x, rect.y, rect.w, rect.h, RED);
+    Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, RED, 2);
 }

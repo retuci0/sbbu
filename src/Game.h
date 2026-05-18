@@ -1,18 +1,24 @@
 #pragma once
 
-#include "input_handler.h"
-#include "objects/platform.h"
-#include "objects/player.h"
-#include "objects/projectile.h"
-#include "misc/characters.h"
+#include "InputHandler.h"
+#include "objects/Platform.h"
+#include "objects/Player.h"
+#include "objects/Projectile.h"
+#include "misc/Characters.h"
+#include "screen/Screen.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
 
-#include <vector>
+#include <memory>
 #include <string>
+#include <vector>
+
+class CharacterSelectionScreen;
+class PauseScreen;
+class VolumeScreen;
 
 
 struct Resources {
@@ -22,17 +28,17 @@ struct Resources {
     SDL_Texture* heartImage         = nullptr;
     SDL_Texture* bgImage            = nullptr;
 
-    TTF_Font* titleFont = nullptr;
-    TTF_Font* font      = nullptr;
+    TTF_Font* titleFont             = nullptr;
+    TTF_Font* font                  = nullptr;
 
-    Mix_Chunk* jumpSound      = nullptr;
-    Mix_Chunk* jumpSound2     = nullptr;
-    Mix_Chunk* deathSound     = nullptr;
-    Mix_Chunk* projectileSound = nullptr;
-    Mix_Chunk* voidDeathSound = nullptr;
-    Mix_Chunk* damageSound    = nullptr;
-    Mix_Chunk* gameEndSound   = nullptr;
-    Mix_Music* music          = nullptr;
+    Mix_Chunk* jumpSound            = nullptr;
+    Mix_Chunk* jumpSound2           = nullptr;
+    Mix_Chunk* deathSound           = nullptr;
+    Mix_Chunk* projectileSound      = nullptr;
+    Mix_Chunk* voidDeathSound       = nullptr;
+    Mix_Chunk* damageSound          = nullptr;
+    Mix_Chunk* gameEndSound         = nullptr;
+    Mix_Music* music                = nullptr;
 
     Character bert;
     Character berrota;
@@ -62,7 +68,10 @@ private:
 
     bool running = true;
     bool hitbox  = false;
-    bool paused  = false;
+    bool paused = false;
+
+    std::unique_ptr<Screen> screen;
+    void setScreen(std::unique_ptr<Screen> screen);
 
     int p1Cooldown = 0;
     int p2Cooldown = 0;
@@ -77,10 +86,23 @@ private:
     float musicVolume = 1.0f;
 
     void loadResources();
-    void setupPlayers(const Character* c1, const std::string& n1,
-                      const Character* c2, const std::string& n2);
+    void setupPlayers(const Character* c1, const std::string& n1, const Character* c2, const std::string& n2);
+
     void respawn(Player& p, bool voidDeath);
+
     void applySfxVolume(float multiplier);
     void showEndDialog(const std::string& msg);
+    
+    void update();
+    void updateGameplay();
+
+    void processEvents();
+    void handleGameplayInput();
+
+    void render();
+    void renderGameplay();
+    void handleScreenTransitions();
+
+
     TTF_Font* findFont(int size);
 };

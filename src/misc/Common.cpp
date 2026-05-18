@@ -1,4 +1,4 @@
-#include "common.h"
+#include "Common.h"
 
 
 void renderText(SDL_Renderer* r, TTF_Font* font, const std::string& text, int x, int y, SDL_Color color) {

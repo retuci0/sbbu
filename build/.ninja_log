@@ -1,0 +1,16 @@
+# ninja log v7
+2	906	1779112279679078867	CMakeFiles/super_bert_bros.dir/src/objects/Projectile.cpp.o	d76c4507acf3a5a0
+2	905	1779112279679214148	CMakeFiles/super_bert_bros.dir/src/objects/Platform.cpp.o	f59cc83e4e3b3fe7
+2	756	1779112279679690693	CMakeFiles/super_bert_bros.dir/src/screen/VolumeScreen.cpp.o	12bcc747380fbcd0
+2	1011	1779112279679372610	CMakeFiles/super_bert_bros.dir/src/screen/CharacterSelectionScreen.cpp.o	6105571818c91be6
+2	719	1779112279679542671	CMakeFiles/super_bert_bros.dir/src/screen/PauseScreen.cpp.o	e783ecc992b6f417
+1	755	1779112279678947965	CMakeFiles/super_bert_bros.dir/src/objects/Player.cpp.o	1a621c79b58ab329
+2	1233	1779110724124829304	CMakeFiles/super_bert_bros.dir/src/misc/Characters.cpp.o	7dc286be369b2eaa
+2	1068	1779112456378521908	CMakeFiles/super_bert_bros.dir/src/Game.cpp.o	1e007e052d372a3e
+2	947	1779110724124688484	CMakeFiles/super_bert_bros.dir/src/InputHandler.cpp.o	408cb784965a83a4
+2	940	1779112456377031819	CMakeFiles/super_bert_bros.dir/src/Main.cpp.o	b327cdc0fc7cd8a8
+4	284	1779110724125784182	CMakeFiles/super_bert_bros.dir/inc/tinyfiledialogs.c.o	2ae52f1edbb7e3a3
+1069	1129	1779112457444040410	super_bert_bros	e47bf2b9fc68a1ee
+2	932	1779112557735818272	CMakeFiles/super_bert_bros.dir/src/Main.cpp.o	b327cdc0fc7cd8a8
+2	1076	1779112557736359265	CMakeFiles/super_bert_bros.dir/src/Game.cpp.o	1e007e052d372a3e
+1077	1140	1779112558810826312	super_bert_bros	e47bf2b9fc68a1ee

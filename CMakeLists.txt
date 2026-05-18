@@ -9,38 +9,48 @@ pkg_check_modules(SDL2 REQUIRED sdl2)
 pkg_check_modules(SDL2_image REQUIRED SDL2_image)
 pkg_check_modules(SDL2_mixer REQUIRED SDL2_mixer)
 pkg_check_modules(SDL2_ttf  REQUIRED SDL2_ttf)
+pkg_check_modules(X11 REQUIRED x11)
+
 
 set(SRC
-    src/main.cpp
-    src/game.cpp
-    src/input_handler.cpp
-    src/misc/characters.cpp
-    src/misc/common.cpp
-    src/objects/player.cpp
-    src/objects/projectile.cpp
-    src/objects/platform.cpp
-    src/screen/character_selection.cpp
-    src/screen/pause.cpp
-    src/screen/volume.cpp
+    src/Main.cpp
+    src/Game.cpp
+    src/InputHandler.cpp
+    src/misc/Characters.cpp
+    src/objects/Player.cpp
+    src/objects/Projectile.cpp
+    src/objects/Platform.cpp
+    src/screen/CharacterSelectionScreen.cpp
+    src/screen/PauseScreen.cpp
+    src/screen/VolumeScreen.cpp
+
+    inc/tinyfiledialogs.c
 )
 
 set(HEADERS
-    src/game.h
-    src/input_handler.h
-    src/misc/characters.h
-    src/misc/common.h
-    src/objects/player.h
-    src/objects/projectile.h
-    src/objects/platform.h
-    src/screen/character_selection.h
-    src/screen/pause.h
-    src/screen/volume.h
+    src/Game.h
+    src/InputHandler.h
+    src/misc/Characters.h
+    src/misc/Common.h
+    src/misc/Renderer.h
+    src/objects/Player.h
+    src/objects/Projectile.h
+    src/objects/Platform.h
+    src/screen/Screen.h
+    src/screen/CharacterSelectionScreen.h
+    src/screen/PauseScreen.h
+    src/screen/VolumeScreen.h
+
+    inc/tinyfiledialogs.h
 )
+
+enable_language(C)
 
 add_executable(super_bert_bros ${SRC} ${HEADERS})
 
 target_include_directories(super_bert_bros PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${CMAKE_CURRENT_SOURCE_DIR}/inc
 )
 
 target_link_libraries(super_bert_bros

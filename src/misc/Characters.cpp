@@ -1,4 +1,5 @@
-#include "characters.h"
+#include "Characters.h"
+
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_log.h>
 

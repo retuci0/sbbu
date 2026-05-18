@@ -1,4 +1,4 @@
-#include "input_handler.h"
+#include "InputHandler.h"
 
 
 void InputHandler::beginFrame() {
