@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Screen.h"
+
+#include "../misc/Color.h"
 #include "../misc/Characters.h"
 
 #include <SDL2/SDL_ttf.h>
@@ -14,8 +16,8 @@ struct CharacterSelectionResult {
     const Character* char2;
     std::string name1;
     std::string name2;
-    SDL_Color color1;
-    SDL_Color color2;
+    Color color1;
+    Color color2;
 };
 
 class CharacterSelectionScreen : public Screen {
@@ -38,7 +40,7 @@ private:
 
     int selectedChar1, selectedChar2;
     std::string name1, name2;
-    SDL_Color color1, color2;
+    Color color1, color2;
     int activeField = 0;  // 0 = none, 1 = name1, 2 = name2, 3 = color1, 4 = color2
     bool nameError = false;
     bool finished = false;

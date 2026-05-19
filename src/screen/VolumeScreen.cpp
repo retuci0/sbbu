@@ -24,11 +24,11 @@ float VolumeScreen::xToVal(int x) const {
 }
 
 void VolumeScreen::drawSlider(int slY, float val, const std::string& label) {
-    Renderer::fillRect(renderer, SL_X, slY, SL_W, SL_H, 100, 100, 100, 255);
+    Renderer::fillRect(renderer, SL_X, slY, SL_W, SL_H, { 100, 100, 100, 255 });
     int fillW = valToX(val) - SL_X;
-    Renderer::fillRect(renderer, SL_X, slY, fillW, SL_H, 100, 180, 100, 255);
+    Renderer::fillRect(renderer, SL_X, slY, fillW, SL_H, { 100, 180, 100, 255 });
     int hx = valToX(val);
-    Renderer::fillRect(renderer, hx - HANDLE_R, slY - HANDLE_R + SL_H/2, HANDLE_R*2, HANDLE_R*2, 200,200,200,255);
+    Renderer::fillRect(renderer, hx - HANDLE_R, slY - HANDLE_R + SL_H/2, HANDLE_R*2, HANDLE_R*2, { 200, 200, 200, 255 });
     Renderer::renderText(renderer, font, label + ": " + std::to_string(static_cast<int>(std::round(val * 100))) + "%",
                          SL_X, slY - 50, WHITE);
 }
@@ -55,7 +55,7 @@ void VolumeScreen::update() {
 }
 
 void VolumeScreen::render(SDL_Renderer* renderer) {
-    Renderer::fillRect(renderer, 0, 0, 1920, 1080, 20,20,20,255);
+    Renderer::fillRect(renderer, 0, 0, 1920, 1080, { 20, 20, 20, 255 });
     Renderer::renderText(renderer, titleFont, "volume settings", 750, 200, WHITE);
     drawSlider(SL_SFX_Y, sfx, "SFX Volume");
     drawSlider(SL_MUSIC_Y, music, "Music Volume");

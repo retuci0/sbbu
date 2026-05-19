@@ -59,18 +59,22 @@ void Player::jump() {
 }
 
 void Player::getHit(Facing side) {
-    if (damageSound) { Mix_PlayChannel(-1, damageSound, 0); }
+    if (damageSound) { 
+        Mix_PlayChannel(-1, damageSound, 0); 
+    }
+
     status = Status::DAMAGED;
+    damagedTimer = 10;
 
     float damageTaken = static_cast<float>(character->stats.health - hp);
     float w = character->stats.weight;
 
     if (side == Facing::LEFT) {
-        dx = -damageTaken * w;
+        dx = (-damageTaken) * w;
     } else {
-        dx = damageTaken * w;
+        dx = (damageTaken) * w;
     }
-    dy = -1.0f * (damageTaken / 10.0f) * w;
+    dy = (-damageTaken / 3.3f) * w;
 }
 
 void Player::update(const std::vector<Platform>& platforms) {
@@ -128,6 +132,15 @@ void Player::update(const std::vector<Platform>& platforms) {
                 onGround = true;
                 break;
             }
+        }
+    }
+
+    // decrement damaged timer
+    if (status == Status::DAMAGED) {
+        if (damagedTimer > 0) {
+            --damagedTimer;
+        } else {
+            status = Status::IDLE;  // let the sync block below do the stuff
         }
     }
 
@@ -205,7 +218,7 @@ void Player::draw(SDL_Renderer* r) const {
     Renderer::fillRect(r,
         rect.x + rect.w / 2 - 8, rect.y - 10,
         16, 5,
-        color.r, color.g, color.b, color.a
+        color
     );
 }
 

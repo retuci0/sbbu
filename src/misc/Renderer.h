@@ -1,6 +1,7 @@
 #pragma once
 
-#include <SDL2/SDL.h>
+#include "Color.h"
+
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
 
@@ -8,39 +9,49 @@
 
 
 namespace Renderer {
-    static void renderText(SDL_Renderer* r, TTF_Font* font, const std::string& text, int x, int y, SDL_Color color) {
-        if (!font || text.empty()) { return; }
-        SDL_Surface* surf = TTF_RenderText_Solid(font, text.c_str(), color);
-        if (!surf) { return; }
-        SDL_Texture* tex = SDL_CreateTextureFromSurface(r, surf);
-        if (tex) {
-            SDL_Rect dst = {x, y, surf->w, surf->h};
-            SDL_RenderCopy(r, tex, nullptr, &dst);
-            SDL_DestroyTexture(tex);
-        }
-        SDL_FreeSurface(surf);
-    }
 
-    static void fillRect(SDL_Renderer* r, int x, int y, int w, int h, Uint8 red, Uint8 green, Uint8 blue, Uint8 alpha) {
-        SDL_SetRenderDrawBlendMode(r, SDL_BLENDMODE_BLEND);
-        SDL_SetRenderDrawColor(r, red, green, blue, alpha);
-        SDL_Rect rect = {x, y, w, h};
-        SDL_RenderFillRect(r, &rect);
-    }
+    /**
+     * renders a string 
+     * @author retucio
+     * @param r pointer to SDL_Renderer object
+     * @param font point to loaded TTF_Font* object
+     * @param text string to draw on screen
+     * @param x, y coordinates
+     * @param color color to use when drawing the text
+     */
+    void renderText(SDL_Renderer* r, TTF_Font* font, const std::string& text, int x, int y, Color c);
 
-    static void outlineRect(SDL_Renderer* r, int x, int y, int w, int h, SDL_Color color, int thickness) {
-        SDL_SetRenderDrawColor(r, color.r, color.g, color.b, color.a);
-        for (int i = 0; i < thickness; ++i) {
-            SDL_Rect rect = {x + i, y + i, w - 2 * i, h - 2 * i};
-            SDL_RenderDrawRect(r, &rect);
-        }
-    }
+    /**
+     * renders a filled rectangle
+     * @author retucio
+     * @param r pointer to SDL_Renderer object
+     * @param x, y coordinates
+     * @param w, h size of the rect to draw
+     * @param c color
+     */
+    void fillRect(SDL_Renderer* r, int x, int y, int w, int h, Color c);
 
-    static SDL_Rect renderButton(SDL_Renderer* r, TTF_Font* font, const std::string& text, int x, int y, int w, int h, SDL_Color bg, SDL_Color fg) {
-        fillRect(r, x, y, w, h, bg.r, bg.g, bg.b, bg.a);
-        int tw = 0, th = 0;
-        TTF_SizeText(font, text.c_str(), &tw, &th);
-        renderText(r, font, text, x + (w - tw) / 2, y + (h - th) / 2, fg);
-        return {x, y, w, h};
-    }
+    /**
+     * renders the outline of a rectangle
+     * @author retucio
+     * @param r pointer to SDL_Renderer object
+     * @param x, y coordinates
+     * @param w, h size of the rect to draw
+     * @param c color
+     * @param thickness thickness of the outline's lines
+     */
+    void outlineRect(SDL_Renderer* r, int x, int y, int w, int h, Color c, int thickness);
+
+    /**
+     * renders a button-like object, by rendering a rectangle and text on top
+     * @author retucio
+     * @param r pointer to SDL_Renderer object
+     * @param font pointer to loaded TTF_Font object
+     * @param text label of the button
+     * @param x, y coordinates
+     * @param w, h size of the button
+     * @param bg background (rect) color
+     * @param fg foreground (text) color
+     */
+    SDL_Rect renderButton(SDL_Renderer* r, TTF_Font* font, const std::string& text, int x, int y, int w, int h, Color bg, Color fg);
 };

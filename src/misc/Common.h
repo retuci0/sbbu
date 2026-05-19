@@ -1,17 +1,19 @@
 #pragma once
 
+#include "../misc/Color.h"
+
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 
 
 // colors
 
-constexpr SDL_Color WHITE    = {255, 255, 255, 255};
-constexpr SDL_Color BLACK    = {  0,   0,   0, 255};
-constexpr SDL_Color RED      = {255,   0,   0, 255};
-constexpr SDL_Color GREEN    = {  0, 255,   0, 255};
-constexpr SDL_Color BLUE     = {  0,   0, 255, 255};
-constexpr SDL_Color DARK_RED = { 45,   0,   0, 255};
+constexpr Color WHITE    = { 255, 255, 255, 255 };
+constexpr Color BLACK    = {   0,   0,   0, 255 };
+constexpr Color RED      = { 255,   0,   0, 255 };
+constexpr Color GREEN    = {   0, 255,   0, 255 };
+constexpr Color BLUE     = {   0,   0, 255, 255 };
+constexpr Color DARK_RED = {  45,   0,   0, 255 };
 
 
 // keybinds (edit here to remap)
@@ -38,11 +40,6 @@ enum class Facing {
     RIGHT 
 };
 
-
-// ui helpers
-inline SDL_Rect makeRect(int x, int y, int w, int h) { 
-    return {x, y, w, h}; 
-}
 
 // hit testing
 inline bool pointInRect(int px, int py, const SDL_Rect& r) {

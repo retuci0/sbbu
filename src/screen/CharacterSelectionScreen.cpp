@@ -145,7 +145,7 @@ void CharacterSelectionScreen::update() {
 }
 
 void CharacterSelectionScreen::render(SDL_Renderer* renderer) {
-    Renderer::fillRect(renderer, 0, 0, SW, SH, 30, 30, 30, 255);
+    Renderer::fillRect(renderer, 0, 0, SW, SH, { 30, 30, 30, 255 });
     Renderer::renderText(renderer, titleFont, "character selection", 650, 60, WHITE);
     Renderer::renderText(renderer, font, "player 1", COL1_X, 150, WHITE);
     Renderer::renderText(renderer, font, "player 2", COL2_X, 150, WHITE);
@@ -191,8 +191,8 @@ void CharacterSelectionScreen::render(SDL_Renderer* renderer) {
     // color picker buttons
     SDL_Rect colorBtn1 = {COL1_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H};
     SDL_Rect colorBtn2 = {COL2_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H};
-    Renderer::fillRect(renderer, colorBtn1.x, colorBtn1.y, colorBtn1.w, colorBtn1.h, color1.r, color1.g, color1.b, color1.a);
-    Renderer::fillRect(renderer, colorBtn2.x, colorBtn2.y, colorBtn2.w, colorBtn2.h, color2.r, color2.g, color2.b, color2.a);
+    Renderer::fillRect(renderer, colorBtn1.x, colorBtn1.y, colorBtn1.w, colorBtn1.h, color1);
+    Renderer::fillRect(renderer, colorBtn2.x, colorBtn2.y, colorBtn2.w, colorBtn2.h, color2);
     Renderer::renderText(renderer, font, "pick color", colorBtn1.x + 10, colorBtn1.y + 12, BLACK);
     Renderer::renderText(renderer, font, "pick color", colorBtn2.x + 10, colorBtn2.y + 12, BLACK);
 

@@ -183,7 +183,7 @@ void Game::showEndDialog(const std::string& msg) {
                 waiting = false;
             }
         }
-        Renderer::fillRect(renderer, 0, 0, SW, SH, 0, 0, 0, 180);
+        Renderer::fillRect(renderer, 0, 0, SW, SH, { 0, 0, 0, 180 });
         int lineY = SH / 2 - 80;
         std::string line, rest = msg;
         while (true) {
@@ -208,8 +208,13 @@ void Game::handleGameplayInput() {
     bool p1Right = isDown(K_P1_RIGHT);
     bool p2Left = isDown(K_P2_LEFT);
     bool p2Right = isDown(K_P2_RIGHT);
-    player1.move((p1Left && p1Right) ? 0 : p1Left ? -1 : p1Right ? 1 : 0);
-    player2.move((p2Left && p2Right) ? 0 : p2Left ? -1 : p2Right ? 1 : 0);
+    
+    if (player1.status != Status::DAMAGED) {
+        player1.move((p1Left && p1Right) ? 0 : p1Left ? -1 : p1Right ? 1 : 0);
+    }
+    if (player2.status != Status::DAMAGED) {
+        player2.move((p2Left && p2Right) ? 0 : p2Left ? -1 : p2Right ? 1 : 0);
+    }
 
     if (isDown(K_P1_SHOT)) { player1.status = Status::ATTACKING; }
     if (isDown(K_P2_SHOT)) { player2.status = Status::ATTACKING; }
@@ -280,7 +285,7 @@ void Game::renderGameplay() {
     if (resources.bgImage) {
         SDL_RenderCopy(renderer, resources.bgImage, nullptr, nullptr);
     } else {
-        Renderer::fillRect(renderer, 0, 0, SW, SH, 20, 20, 60, 255);
+        Renderer::fillRect(renderer, 0, 0, SW, SH, { 20, 20, 60, 255 });
     }
 
     // platforms
@@ -306,7 +311,7 @@ void Game::renderGameplay() {
         SDL_Rect iconRect1 = {480, 840, 125, 57};
         SDL_RenderCopy(renderer, player1.character->icon, nullptr, &iconRect1);
     }
-    Renderer::fillRect(renderer, 480, 950, 150, 45, 255, 255, 255, 255);
+    Renderer::fillRect(renderer, 480, 950, 150, 45, { 255, 255, 255, 255 });
     Renderer::renderText(renderer, resources.font, player1.name, 490, 955, BLACK);
     if (player1.lives >= 0) {
         Renderer::renderText(renderer, resources.titleFont, std::to_string(player1.hp) + " hp", 480, 900, WHITE);
@@ -325,7 +330,7 @@ void Game::renderGameplay() {
         SDL_Rect iconRect2 = {1315, 840, 125, 57};
         SDL_RenderCopy(renderer, player2.character->icon, nullptr, &iconRect2);
     }
-    Renderer::fillRect(renderer, 1315, 950, 150, 45, 255, 255, 255, 255);
+    Renderer::fillRect(renderer, 1315, 950, 150, 45, WHITE);
     Renderer::renderText(renderer, resources.font, player2.name, 1325, 955, BLACK);
     if (player2.lives >= 0) {
         Renderer::renderText(renderer, resources.titleFont, std::to_string(player2.hp) + " hp", 1315, 900, WHITE);

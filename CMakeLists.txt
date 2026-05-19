@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(super_bert_bros VERSION 1.0 LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(PkgConfig REQUIRED)
@@ -17,6 +17,7 @@ set(SRC
     src/Game.cpp
     src/InputHandler.cpp
     src/misc/Characters.cpp
+    src/misc/Renderer.cpp
     src/objects/Player.cpp
     src/objects/Projectile.cpp
     src/objects/Platform.cpp
@@ -31,6 +32,7 @@ set(HEADERS
     src/Game.h
     src/InputHandler.h
     src/misc/Characters.h
+    src/misc/Color.h
     src/misc/Common.h
     src/misc/Renderer.h
     src/objects/Player.h

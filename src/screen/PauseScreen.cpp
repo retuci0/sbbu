@@ -24,8 +24,8 @@ void PauseScreen::handleEvent(const SDL_Event& e) {
 void PauseScreen::update() {}
 
 void PauseScreen::render(SDL_Renderer* renderer) {
-    Renderer::fillRect(renderer, 0, 0, sw, sh, 0, 0, 0, 150);
-    Renderer::fillRect(renderer, 200, 150, 1500, 150, 0, 0, 0, 255);
+    Renderer::fillRect(renderer, 0, 0, sw, sh, { 0, 0, 0, 150 });
+    Renderer::fillRect(renderer, 200, 150, 1500, 150,BLACK);
     Renderer::renderText(renderer, titleFont, "game paused.", 750, 190, WHITE);
     Renderer::renderButton(renderer, font, "resume", 300, 450, 600, 150, {255,255,255,255}, BLACK);
     Renderer::renderButton(renderer, font, "quit", 1000, 450, 600, 150, {255,255,255,255}, BLACK);

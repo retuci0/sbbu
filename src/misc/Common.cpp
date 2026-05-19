@@ -1,5 +1,7 @@
 #include "Common.h"
 
+#include <string>
+
 
 void renderText(SDL_Renderer* r, TTF_Font* font, const std::string& text, int x, int y, SDL_Color color) {
     if (!font || text.empty()) { return; }
