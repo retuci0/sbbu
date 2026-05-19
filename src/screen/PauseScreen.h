@@ -9,7 +9,7 @@
 enum class PauseActionResult {
     RESUME,
     QUIT,
-    CHANGE_CHARACTERS,
+    RESTART,
     CHANGE_VOLUME
 };
 

@@ -12,6 +12,7 @@
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_ttf.h>
 
+#include <array>
 #include <memory>
 #include <string>
 #include <vector>
@@ -40,12 +41,20 @@ struct Resources {
     Mix_Chunk* gameEndSound         = nullptr;
     Mix_Music* music                = nullptr;
 
-    Character bert;
-    Character berrota;
-    Character lorc;
-    Character jordi;
+    Character BERT;
+    Character BERROTA;
+    Character LORC;
+    Character JORDI;
+    Character BARCOS;
+    Character ALSEXITO;
+    Character SHASHA;
+    Character OSCAR;
 
     void destroy();
+
+    std::array<const Character*, 8> characterList() const {
+        return { &BERT, &BERROTA, &LORC, &JORDI, &BARCOS, &ALSEXITO, &SHASHA, &OSCAR };
+    }
 };
 
 class Game : public InputHandler {

@@ -1,5 +1,0 @@
-CRASH REPORT 2026-5-17 at 17:31.42
-something went wrong!
-please report this crash log at https://github.com/retuci0/super-bert-bros-ultimate
-
-no TTF font found. place a font.ttf in the working directory.

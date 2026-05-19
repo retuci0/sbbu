@@ -5,6 +5,7 @@
 
 #include <SDL2/SDL_ttf.h>
 
+#include <array>
 #include <string>
 
 
@@ -19,7 +20,7 @@ struct CharacterSelectionResult {
 
 class CharacterSelectionScreen : public Screen {
 public:
-    CharacterSelectionScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, const Character* chars[4],
+    CharacterSelectionScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, const std::array<const Character*, 8>,
                              const std::string& defaultName1, const Character* defaultChar1,
                              const std::string& defaultName2, const Character* defaultChar2);
 
@@ -33,7 +34,7 @@ private:
     SDL_Renderer* renderer;
     TTF_Font* titleFont;
     TTF_Font* font;
-    const Character** chars;
+    std::array<const Character*, 8> chars;
 
     int selectedChar1, selectedChar2;
     std::string name1, name2;

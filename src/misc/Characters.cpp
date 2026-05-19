@@ -20,6 +20,15 @@ const CharacterStats JORDI_STATS = {
     "Jordi", "strong but fragile.",
     80, 10, 5, 5.1f, 11.0f, 0.30f, 0.50f, 17.0f, 1.2f
 };
+const CharacterStats BARCOS_STATS = {
+    "Barcos", "short ahh mf",
+    50, 5, 3, 12.0f, 15.0f, 0.5f, 0.5f, 17.0f, 2.0f
+};
+const CharacterStats ALSEXITO_STATS = {
+    "Alsexito", "your average gay gymbro",
+    120, 20, 2, 2.5f, 2.5f, 0.8f, 0.72f, 25.0f, 2.0f
+};
+
 
 static SDL_Texture* loadTex(SDL_Renderer* r, const std::string& path) {
     SDL_Texture* t = IMG_LoadTexture(r, path.c_str());
@@ -55,7 +64,7 @@ Character loadCharacter(SDL_Renderer* renderer, const CharacterStats& stats, con
         c.jumpFrames.push_back(loadTex(renderer, folder + "/jump/" + std::to_string(i) + ".png"));
     }
     c.idle   = loadTex(renderer, folder + "/idle/0.png");
-    c.attack = loadTex(renderer, folder + "/attack/0.png");
+    c.attack = loadTex(renderer, folder + "/shoot/0.png");
     c.damage = loadTex(renderer, folder + "/damage/0.png");
     c.icon   = loadTex(renderer, folder + "/icon.png");
     c.loaded = true;

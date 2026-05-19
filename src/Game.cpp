@@ -31,7 +31,8 @@ void Resources::destroy() {
     dChunk(projectileSound); dChunk(voidDeathSound);
     dChunk(damageSound); dChunk(gameEndSound);
     if (music) { Mix_FreeMusic(music); music = nullptr; }
-    bert.unload(); berrota.unload(); lorc.unload(); jordi.unload();
+    BERT.unload(); BERROTA.unload(); JORDI.unload(); LORC.unload();
+    BARCOS.unload(); ALSEXITO.unload(); SHASHA.unload(); OSCAR.unload();
 }
 
 TTF_Font* Game::findFont(int size) {
@@ -62,11 +63,11 @@ void Game::loadResources() {
         return c;
     };
 
-    resources.platformImage      = loadTex("assets/images/platform.png");
-    resources.smallPlatformImage = loadTex("assets/images/small_platform.png");
-    resources.projectileImage    = loadTex("assets/images/projectile.png");
-    resources.heartImage         = loadTex("assets/images/heart.png");
-    resources.bgImage            = loadTex("assets/images/background.png");
+    resources.platformImage      = loadTex("assets/images/platform/platform_big.png");
+    resources.smallPlatformImage = loadTex("assets/images/platform/platform_small.png");
+    resources.projectileImage    = loadTex("assets/images/projectile/projectile.png");
+    resources.heartImage         = loadTex("assets/images/ui/heart.png");
+    resources.bgImage            = loadTex("assets/images/ui/background.png");
 
     resources.titleFont = findFont(50);
     resources.font      = findFont(30);
@@ -81,19 +82,21 @@ void Game::loadResources() {
 
     resources.music = Mix_LoadMUS("assets/sound/music.mp3");
 
-    if (resources.jumpSound)       { Mix_VolumeChunk(resources.jumpSound,       64); }
-    if (resources.jumpSound2)      { Mix_VolumeChunk(resources.jumpSound2,      26); }
+    if (resources.jumpSound)       { Mix_VolumeChunk(resources.jumpSound,        64); }
+    if (resources.jumpSound2)      { Mix_VolumeChunk(resources.jumpSound2,       26); }
     if (resources.deathSound)      { Mix_VolumeChunk(resources.deathSound,      115); }
-    if (resources.projectileSound) { Mix_VolumeChunk(resources.projectileSound, 26); }
-    if (resources.voidDeathSound)  { Mix_VolumeChunk(resources.voidDeathSound,  9); }
+    if (resources.projectileSound) { Mix_VolumeChunk(resources.projectileSound,  26); }
+    if (resources.voidDeathSound)  { Mix_VolumeChunk(resources.voidDeathSound,    9); }
     if (resources.damageSound)     { Mix_VolumeChunk(resources.damageSound,     102); }
-    if (resources.gameEndSound)    { Mix_VolumeChunk(resources.gameEndSound,    13); }
+    if (resources.gameEndSound)    { Mix_VolumeChunk(resources.gameEndSound,     13); }
     if (resources.music)           { Mix_VolumeMusic(9); }
 
-    resources.bert    = loadCharacter(renderer, BERT_STATS,    "assets/images/bert");
-    resources.berrota = loadCharacter(renderer, BERROTA_STATS, "assets/images/berrota");
-    resources.lorc    = loadCharacter(renderer, LORC_STATS,    "assets/images/lorc");
-    resources.jordi   = loadCharacter(renderer, JORDI_STATS,   "assets/images/jordi");
+    resources.BERT     = loadCharacter(renderer, BERT_STATS,    "assets/images/characters/bert");
+    resources.BERROTA  = loadCharacter(renderer, BERROTA_STATS, "assets/images/characters/berrota");
+    resources.JORDI    = loadCharacter(renderer, LORC_STATS,    "assets/images/characters/lorc");
+    resources.LORC     = loadCharacter(renderer, JORDI_STATS,   "assets/images/characters/jordi");
+    resources.BARCOS   = loadCharacter(renderer, BARCOS_STATS, "assets/images/characters/barcos");
+    resources.ALSEXITO = loadCharacter(renderer, ALSEXITO_STATS, "assets/images/characters/alsexito");
 }
 
 void Game::init() {
@@ -338,8 +341,6 @@ void Game::renderGameplay() {
 }
 
 void Game::handleScreenTransitions() {
-    const Character* charArr[4] = { &resources.bert, &resources.berrota, &resources.lorc, &resources.jordi };
-
     if (auto* cs = dynamic_cast<CharacterSelectionScreen*>(screen.get())) {
         if (cs->isFinished()) {
             auto result = cs->getResult();
@@ -362,10 +363,10 @@ void Game::handleScreenTransitions() {
                 case PauseActionResult::QUIT:
                     running = false;
                     break;
-                case PauseActionResult::CHANGE_CHARACTERS:
+                case PauseActionResult::RESTART:
                     Mix_HaltMusic();
                     setScreen(std::make_unique<CharacterSelectionScreen>(
-                        renderer, resources.titleFont, resources.font, charArr,
+                        renderer, resources.titleFont, resources.font, resources.characterList(),
                         player1.name, player1.character,
                         player2.name, player2.character));
                     break;
@@ -423,7 +424,6 @@ void Game::update() {
         updateGameplay();
 
         // end‑game transitions (back to character selection)
-        const Character* charArr[4] = { &resources.bert, &resources.berrota, &resources.lorc, &resources.jordi };
         if (player1.lives == -1 && player2.lives == -1) {
             showEndDialog("BOTH PLAYERS DIED\nwhat a skill issue");
             running = false;
@@ -432,17 +432,17 @@ void Game::update() {
                           "2nd: " + player1.name + " (" + player1.character->stats.name + ")");
             Mix_HaltMusic();
             setScreen(std::make_unique<CharacterSelectionScreen>(
-                renderer, resources.titleFont, resources.font, charArr,
-                "Player 1", &resources.bert,
-                "Player 2", &resources.berrota));
+                renderer, resources.titleFont, resources.font, resources.characterList(),
+                "Player 1", &resources.BERT,
+                "Player 2", &resources.BERROTA));
         } else if (player2.lives == -1) {
             showEndDialog("GG!\n1st: " + player1.name + " (" + player1.character->stats.name + ")\n"
                           "2nd: " + player2.name + " (" + player2.character->stats.name + ")");
             Mix_HaltMusic();
             setScreen(std::make_unique<CharacterSelectionScreen>(
-                renderer, resources.titleFont, resources.font, charArr,
-                "Player 1", &resources.bert,
-                "Player 2", &resources.berrota));
+                renderer, resources.titleFont, resources.font, resources.characterList(),
+                "Player 1", &resources.BERT,
+                "Player 2", &resources.BERROTA));
         }
     }
 }
@@ -461,12 +461,12 @@ void Game::render() {
 }
 
 void Game::run() {
-    const Character* charArr[4] = { &resources.bert, &resources.berrota, &resources.lorc, &resources.jordi };
     setScreen(std::make_unique<CharacterSelectionScreen>(
         renderer, resources.titleFont, resources.font,
-        charArr,
-        "Player 1", &resources.bert,
-        "Player 2", &resources.berrota));
+        resources.characterList(),
+        "player 1", &resources.BERT,
+        "player 2", &resources.BERT
+    ));
 
     while (running) {
         beginFrame();

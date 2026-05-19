@@ -12,11 +12,11 @@ void PauseScreen::handleEvent(const SDL_Event& e) {
         int mx = e.button.x, my = e.button.y;
         SDL_Rect resume = {300, 450, 600, 150};
         SDL_Rect quit = {1000, 450, 600, 150};
-        SDL_Rect chChar = {300, 700, 600, 150};
+        SDL_Rect restart = {300, 700, 600, 150};
         SDL_Rect chVol = {1000, 700, 600, 150};
         if (pointInRect(mx, my, resume)) { result = PauseActionResult::RESUME; finished = true; }
         else if (pointInRect(mx, my, quit)) { result = PauseActionResult::QUIT; finished = true; }
-        else if (pointInRect(mx, my, chChar)) { result = PauseActionResult::CHANGE_CHARACTERS; finished = true; }
+        else if (pointInRect(mx, my, restart)) { result = PauseActionResult::RESTART; finished = true; }
         else if (pointInRect(mx, my, chVol)) { result = PauseActionResult::CHANGE_VOLUME; finished = true; }
     }
 }
@@ -29,6 +29,6 @@ void PauseScreen::render(SDL_Renderer* renderer) {
     Renderer::renderText(renderer, titleFont, "game paused.", 750, 190, WHITE);
     Renderer::renderButton(renderer, font, "resume", 300, 450, 600, 150, {255,255,255,255}, BLACK);
     Renderer::renderButton(renderer, font, "quit", 1000, 450, 600, 150, {255,255,255,255}, BLACK);
-    Renderer::renderButton(renderer, font, "change characters", 300, 700, 600, 150, {255,255,255,255}, BLACK);
+    Renderer::renderButton(renderer, font, "restart", 300, 700, 600, 150, {255,255,255,255}, BLACK);
     Renderer::renderButton(renderer, font, "change volume", 1000, 700, 600, 150, {255,255,255,255}, BLACK);
 }

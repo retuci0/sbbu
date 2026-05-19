@@ -1,7 +1,9 @@
 # super bert bros ultimate
 
-> faithful C++ port of [super bert bros](https://github.com/retuci0/super-bert-bros)
+> faithful C++ port of [super bert bros](https://github.com/berrota/super-bert-bros)
 
+
+## [original readme](https://github.com/berrota/super-bert-bros/blob/master/readmes/en_US.md)
 
 ## dependencies
 

@@ -39,5 +39,7 @@ extern const CharacterStats BERT_STATS;
 extern const CharacterStats BERROTA_STATS;
 extern const CharacterStats LORC_STATS;
 extern const CharacterStats JORDI_STATS;
+extern const CharacterStats BARCOS_STATS;
+extern const CharacterStats ALSEXITO_STATS;
 
 Character loadCharacter(SDL_Renderer* renderer, const CharacterStats& stats, const std::string& assetFolder);

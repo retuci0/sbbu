@@ -1,6 +1,8 @@
-rm -rf build/super_bert_bros
+#!/bin/bash
+rm -rf build
 mkdir build
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build -j$(nproc)
+cp -r assets/ build/
 cd build
-cmake ..
-cmake --build . -j$(nproc)
 ./super_bert_bros
