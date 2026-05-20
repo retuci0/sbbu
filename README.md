@@ -45,9 +45,10 @@ cd ../super-bert-bros
 
 | Action           | Player 1    | Player 2  |
 |------------------|-------------|-----------|
-| Move left/right  | A / D       | ← / →     |
-| Jump             | Space       | ↑         |
-| Shoot            | E           | RCtrl     |
-| Toggle hitboxes  | B           | —         |
-| Pause            | Esc         | —         |
-| Quit             | 0           | —         |
+| move             | A / D       | ← / →     |
+| jump             | SPACE       | ↑         |
+| shoot projectile | E           | RCTRL     |
+| melee attack     | W           | RSHIFT    |
+| debug mode       | B           | —         |
+| pause            | ESC         | —         |
+| quit             | 0           | —         |
