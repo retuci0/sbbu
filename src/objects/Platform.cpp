@@ -20,6 +20,6 @@ void Platform::draw(SDL_Renderer* r) const {
     }
 }
 
-void Platform::drawHitboxes(SDL_Renderer* r) const {
+void Platform::drawHitbox(SDL_Renderer* r) const {
     Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, BLUE, 2);
 }

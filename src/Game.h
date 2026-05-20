@@ -1,6 +1,7 @@
 #pragma once
 
 #include "InputHandler.h"
+#include "objects/CollisionRect.h"
 #include "objects/Platform.h"
 #include "objects/Player.h"
 #include "objects/Projectile.h"
@@ -31,11 +32,13 @@ struct Resources {
 
     TTF_Font* titleFont             = nullptr;
     TTF_Font* font                  = nullptr;
+    TTF_Font* smallFont             = nullptr;
 
     Mix_Chunk* jumpSound            = nullptr;
     Mix_Chunk* jumpSound2           = nullptr;
     Mix_Chunk* deathSound           = nullptr;
     Mix_Chunk* projectileSound      = nullptr;
+    Mix_Chunk* meleeSound           = nullptr;
     Mix_Chunk* voidDeathSound       = nullptr;
     Mix_Chunk* damageSound          = nullptr;
     Mix_Chunk* gameEndSound         = nullptr;
@@ -70,23 +73,21 @@ private:
     static constexpr int SW = 1920, SH = 1080;
     static constexpr int MAX_PROJ      = 8;
     static constexpr int PROJ_COOLDOWN = 25;
+    static constexpr int ATTACK_COOLDOWN = 20;
 
     SDL_Window*   window   = nullptr;
     SDL_Renderer* renderer = nullptr;
     Resources     resources;
 
     bool running = true;
-    bool hitbox  = false;
-    bool paused = false;
+    bool debug   = false;
+    bool paused  = false;
 
     std::unique_ptr<Screen> screen;
     void setScreen(std::unique_ptr<Screen> screen);
 
-    int p1Cooldown = 0;
-    int p2Cooldown = 0;
-
-    std::vector<Projectile> p1Proj;
-    std::vector<Projectile> p2Proj;
+    std::vector<Projectile> projectiles;
+    std::vector<CollisionRect> meleeHitboxes;
 
     Player player1, player2;
     std::vector<Platform> platforms;

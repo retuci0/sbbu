@@ -5,8 +5,8 @@
 #include <SDL2/SDL_render.h>
 
 
-Projectile::Projectile(SDL_Texture* img, int x, int y, Facing dir)
-    : direction(dir), img(img)
+Projectile::Projectile(SDL_Texture* img, int x, int y, Facing dir, Player* owner)
+    : direction(dir), img(img), owner(owner)
 {
     rect = {x, y, 64, 64};
 }
@@ -29,6 +29,6 @@ void Projectile::draw(SDL_Renderer* r) {
     }
 }
 
-void Projectile::drawHitboxes(SDL_Renderer* r) const {
+void Projectile::drawHitbox(SDL_Renderer* r) const {
     Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, GREEN, 2);
 }

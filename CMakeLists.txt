@@ -18,6 +18,7 @@ set(SRC
     src/InputHandler.cpp
     src/misc/Characters.cpp
     src/misc/Renderer.cpp
+    src/objects/CollisionRect.cpp
     src/objects/Player.cpp
     src/objects/Projectile.cpp
     src/objects/Platform.cpp
@@ -35,6 +36,7 @@ set(HEADERS
     src/misc/Color.h
     src/misc/Common.h
     src/misc/Renderer.h
+    src/objects/CollisionRect.h
     src/objects/Player.h
     src/objects/Projectile.h
     src/objects/Platform.h

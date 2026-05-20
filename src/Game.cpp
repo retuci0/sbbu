@@ -71,11 +71,13 @@ void Game::loadResources() {
 
     resources.titleFont = findFont(50);
     resources.font      = findFont(30);
+    resources.smallFont = findFont(21);
 
     resources.jumpSound       = loadChunk("assets/sound/jump.wav");
     resources.jumpSound2      = loadChunk("assets/sound/jump2.wav");
     resources.deathSound      = loadChunk("assets/sound/death.wav");
     resources.projectileSound = loadChunk("assets/sound/projectile.wav");
+    resources.meleeSound      = loadChunk("assets/sound/punch.wav");
     resources.voidDeathSound  = loadChunk("assets/sound/void_death.wav");
     resources.damageSound     = loadChunk("assets/sound/damage.wav");
     resources.gameEndSound    = loadChunk("assets/sound/game_end.wav");
@@ -216,23 +218,40 @@ void Game::handleGameplayInput() {
         player2.move((p2Left && p2Right) ? 0 : p2Left ? -1 : p2Right ? 1 : 0);
     }
 
-    if (isDown(K_P1_SHOT)) { player1.status = Status::ATTACKING; }
-    if (isDown(K_P2_SHOT)) { player2.status = Status::ATTACKING; }
+    if (isDown(K_P1_SHOOT)) { player1.status = Status::SHOOTING; }
+    if (isDown(K_P2_SHOOT)) { player2.status = Status::SHOOTING; }
 
     if (isPressed(K_P1_JUMP)) { player1.jump(); }
     if (isPressed(K_P2_JUMP)) { player2.jump(); }
 
-    if (isPressed(K_P1_SHOT) && p1Cooldown == 0) {
-        if (resources.projectileSound) { Mix_PlayChannel(-1, resources.projectileSound, 0); }
-        int px = (player1.facing == Facing::LEFT) ? player1.rect.x - 20 : player1.rect.x + 20;
-        p1Proj.emplace_back(resources.projectileImage, px, player1.rect.y, player1.facing);
-        p1Cooldown = PROJ_COOLDOWN;
+    if (isPressed(K_P1_SHOOT)) {
+        bool shot = player1.tryShoot(resources.projectileSound);
+        if (shot) {
+            int px = (player1.facing == Facing::LEFT) ? player1.rect.x - 20 : player1.rect.x + 20;
+            projectiles.emplace_back(resources.projectileImage, px, player1.rect.y, player1.facing, &player1);
+        }
     }
-    if (isPressed(K_P2_SHOT) && p2Cooldown == 0) {
-        if (resources.projectileSound) { Mix_PlayChannel(-1, resources.projectileSound, 0); }
-        int px = (player2.facing == Facing::LEFT) ? player2.rect.x - 20 : player2.rect.x + 20;
-        p2Proj.emplace_back(resources.projectileImage, px, player2.rect.y, player2.facing);
-        p2Cooldown = PROJ_COOLDOWN;
+    if (isPressed(K_P2_SHOOT)) {
+        bool shot = player2.tryShoot(resources.projectileSound);
+        if (shot) {
+            int px = (player2.facing == Facing::LEFT) ? player2.rect.x - 20 : player2.rect.x + 20;
+            projectiles.emplace_back(resources.projectileImage, px, player2.rect.y, player2.facing, &player2);
+       }
+    }
+
+    if (isPressed(K_P1_MELEE)) {
+        if (player1.tryMelee(resources.meleeSound)) {
+            int hx = player1.rect.x + (player1.facing == Facing::RIGHT ? player1.rect.w : -64);
+            int hy = player1.rect.y;
+            meleeHitboxes.emplace_back(hx, hy, 64, 64, &player1, 5);
+        }
+    }
+    if (isPressed(K_P2_MELEE)) {
+        if (player2.tryMelee(resources.meleeSound)) {
+            int hx = player2.rect.x + (player2.facing == Facing::RIGHT ? player2.rect.w : -64);
+            int hy = player2.rect.y;
+            meleeHitboxes.emplace_back(hx, hy, 64, 64, &player2, 5);
+        }
     }
 }
 
@@ -241,28 +260,54 @@ void Game::updateGameplay() {
     player2.update(platforms);
 
     // update projectiles
-    auto updateProjs = [&](std::vector<Projectile>& projs, Player& target, Player& shooter) {
-        for (auto it = projs.begin(); it != projs.end(); ) {
-            it->move();
-            if (it->rect.x >= SW || it->rect.x <= 0) {
-                it = projs.erase(it);
-                continue;
-            }
-            if (SDL_HasIntersection(&it->rect, &target.rect)) {
-                target.getHit(it->direction);
-                target.hp -= shooter.character->stats.projectileDamage;
-                it = projs.erase(it);
-                continue;
-            }
-            ++it;
+    for (auto it = projectiles.begin(); it != projectiles.end(); ) {
+        it->move();
+        // out of bounds
+        if (it->rect.x >= SW || it->rect.x <= 0) {
+            it = projectiles.erase(it);
+            continue;
         }
-        if (projs.size() > MAX_PROJ) { projs.erase(projs.begin()); }
-    };
-    updateProjs(p1Proj, player2, player1);
-    updateProjs(p2Proj, player1, player2);
+        // collision with player 1
+        if (it->owner != &player1 && SDL_HasIntersection(&it->rect, &player1.rect)) {
+            player1.getHit(it->direction);
+            player1.hp -= it->owner->character->stats.projectileDamage;
+            it = projectiles.erase(it);
+            continue;
+        }
+        // collision with player 2
+        if (it->owner != &player2 && SDL_HasIntersection(&it->rect, &player2.rect)) {
+            player2.getHit(it->direction);
+            player2.hp -= it->owner->character->stats.projectileDamage;
+            it = projectiles.erase(it);
+            continue;
+        }
+        ++it;
+    }
+    // limit total projectiles
+    if (projectiles.size() > MAX_PROJ) projectiles.erase(projectiles.begin());
 
-    if (p1Cooldown > 0) { --p1Cooldown; }
-    if (p2Cooldown > 0) { --p2Cooldown; }
+    // update collision rects of melee attacks
+    for (auto it = meleeHitboxes.begin(); it != meleeHitboxes.end(); ) {
+    it->update();
+    if (!it->isAlive()) {
+        it = meleeHitboxes.erase(it);
+        continue;
+    }
+    // check collision against opponent
+    if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
+        player2.getHit(player1.facing);
+        player2.hp -= player1.character->stats.damage;
+        it = meleeHitboxes.erase(it);  // single hit
+        continue;
+    }
+    if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
+        player1.getHit(player2.facing);
+        player1.hp -= player2.character->stats.damage;
+        it = meleeHitboxes.erase(it);
+        continue;
+    }
+    ++it;
+}
 
     // life and death (so poetical, ik)
     auto handleDeath = [&](Player& p) {
@@ -292,18 +337,22 @@ void Game::renderGameplay() {
     for (auto& p : platforms) { p.draw(renderer); }
 
     // players and projectiles
-    player1.draw(renderer);
-    player2.draw(renderer);
-    for (auto& pr : p1Proj) { pr.draw(renderer); }
-    for (auto& pr : p2Proj) { pr.draw(renderer); }
+    player1.draw(renderer, resources.smallFont);
+    player2.draw(renderer, resources.smallFont);
+    for (auto& pr : projectiles) { pr.draw(renderer); }
 
-    // hitboxes (debug)
-    if (hitbox) {
-        for (auto& p : platforms) { p.drawHitboxes(renderer); }
-        player1.drawHitboxes(renderer);
-        player2.drawHitboxes(renderer);
-        for (auto& pr : p1Proj) { pr.drawHitboxes(renderer); }
-        for (auto& pr : p2Proj) { pr.drawHitboxes(renderer); }
+    // debug info
+    if (debug) {
+        // hitboxes
+        for (auto& p : platforms) { p.drawHitbox(renderer); }
+        player1.drawHitbox(renderer);
+        player2.drawHitbox(renderer);
+        for (auto& pr : projectiles) { pr.drawHitbox(renderer); }
+        for (auto& cr : meleeHitboxes) { cr.drawHitbox(renderer); }
+        
+        // player statuses
+        Renderer::renderText(renderer, resources.font, player1.name + ": " + player1.getStatusName(), 2, 2, BLACK);
+        Renderer::renderText(renderer, resources.font, player2.name + ": " + player2.getStatusName(), 2, 32, BLACK);
     }
 
     // HUD - Player 1
@@ -352,8 +401,10 @@ void Game::handleScreenTransitions() {
             setupPlayers(result.char1, result.name1, result.char2, result.name2);
             player1.color = result.color1;
             player2.color = result.color2;
-            p1Cooldown = p2Cooldown = 0;
-            p1Proj.clear(); p2Proj.clear();
+            player1.resetTimers();
+            player2.resetTimers();
+            projectiles.clear();
+            meleeHitboxes.clear();
             if (resources.music) { Mix_PlayMusic(resources.music, -1); }
             setScreen(nullptr);
         }
@@ -438,16 +489,16 @@ void Game::update() {
             Mix_HaltMusic();
             setScreen(std::make_unique<CharacterSelectionScreen>(
                 renderer, resources.titleFont, resources.font, resources.characterList(),
-                "Player 1", &resources.BERT,
-                "Player 2", &resources.BERROTA));
+                "player 1", &resources.BERT,
+                "player 2", &resources.BERROTA));
         } else if (player2.lives == -1) {
             showEndDialog("GG!\n1st: " + player1.name + " (" + player1.character->stats.name + ")\n"
                           "2nd: " + player2.name + " (" + player2.character->stats.name + ")");
             Mix_HaltMusic();
             setScreen(std::make_unique<CharacterSelectionScreen>(
                 renderer, resources.titleFont, resources.font, resources.characterList(),
-                "Player 1", &resources.BERT,
-                "Player 2", &resources.BERROTA));
+                "player 1", &resources.BERT,
+                "player 2", &resources.BERROTA));
         }
     }
 }
@@ -494,7 +545,7 @@ void Game::onKey(SDL_Keycode key, KeyAction action) {
         return;
     }
     if (key == K_HITBOX) {
-        hitbox = !hitbox;
+        debug = !debug;
         return;
     }
     if (key == K_FULLSCREEN) {

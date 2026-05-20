@@ -24,10 +24,11 @@ struct Character {
     CharacterStats stats;
 
     // only right-facing frames are stored
-    std::vector<SDL_Texture*> walkFrames;  // 5 frames
-    std::vector<SDL_Texture*> jumpFrames;  // 5 frames
+    std::vector<SDL_Texture*> walkFrames;   // 5 frames
+    std::vector<SDL_Texture*> jumpFrames;   // 5 frames
+    std::vector<SDL_Texture*> attackFrames; // 5 frames
     SDL_Texture* idle   = nullptr;
-    SDL_Texture* attack = nullptr;
+    SDL_Texture* shoot  = nullptr;
     SDL_Texture* damage = nullptr;
     SDL_Texture* icon   = nullptr;
 

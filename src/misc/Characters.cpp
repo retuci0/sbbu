@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_log.h>
+#include <string>
 
 
 const CharacterStats BERT_STATS = {
@@ -46,12 +47,12 @@ void Character::unload() {
         if (t) { SDL_DestroyTexture(t); }
     }
     if (idle)   { SDL_DestroyTexture(idle); }
-    if (attack) { SDL_DestroyTexture(attack); }
+    if (shoot) { SDL_DestroyTexture(shoot); }
     if (damage) { SDL_DestroyTexture(damage); }
     if (icon)   { SDL_DestroyTexture(icon); }
     walkFrames.clear();
     jumpFrames.clear();
-    idle = attack = damage = icon = nullptr;
+    idle = shoot = damage = icon = nullptr;
     loaded = false;
 }
 
@@ -62,9 +63,10 @@ Character loadCharacter(SDL_Renderer* renderer, const CharacterStats& stats, con
     for (int i = 0; i < 5; ++i) {
         c.walkFrames.push_back(loadTex(renderer, folder + "/walk/" + std::to_string(i) + ".png"));
         c.jumpFrames.push_back(loadTex(renderer, folder + "/jump/" + std::to_string(i) + ".png"));
+        c.attackFrames.push_back(loadTex(renderer, folder + "/attack/" + std::to_string(i) + ".png"));
     }
     c.idle   = loadTex(renderer, folder + "/idle/0.png");
-    c.attack = loadTex(renderer, folder + "/shoot/0.png");
+    c.shoot = loadTex(renderer, folder + "/shoot/0.png");
     c.damage = loadTex(renderer, folder + "/damage/0.png");
     c.icon   = loadTex(renderer, folder + "/icon.png");
     c.loaded = true;

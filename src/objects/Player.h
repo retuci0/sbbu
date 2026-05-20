@@ -7,16 +7,19 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 
+#include <SDL2/SDL_ttf.h>
 #include <string>
 #include <vector>
 
-class Platform;
 
+class Platform;
+class Projectile;
 
 enum class Status {
     IDLE,
     WALKING,
     JUMPING,
+    SHOOTING,
     ATTACKING,
     DAMAGED
 };
@@ -37,7 +40,10 @@ public:
     bool onGround     = false;
     bool hasAirJumped = false;
 
-    int damagedTimer = 0;
+    int damagedTimer    = 0;
+    int shootCooldown   = 0;
+    int meleeTimer      = 0;
+    int meleeCooldown   = 0;
 
     // hitbox
     SDL_Rect rect = {};
@@ -46,7 +52,7 @@ public:
     float currentSpriteIndex = 0.0f;
 
     // player color indicator (drawn above head)
-    Color color = {255, 255, 255, 255};
+    Color color = { 255, 255, 255, 255 };
 
     // non-owning
     Mix_Chunk* damageSound = nullptr;
@@ -56,11 +62,19 @@ public:
 
     void move(int direction);  // -1 left, 0 stop, +1 right
     void jump();
+
     void getHit(Facing side);
+    bool tryShoot(Mix_Chunk* projSound);
+    bool tryMelee(Mix_Chunk* meleeSound);
 
     void update(const std::vector<Platform>& platforms);
-    void draw(SDL_Renderer* r) const;
-    void drawHitboxes(SDL_Renderer* r) const;
+    void updateTimers();
+    void resetTimers();
+
+    void draw(SDL_Renderer* r, TTF_Font* font) const;
+    void drawNametag(SDL_Renderer* r, TTF_Font* font) const;
+    void drawHitbox(SDL_Renderer* r) const;
+    std::string getStatusName() const;
 
 private:
     void animate();

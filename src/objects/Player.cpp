@@ -5,7 +5,10 @@
 
 #include "../misc/Renderer.h"
 
+#include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_ttf.h>
 #include <algorithm>
+#include <string>
 
 
 // how many pixels of platform-top overlap counts as an edge to climb (instead of wall)
@@ -31,6 +34,11 @@ void Player::init(int x, int y, const Character* ch, const std::string& playerNa
 }
 
 void Player::move(int direction) {
+    if (status == Status::ATTACKING || status == Status::DAMAGED) {
+        dx = direction * character->stats.velocity;
+        return;
+    }
+
     if (direction > 0) {
         facing = Facing::RIGHT;
         status = Status::WALKING;
@@ -40,7 +48,6 @@ void Player::move(int direction) {
     } else {
         status = Status::IDLE;
     }
-
     dx = direction * character->stats.velocity;
 }
 
@@ -135,20 +142,14 @@ void Player::update(const std::vector<Platform>& platforms) {
         }
     }
 
-    // decrement damaged timer
-    if (status == Status::DAMAGED) {
-        if (damagedTimer > 0) {
-            --damagedTimer;
-        } else {
-            status = Status::IDLE;  // let the sync block below do the stuff
-        }
-    }
+    // decrement timers
+    updateTimers();
 
     // sync status
-    if (status != Status::DAMAGED && status != Status::ATTACKING) {
+    if (status != Status::DAMAGED && status != Status::ATTACKING && status != Status::SHOOTING) {
         if (!onGround) {
             status = Status::JUMPING;
-        } else if (dx != 0.f) {
+        } else if (dx != 0.0f) {
             status = Status::WALKING;
         } else {
             status = Status::IDLE;
@@ -157,6 +158,49 @@ void Player::update(const std::vector<Platform>& platforms) {
 
     animate();
 }
+
+    bool Player::tryShoot(Mix_Chunk* projSound) {
+        if (shootCooldown > 0) return false;
+        if (projSound) Mix_PlayChannel(-1, projSound, 0);
+        shootCooldown = 25;
+        status = Status::SHOOTING;
+        return true;
+    }
+
+    bool Player::tryMelee(Mix_Chunk* meleeSound) {
+        if (meleeCooldown > 0) return false;
+        status = Status::ATTACKING;
+        meleeTimer = 8;  // hitbox active for 8 frames
+        meleeCooldown = 20;
+        currentSpriteIndex = 0.0f;
+        if (meleeSound) Mix_PlayChannel(-1, meleeSound, 0);
+        return true;
+    }
+
+    void Player::updateTimers() {
+        if (shootCooldown > 0) --shootCooldown;
+        if (meleeCooldown > 0) --meleeCooldown;
+        if (meleeTimer > 0) {
+            --meleeTimer;
+            if (meleeTimer == 0 && status == Status::ATTACKING) {
+                status = Status::IDLE;  // let the sync block take over next frame
+            }
+        }
+        if (status == Status::DAMAGED) {
+            if (damagedTimer > 0) {
+                --damagedTimer;
+            } else {
+                status = Status::IDLE;  // let the sync block take over next frame
+            }
+        }
+    }
+
+    void Player::resetTimers() {
+        shootCooldown = 0;
+        meleeCooldown = 0;
+        meleeTimer = 0;
+        damagedTimer = 0;
+    } 
 
 void Player::drawSprite(SDL_Renderer* r, SDL_Texture* tex, bool flipH) const {
     if (!tex) { return; }
@@ -180,13 +224,16 @@ void Player::animate() {
         case Status::JUMPING:
             advanceFrame(character->jumpFrames, 0.15f);
             break;
+        case Status::ATTACKING:
+            advanceFrame(character->attackFrames, 0.6f);
+            break;
         default:
             currentSpriteIndex = 0.0f;
             break;
     }
 }
 
-void Player::draw(SDL_Renderer* r) const {
+void Player::draw(SDL_Renderer* r, TTF_Font* font) const {
     bool flipH = (facing == Facing::LEFT);
     int idx = static_cast<int>(currentSpriteIndex);
 
@@ -204,24 +251,52 @@ void Player::draw(SDL_Renderer* r) const {
             }
             break;
         case Status::ATTACKING:
-            drawSprite(r, character->attack, flipH);
+            if (!character->attackFrames.empty()) {
+                int i = idx % static_cast<int>(character->attackFrames.size());
+                drawSprite(r, character->attackFrames[i], flipH);
+            }
+            break;
+        case Status::SHOOTING:
+            drawSprite(r, character->shoot, flipH);
             break;
         case Status::DAMAGED:
             drawSprite(r, character->damage, flipH);
             break;
-        case Status::IDLE:
         default:
             drawSprite(r, character->idle, flipH);
             break;
     }
 
-    Renderer::fillRect(r,
-        rect.x + rect.w / 2 - 8, rect.y - 10,
-        16, 5,
-        color
-    );
+    // nametag
+    drawNametag(r, font);
 }
 
-void Player::drawHitboxes(SDL_Renderer* r) const {
+void Player::drawNametag(SDL_Renderer* r, TTF_Font* font) const {
+    int w, h;
+    TTF_SizeText(font, name.c_str(), &w, &h);
+    int x = rect.x + (rect.w - w) / 2;
+    int y = rect.y - 40;
+    Renderer::fillRect(r, x - 2, y - 2, w + 4, h + 4, { 67, 67, 67, 67 });
+    Renderer::renderText(r, font, name, x, y, color);
+}
+
+void Player::drawHitbox(SDL_Renderer* r) const {
     Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, RED, 2);
+}
+
+std::string Player::getStatusName() const {
+    switch (status) {
+        case Status::WALKING:
+            return "walking (" + std::to_string(static_cast<int>(currentSpriteIndex) + 1) + "/5)";
+        case Status::JUMPING:
+            return "jumping (" + std::to_string(static_cast<int>(currentSpriteIndex + 1)) + "/5)";
+        case Status::ATTACKING:
+            return "attacking (" + std::to_string(static_cast<int>(currentSpriteIndex + 1)) + "/5)";
+        case Status::SHOOTING:
+            return "shooting";
+        case Status::DAMAGED:
+            return "damaged";
+        default:
+            return "idling";
+        }
 }
