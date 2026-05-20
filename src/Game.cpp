@@ -124,6 +124,7 @@ void Game::init() {
     renderer = SDL_CreateRenderer(window, -1,
         SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) { throw std::runtime_error(std::string("CreateRenderer: ") + SDL_GetError()); }
+    SDL_RenderSetLogicalSize(renderer, 1920, 1080);
 
     loadResources();
 }
