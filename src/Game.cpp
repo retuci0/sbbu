@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include <random>
+#include <uuid/uuid.h>
 
 
 void Resources::destroy() {
@@ -139,7 +140,10 @@ void Game::setupPlayers(const Character* c1, const std::string& n1, const Charac
                             1080, 250, 200, 30, PlatformSize::SMALL);
 
     player1.init(640, 0, c1, n1, resources.damageSound);
+    uuid_generate(player1.uuid);
+
     player2.init(1080, 0, c2, n2, resources.damageSound);
+    uuid_generate(player2.uuid);
 
     player1.color = {100, 149, 237, 230};
     player2.color = {255,  80,  80, 230};
@@ -160,6 +164,8 @@ void Game::respawn(Player& p, bool voidDeath) {
     p.rect.x = spawnX;
     p.rect.y = -2000;
     p.lives -= 1;
+    p.invulnerableTimer = Player::INV_DURATION;
+    p.charge = 0.0f;
 }
 
 void Game::applySfxVolume(float multiplier) {
@@ -242,15 +248,15 @@ void Game::handleGameplayInput() {
 
     if (isPressed(K_P1_MELEE)) {
         if (player1.tryMelee(resources.meleeSound)) {
-            int hx = player1.rect.x + (player1.facing == Facing::RIGHT ? player1.rect.w : -64);
-            int hy = player1.rect.y;
+            int hx = player1.rect.x + (player1.facing == Facing::RIGHT ? player1.rect.w - 64 : 0);
+            int hy = player1.rect.y + player1.rect.h - 64;
             meleeHitboxes.emplace_back(hx, hy, 64, 64, &player1, 5);
         }
     }
     if (isPressed(K_P2_MELEE)) {
         if (player2.tryMelee(resources.meleeSound)) {
-            int hx = player2.rect.x + (player2.facing == Facing::RIGHT ? player2.rect.w : -64);
-            int hy = player2.rect.y;
+            int hx = player2.rect.x + (player2.facing == Facing::RIGHT ? player2.rect.w - 64 : 0);
+            int hy = player2.rect.y + player2.rect.h - 64;
             meleeHitboxes.emplace_back(hx, hy, 64, 64, &player2, 5);
         }
     }
@@ -270,6 +276,7 @@ void Game::updateGameplay() {
         }
         // collision with player 1
         if (it->owner != &player1 && SDL_HasIntersection(&it->rect, &player1.rect)) {
+            if (player1.invulnerableTimer > 0) continue;
             player1.getHit(it->direction);
             player1.hp -= it->owner->character->stats.projectileDamage;
             it = projectiles.erase(it);
@@ -277,6 +284,7 @@ void Game::updateGameplay() {
         }
         // collision with player 2
         if (it->owner != &player2 && SDL_HasIntersection(&it->rect, &player2.rect)) {
+            if (player2.invulnerableTimer > 0) continue;
             player2.getHit(it->direction);
             player2.hp -= it->owner->character->stats.projectileDamage;
             it = projectiles.erase(it);
@@ -299,12 +307,14 @@ void Game::updateGameplay() {
         player2.getHit(player1.facing);
         player2.hp -= player1.character->stats.damage;
         it = meleeHitboxes.erase(it);  // single hit
+        player1.charge = std::min(player1.charge + 0.1f, Player::MAX_CHARGE);
         continue;
     }
     if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
         player1.getHit(player2.facing);
         player1.hp -= player2.character->stats.damage;
         it = meleeHitboxes.erase(it);
+        player2.charge = std::min(player2.charge + 0.1f, Player::MAX_CHARGE);
         continue;
     }
     ++it;
@@ -324,6 +334,39 @@ void Game::updateGameplay() {
     };
     handleDeath(player1);
     handleDeath(player2);
+}
+
+void Game::renderPlayerHud(const Player& player) const {
+    int x = player == player1 ? 480 : 1315;
+
+    // icon
+    if (player.character->icon) {
+        SDL_Rect iconRect = { x, 840, 125, 57 };
+        SDL_RenderCopy(renderer, player.character->icon, nullptr, &iconRect);
+    }
+
+    // name
+    Renderer::fillRect(renderer, x, 950, 150, 45, WHITE);
+    Renderer::renderText(renderer, resources.font, player.name, x + 10, 955, BLACK);
+
+    // life & lives
+    if (player.lives >= 0) {
+        Renderer::renderText(renderer, resources.titleFont, std::to_string(player.hp) + " hp", x, 900, WHITE);
+        for (int i = 0; i < player.lives; ++i) {
+            if (resources.heartImage) {
+                SDL_Rect heart = { x + i * 35, 997, 30, 30 };
+                SDL_RenderCopy(renderer, resources.heartImage, nullptr, &heart);
+            }
+        }
+    } else {
+        Renderer::renderText(renderer, resources.titleFont, "DEAD", x, 900, DARK_RED);
+    }
+    
+    // charge bar
+    Renderer::fillRect(renderer, x - 10, 840, 5, 57, BLACK);
+    int h = static_cast<int>(player.charge * 57);
+    Color c = { static_cast<int>(255.0f - player.charge * 255.0f), static_cast<int>(player.charge * 255.0f), 0 };
+    Renderer::fillRect(renderer, x - 10, 840 + (57 - h), 5, h, c);
 }
 
 void Game::renderGameplay() {
@@ -356,43 +399,9 @@ void Game::renderGameplay() {
         Renderer::renderText(renderer, resources.font, player2.name + ": " + player2.getStatusName(), 2, 32, BLACK);
     }
 
-    // HUD - Player 1
-    if (player1.character->icon) {
-        SDL_Rect iconRect1 = {480, 840, 125, 57};
-        SDL_RenderCopy(renderer, player1.character->icon, nullptr, &iconRect1);
-    }
-    Renderer::fillRect(renderer, 480, 950, 150, 45, { 255, 255, 255, 255 });
-    Renderer::renderText(renderer, resources.font, player1.name, 490, 955, BLACK);
-    if (player1.lives >= 0) {
-        Renderer::renderText(renderer, resources.titleFont, std::to_string(player1.hp) + " hp", 480, 900, WHITE);
-        for (int i = 0; i < player1.lives; ++i) {
-            if (resources.heartImage) {
-                SDL_Rect heart = {480 + i * 35, 997, 30, 30};
-                SDL_RenderCopy(renderer, resources.heartImage, nullptr, &heart);
-            }
-        }
-    } else {
-        Renderer::renderText(renderer, resources.titleFont, "DEAD", 480, 900, DARK_RED);
-    }
-
-    // HUD - Player 2
-    if (player2.character->icon) {
-        SDL_Rect iconRect2 = {1315, 840, 125, 57};
-        SDL_RenderCopy(renderer, player2.character->icon, nullptr, &iconRect2);
-    }
-    Renderer::fillRect(renderer, 1315, 950, 150, 45, WHITE);
-    Renderer::renderText(renderer, resources.font, player2.name, 1325, 955, BLACK);
-    if (player2.lives >= 0) {
-        Renderer::renderText(renderer, resources.titleFont, std::to_string(player2.hp) + " hp", 1315, 900, WHITE);
-        for (int i = 0; i < player2.lives; ++i) {
-            if (resources.heartImage) {
-                SDL_Rect heart = {1315 + i * 35, 997, 30, 30};
-                SDL_RenderCopy(renderer, resources.heartImage, nullptr, &heart);
-            }
-        }
-    } else {
-        Renderer::renderText(renderer, resources.titleFont, "DEAD", 1315, 900, DARK_RED);
-    }
+    // player info HUD
+    renderPlayerHud(player1);
+    renderPlayerHud(player2);
 }
 
 void Game::handleScreenTransitions() {

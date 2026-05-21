@@ -10,6 +10,7 @@ pkg_check_modules(SDL2_image REQUIRED SDL2_image)
 pkg_check_modules(SDL2_mixer REQUIRED SDL2_mixer)
 pkg_check_modules(SDL2_ttf  REQUIRED SDL2_ttf)
 pkg_check_modules(X11 REQUIRED x11)
+pkg_check_modules(UUID REQUIRED uuid)
 
 
 set(SRC
@@ -62,6 +63,7 @@ target_link_libraries(super_bert_bros
     ${SDL2_image_LIBRARIES}
     ${SDL2_mixer_LIBRARIES}
     ${SDL2_ttf_LIBRARIES}
+    ${UUID_LIBRARIES}
 )
 
 target_compile_options(super_bert_bros PRIVATE

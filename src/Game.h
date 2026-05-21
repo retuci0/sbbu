@@ -110,6 +110,7 @@ private:
     void handleGameplayInput();
 
     void render();
+    void renderPlayerHud(const Player& player) const;
     void renderGameplay();
     void handleScreenTransitions();
 

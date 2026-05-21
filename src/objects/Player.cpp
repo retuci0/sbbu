@@ -6,13 +6,12 @@
 #include "../misc/Renderer.h"
 
 #include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
+
 #include <algorithm>
+#include <cmath>
 #include <string>
-
-
-// how many pixels of platform-top overlap counts as an edge to climb (instead of wall)
-static constexpr int EDGE_CLIMB_THRESHOLD = 12;
 
 
 void Player::init(int x, int y, const Character* ch, const std::string& playerName, Mix_Chunk* dmgSound) {
@@ -26,7 +25,7 @@ void Player::init(int x, int y, const Character* ch, const std::string& playerNa
     facing       = Facing::RIGHT;
     currentSpriteIndex = 0.0f;
 
-    int w = 64, h = 64;
+    int w = 125, h = 89;
     if (ch->idle) {
         SDL_QueryTexture(ch->idle, nullptr, nullptr, &w, &h);
     }
@@ -66,22 +65,26 @@ void Player::jump() {
 }
 
 void Player::getHit(Facing side) {
+    if (invulnerableTimer > 0) return;
+
     if (damageSound) { 
         Mix_PlayChannel(-1, damageSound, 0); 
     }
 
     status = Status::DAMAGED;
-    damagedTimer = 10;
+    damagedTimer = DAMAGED_DURATION;
 
     float damageTaken = static_cast<float>(character->stats.health - hp);
     float w = character->stats.weight;
 
     if (side == Facing::LEFT) {
-        dx = (-damageTaken) * w;
+        dx = (-damageTaken / 3.3f) * w;
     } else {
-        dx = (damageTaken) * w;
+        dx = (damageTaken / 3.3f) * w;
     }
-    dy = (-damageTaken / 3.3f) * w;
+    dy = (-damageTaken / 5.0f) * w;
+
+    charge = std::max(0.0f, charge - damageTaken * 0.05f);
 }
 
 void Player::update(const std::vector<Platform>& platforms) {
@@ -107,8 +110,10 @@ void Player::update(const std::vector<Platform>& platforms) {
                 rect.y = platformTop - rect.h;
                 dy = 0;
             } else {
-                if (dx > 0) { rect.x = p.rect.x - rect.w; }
-                if (dx < 0) { rect.x = p.rect.x + p.rect.w; }
+                if (dy >= 0) {
+                    if (dx > 0) rect.x = p.rect.x - rect.w;
+                    if (dx < 0) rect.x = p.rect.x + p.rect.w;
+                }
             }
         }
     }
@@ -145,6 +150,9 @@ void Player::update(const std::vector<Platform>& platforms) {
     // decrement timers
     updateTimers();
 
+    // clamp charge to [0, 1]
+    charge = std::clamp(charge, 0.0f, 1.0f);
+
     // sync status
     if (status != Status::DAMAGED && status != Status::ATTACKING && status != Status::SHOOTING) {
         if (!onGround) {
@@ -162,7 +170,7 @@ void Player::update(const std::vector<Platform>& platforms) {
     bool Player::tryShoot(Mix_Chunk* projSound) {
         if (shootCooldown > 0) return false;
         if (projSound) Mix_PlayChannel(-1, projSound, 0);
-        shootCooldown = 25;
+        shootCooldown = SHOOT_COOLDOWN;
         status = Status::SHOOTING;
         return true;
     }
@@ -170,8 +178,8 @@ void Player::update(const std::vector<Platform>& platforms) {
     bool Player::tryMelee(Mix_Chunk* meleeSound) {
         if (meleeCooldown > 0) return false;
         status = Status::ATTACKING;
-        meleeTimer = 8;  // hitbox active for 8 frames
-        meleeCooldown = 20;
+        meleeTimer = MELEE_DURATION;  // hitbox active for 8 frames
+        meleeCooldown = MELEE_COOLDOWN;
         currentSpriteIndex = 0.0f;
         if (meleeSound) Mix_PlayChannel(-1, meleeSound, 0);
         return true;
@@ -180,6 +188,7 @@ void Player::update(const std::vector<Platform>& platforms) {
     void Player::updateTimers() {
         if (shootCooldown > 0) --shootCooldown;
         if (meleeCooldown > 0) --meleeCooldown;
+        if (invulnerableTimer > 0) --invulnerableTimer;
         if (meleeTimer > 0) {
             --meleeTimer;
             if (meleeTimer == 0 && status == Status::ATTACKING) {
@@ -196,16 +205,27 @@ void Player::update(const std::vector<Platform>& platforms) {
     }
 
     void Player::resetTimers() {
-        shootCooldown = 0;
-        meleeCooldown = 0;
-        meleeTimer = 0;
-        damagedTimer = 0;
-    } 
+        shootCooldown       = 0;
+        meleeCooldown       = 0;
+        meleeTimer          = 0;
+        damagedTimer        = 0;
+        invulnerableTimer   = 0;
+    }
 
-void Player::drawSprite(SDL_Renderer* r, SDL_Texture* tex, bool flipH) const {
+void Player::drawSprite(SDL_Renderer* r, SDL_Texture* tex, bool flipH) {
     if (!tex) { return; }
+    currentTexture = tex;
     SDL_Rect dst = {rect.x, rect.y, rect.w, rect.h};
     SDL_RendererFlip flip = flipH ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
+
+    if (invulnerableTimer > 0) {
+        float wave = (1.0f + std::sin(invulnerableTimer * 0.15f)) * 0.5f;
+        Uint8 a = static_cast<Uint8>(60 + wave * 195);
+        SDL_SetTextureAlphaMod(tex, a);
+    } else {
+        SDL_SetTextureAlphaMod(tex, 255);
+    }
+
     SDL_RenderCopyEx(r, tex, nullptr, &dst, 0.0, nullptr, flip);
 }
 
@@ -233,7 +253,7 @@ void Player::animate() {
     }
 }
 
-void Player::draw(SDL_Renderer* r, TTF_Font* font) const {
+void Player::draw(SDL_Renderer* r, TTF_Font* font) {
     bool flipH = (facing == Facing::LEFT);
     int idx = static_cast<int>(currentSpriteIndex);
 
