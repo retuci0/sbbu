@@ -340,9 +340,17 @@ void Game::renderPlayerHud(const Player& player) const {
     int x = player == player1 ? 480 : 1315;
 
     // icon
-    if (player.character->icon) {
-        SDL_Rect iconRect = { x, 840, 125, 57 };
-        SDL_RenderCopy(renderer, player.character->icon, nullptr, &iconRect);
+    SDL_Texture* icon;
+    if (player.invulnerableTimer > 0) {
+        icon = player.character->deadIcon;
+    } else {
+        icon = player.character->icon;
+    }
+    if (icon) {
+        int w, h;
+        SDL_QueryTexture(icon, nullptr, nullptr, &w, &h);
+        SDL_Rect iconRect = { x, SH - 183 - h, w, h };
+        SDL_RenderCopy(renderer, icon, nullptr, &iconRect);
     }
 
     // name
