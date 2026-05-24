@@ -10,24 +10,28 @@ const CharacterStats BERT_STATS = {
     100, 5, 3, 5.0f, 11.0f, 0.20f, 0.50f, 20.0f, 1.0f
 };
 const CharacterStats BERROTA_STATS = {
-    "Berrota", "lightweight skinny mf, moves faster than your mom.",
+    "Berrota", "lightweight skinny mf, moves faster than your mom",
     90, 5, 3, 7.0f, 13.0f, 0.35f, 0.50f, 17.0f, 1.5f
 };
 const CharacterStats LORC_STATS = {
-    "Lorc", "heavy tank - only weakness is gravity.",
+    "Lorc", "heavy tank - only weakness is gravity",
     200, 5, 3, 3.0f, 7.5f, 0.10f, 0.72f, 25.0f, 0.5f
 };
 const CharacterStats JORDI_STATS = {
-    "Jordi", "strong but fragile.",
+    "Jordi", "strong but fragile",
     80, 10, 5, 5.1f, 11.0f, 0.30f, 0.50f, 17.0f, 1.2f
 };
 const CharacterStats BARCOS_STATS = {
-    "Barcos", "short ahh mf",
+    "Barcos", "small ahh mf",
     50, 5, 3, 12.0f, 15.0f, 0.5f, 0.5f, 17.0f, 2.0f
 };
 const CharacterStats ALSEXITO_STATS = {
     "Alsexito", "your average gay gymbro",
     120, 20, 2, 2.5f, 2.5f, 0.8f, 0.72f, 25.0f, 2.0f
+};
+const CharacterStats FLAN_STATS = {
+    "Flan", "fran-chan tarro-ponce",
+    100, 5, 5, 6.0f, 16.0f, 0.8f, 0.5f, 17.0f, 1.0f
 };
 
 

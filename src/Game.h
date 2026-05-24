@@ -6,11 +6,13 @@
 #include "objects/Player.h"
 #include "objects/Projectile.h"
 #include "misc/Characters.h"
-#include "screen/Screen.h"
+#include "misc/Common.h"
+#include "ui/Screen.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_stdinc.h>
 #include <SDL2/SDL_ttf.h>
 
 #include <array>
@@ -24,16 +26,19 @@ class VolumeScreen;
 
 
 struct Resources {
+    // images
     SDL_Texture* platformImage      = nullptr;
     SDL_Texture* smallPlatformImage = nullptr;
     SDL_Texture* projectileImage    = nullptr;
     SDL_Texture* heartImage         = nullptr;
     SDL_Texture* bgImage            = nullptr;
 
+    // fonts
     TTF_Font* titleFont             = nullptr;
     TTF_Font* font                  = nullptr;
     TTF_Font* smallFont             = nullptr;
 
+    // sound effects
     Mix_Chunk* jumpSound            = nullptr;
     Mix_Chunk* jumpSound2           = nullptr;
     Mix_Chunk* deathSound           = nullptr;
@@ -42,10 +47,12 @@ struct Resources {
     Mix_Chunk* voidDeathSound       = nullptr;
     Mix_Chunk* damageSound          = nullptr;
     Mix_Chunk* gameEndSound         = nullptr;
-    Mix_Music* music                = nullptr;
-
     Mix_Chunk** specialSounds       = nullptr;
 
+    // music
+    Mix_Music* music                = nullptr;
+
+    // characters
     Character BERT;
     Character BERROTA;
     Character LORC;
@@ -54,11 +61,12 @@ struct Resources {
     Character ALSEXITO;
     Character SHASHA;
     Character OSCAR;
+    Character FLAN;
 
     void destroy();
 
-    std::array<const Character*, 8> characterList() const {
-        return { &BERT, &BERROTA, &LORC, &JORDI, &BARCOS, &ALSEXITO, &SHASHA, &OSCAR };
+    std::array<const Character*, CHARACTER_NUM> characterList() const {
+        return { &BERT, &BERROTA, &LORC, &JORDI, &BARCOS, &ALSEXITO, &SHASHA, &OSCAR, &FLAN };
     }
 };
 
@@ -94,6 +102,10 @@ private:
 
     float sfxVolume   = 1.0f;
     float musicVolume = 1.0f;
+
+    float fps;
+    int frames;
+    Uint32 lastFpsUpdate;
 
     void loadResources();
     void setupPlayers(const Character* c1, const std::string& n1, const Character* c2, const std::string& n2);

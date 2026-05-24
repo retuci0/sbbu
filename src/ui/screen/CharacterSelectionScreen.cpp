@@ -1,9 +1,9 @@
 #include "CharacterSelectionScreen.h"
 
-#include "../misc/Common.h"
-#include "../misc/Renderer.h"
+#include "../../misc/Common.h"
+#include "../../misc/Renderer.h"
 
-#include "../../inc/tinyfiledialogs.h"
+#include "../../../inc/tinyfiledialogs.h"
 
 #include <SDL2/SDL_rect.h>
 
@@ -20,7 +20,7 @@ static constexpr int START_BTN_W = 400, START_BTN_H = 80;
 static constexpr int COLOR_BTN_W = 160, COLOR_BTN_H = 50;
 static constexpr int COLOR_BTN_Y = NAME_BOX_Y + 80;
 
-CharacterSelectionScreen::CharacterSelectionScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, const std::array<const Character*, 8>& chars,
+CharacterSelectionScreen::CharacterSelectionScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, const std::array<const Character*, CHARACTER_NUM>& chars,
                                                    const std::string& defaultName1, const Character* defaultChar1, 
                                                    const std::string& defaultName2, const Character* defaultChar2)
     : renderer(renderer), titleFont(titleFont), font(font), chars(chars),
@@ -29,10 +29,18 @@ CharacterSelectionScreen::CharacterSelectionScreen(SDL_Renderer* renderer, TTF_F
     selectedChar1 = findIdx(defaultChar1);
     selectedChar2 = findIdx(defaultChar2);
     setDefaultColors();
+    buttons.emplace_back(START_BTN_X, START_BTN_Y, START_BTN_W, START_BTN_H,
+        "start game", Color{50, 180, 50, 255}, WHITE, [&]{
+        std::string n1 = name1.empty() ? "player 1" : name1;
+        std::string n2 = name2.empty() ? "player 2" : name2;
+        if (n1 == n2) { nameError = true; return; }
+        finished = true;
+        result = { chars[selectedChar1], chars[selectedChar2], n1, n2, color1, color2 };
+    });
 }
 
 int CharacterSelectionScreen::findIdx(const Character* ch) const {
-    for (int i = 0; i < 8; ++i) {
+    for (int i = 0; i < CHARACTER_NUM; ++i) {
         if (chars[i] == ch) return i;
     }
     return 0;
@@ -66,6 +74,8 @@ void CharacterSelectionScreen::pickColorFor(int player) {
 }
 
 void CharacterSelectionScreen::handleEvent(const SDL_Event& e) {
+    Screen::handleEvent(e);
+
     if (e.type == SDL_QUIT) {
         finished = true;
         return;
@@ -123,24 +133,7 @@ void CharacterSelectionScreen::handleEvent(const SDL_Event& e) {
         SDL_Rect colorBtn2 = {COL2_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H};
         if (pointInRect(mx, my, colorBtn1)) pickColorFor(1);
         if (pointInRect(mx, my, colorBtn2)) pickColorFor(2);
-
-        // start button
-        SDL_Rect startBtn = {START_BTN_X, START_BTN_Y, START_BTN_W, START_BTN_H};
-        if (pointInRect(mx, my, startBtn)) {
-            std::string n1 = name1.empty() ? "player 1" : name1;
-            std::string n2 = name2.empty() ? "player 2" : name2;
-            if (n1 == n2) {
-                nameError = true;
-            } else {
-                finished = true;
-                result = { chars[selectedChar1], chars[selectedChar2], n1, n2, color1, color2 };
-            }
-        }
     }
-}
-
-void CharacterSelectionScreen::update() {
-    // nun to do
 }
 
 void CharacterSelectionScreen::render(SDL_Renderer* renderer) {

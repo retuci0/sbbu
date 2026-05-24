@@ -1,22 +1,21 @@
 #pragma once
 
-#include "Screen.h"
+#include "../Screen.h"
 
 #include <SDL2/SDL_ttf.h>
 
 #include <string>
 
 
-struct VolumeResult {
-    float sfx;    // [0, 2]
-    float music;  // [0, 2]
+struct VolumeResult { 
+    float sfx; 
+    float music; 
 };
 
 class VolumeScreen : public Screen {
 public:
     VolumeScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, float currentSfx, float currentMusic);
     void handleEvent(const SDL_Event& e) override;
-    void update() override;
     void render(SDL_Renderer* renderer) override;
     bool isFinished() const { return finished; }
     VolumeResult getResult() const { return result; }

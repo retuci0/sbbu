@@ -1,20 +1,24 @@
 #include "VolumeScreen.h"
 
-#include "../misc/Common.h"
-#include "../misc/Renderer.h"
+#include "../../misc/Common.h"
+#include "../../misc/Renderer.h"
 
 #include <algorithm>
 #include <cmath>
 #include <string>
+
 
 static constexpr int SL_X = 600, SL_W = 700, SL_H = 20;
 static constexpr int SL_SFX_Y = 420, SL_MUSIC_Y = 600;
 static constexpr int HANDLE_R = 18;
 static constexpr int OK_X = 860, OK_Y = 750, OK_W = 200, OK_H = 70;
 
-
 VolumeScreen::VolumeScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, float currentSfx, float currentMusic)
-    : renderer(renderer), titleFont(titleFont), font(font), sfx(currentSfx), music(currentMusic) {}
+    : renderer(renderer), titleFont(titleFont), font(font), sfx(currentSfx), music(currentMusic)
+{
+    buttons.emplace_back(OK_X, OK_Y, OK_W, OK_H, "ok", Color{50, 180, 50, 255}, WHITE,
+        [&]{ finished = true; result = {sfx, music}; });
+}
 
 int VolumeScreen::valToX(float v) const {
     return SL_X + static_cast<int>(v / 2.0f * SL_W);
@@ -35,12 +39,10 @@ void VolumeScreen::drawSlider(int slY, float val, const std::string& label) {
 
 void VolumeScreen::handleEvent(const SDL_Event& e) {
     if (e.type == SDL_QUIT) { finished = true; return; }
+    Screen::handleEvent(e);  // handles OK button
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-        int mx = e.button.x, my = e.button.y;
-        SDL_Rect okBtn = {OK_X, OK_Y, OK_W, OK_H};
-        if (pointInRect(mx, my, okBtn)) { finished = true; result = {sfx, music}; return; }
-        if (std::abs(my - (SL_SFX_Y + SL_H/2)) < HANDLE_R*2) dragging = 1;
-        if (std::abs(my - (SL_MUSIC_Y + SL_H/2)) < HANDLE_R*2) dragging = 2;
+        if (std::abs(e.button.y - (SL_SFX_Y   + SL_H/2)) < HANDLE_R*2) dragging = 1;
+        if (std::abs(e.button.y - (SL_MUSIC_Y + SL_H/2)) < HANDLE_R*2) dragging = 2;
     }
     if (e.type == SDL_MOUSEBUTTONUP) dragging = 0;
     if (e.type == SDL_MOUSEMOTION && dragging) {
@@ -50,14 +52,10 @@ void VolumeScreen::handleEvent(const SDL_Event& e) {
     }
 }
 
-void VolumeScreen::update() {
-    // nun to do
-}
-
 void VolumeScreen::render(SDL_Renderer* renderer) {
-    Renderer::fillRect(renderer, 0, 0, 1920, 1080, { 20, 20, 20, 255 });
+    Renderer::fillRect(renderer, 0, 0, SW, SH, {20, 20, 20, 255});
     Renderer::renderText(renderer, titleFont, "volume settings", 750, 200, WHITE);
     drawSlider(SL_SFX_Y, sfx, "SFX Volume");
     drawSlider(SL_MUSIC_Y, music, "Music Volume");
-    Renderer::renderButton(renderer, font, "ok", OK_X, OK_Y, OK_W, OK_H, {50,180,50,255}, WHITE);
+    for (auto& b : buttons) b.draw(renderer, font);
 }

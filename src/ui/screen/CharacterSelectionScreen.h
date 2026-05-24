@@ -1,9 +1,10 @@
 #pragma once
 
-#include "Screen.h"
+#include "../Screen.h"
 
-#include "../misc/Color.h"
-#include "../misc/Characters.h"
+#include "../../misc/Characters.h"
+#include "../../misc/Color.h"
+#include "../../misc/Common.h"
 
 #include <SDL2/SDL_ttf.h>
 
@@ -22,12 +23,11 @@ struct CharacterSelectionResult {
 
 class CharacterSelectionScreen : public Screen {
 public:
-    CharacterSelectionScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, const std::array<const Character*, 8>&,
+    CharacterSelectionScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, const std::array<const Character*, CHARACTER_NUM>&,
                              const std::string& defaultName1, const Character* defaultChar1,
                              const std::string& defaultName2, const Character* defaultChar2);
 
     void handleEvent(const SDL_Event& e) override;
-    void update() override;
     void render(SDL_Renderer* renderer) override;
     bool isFinished() const { return finished; }
     CharacterSelectionResult getResult() const { return result; }
@@ -36,7 +36,7 @@ private:
     SDL_Renderer* renderer;
     TTF_Font* titleFont;
     TTF_Font* font;
-    std::array<const Character*, 8> chars;
+    std::array<const Character*, CHARACTER_NUM> chars;
 
     int selectedChar1, selectedChar2;
     std::string name1, name2;

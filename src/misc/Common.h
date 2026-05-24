@@ -7,6 +7,8 @@
 #include <SDL2/SDL_ttf.h>
 
 
+constexpr int CHARACTER_NUM = 9;
+
 // colors
 
 constexpr Color WHITE    = { 255, 255, 255, 255 };

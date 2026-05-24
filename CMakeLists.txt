@@ -22,9 +22,9 @@ set(SRC
     src/objects/Player.cpp
     src/objects/Projectile.cpp
     src/objects/Platform.cpp
-    src/screen/CharacterSelectionScreen.cpp
-    src/screen/PauseScreen.cpp
-    src/screen/VolumeScreen.cpp
+    src/ui/screen/CharacterSelectionScreen.cpp
+    src/ui/screen/PauseScreen.cpp
+    src/ui/screen/VolumeScreen.cpp
 
     inc/tinyfiledialogs.c
 )
@@ -40,10 +40,11 @@ set(HEADERS
     src/objects/Player.h
     src/objects/Projectile.h
     src/objects/Platform.h
-    src/screen/Screen.h
-    src/screen/CharacterSelectionScreen.h
-    src/screen/PauseScreen.h
-    src/screen/VolumeScreen.h
+    src/ui/Button.h
+    src/ui/Screen.h
+    src/ui/screen/CharacterSelectionScreen.h
+    src/ui/screen/PauseScreen.h
+    src/ui/screen/VolumeScreen.h
 
     inc/tinyfiledialogs.h
 )

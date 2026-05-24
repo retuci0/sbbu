@@ -138,29 +138,53 @@ bool Player::tryMelee(Mix_Chunk* meleeSound) {
 bool Player::trySpecial(Mix_Chunk** sounds, Direction dir) {
     if (specialCooldown > 0) return false;
     if (charge < MAX_CHARGE) return false;
-    
-    // if already in special state
     if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE ||
-        status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN
-    ) { 
+        status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN) {
         return false;
     }
-    dx = 0;
 
-    Mix_Chunk* sound = nullptr;
     switch (dir) {
-        case Direction::NONE:  status = Status::SPECIAL_STATIC; sound = sounds[0]; break;
-        case Direction::LEFT:  // fallthrough
-        case Direction::RIGHT: status = Status::SPECIAL_SIDE;   sound = sounds[1]; break;
-        case Direction::UP:    status = Status::SPECIAL_UP;     sound = sounds[2]; break;
-        case Direction::DOWN:  status = Status::SPECIAL_DOWN;   sound = sounds[3]; break;
+        case Direction::NONE:  
+            // static special - stronger punch
+            dx = 0.0f;
+            dy = 0.0f;
+            status = Status::SPECIAL_STATIC;
+            break;
+        case Direction::LEFT:
+            // fallthrough
+        case Direction::RIGHT:
+            // side special - dash horizontally
+            dx = (facing == Facing::RIGHT ? 12.0f : -12.0f);
+            dy = 0.0f;
+            status = Status::SPECIAL_SIDE;
+            break;
+        case Direction::UP:
+            // up special - rise quickly
+            dx = 0.0f;
+            dy = -14.0f;
+            status = Status::SPECIAL_UP;
+            break;
+        case Direction::DOWN:
+            // down special - slam downward
+            dx = 0.0f;
+            dy = 16.0f;
+            status = Status::SPECIAL_DOWN;
+            break;
     }
+
     specialTimer         = SPECIAL_DURATION;
     specialHitboxSpawned = false;
     specialCooldown      = SPECIAL_COOLDOWN;
+    currentSpriteIndex   = 0.0f;
 
-    currentSpriteIndex = 0.0f;
-    if (sound) Mix_PlayChannel(-1, sound, 0);
+    // play sound
+    if (sounds) {
+        int soundIndex = (dir == Direction::NONE) ? 0 :
+                         (dir == Direction::LEFT || dir == Direction::RIGHT) ? 1 :
+                         (dir == Direction::UP) ? 2 : 3;
+        if (sounds[soundIndex]) Mix_PlayChannel(-1, sounds[soundIndex], 0);
+    }
+
     charge = 0.0f;
     return true;
 }

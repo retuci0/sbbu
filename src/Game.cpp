@@ -4,14 +4,15 @@
 #include "misc/Common.h"
 #include "misc/Characters.h"
 #include "misc/Renderer.h"
-#include "screen/CharacterSelectionScreen.h"
-#include "screen/PauseScreen.h"
-#include "screen/VolumeScreen.h"
+#include "ui/screen/CharacterSelectionScreen.h"
+#include "ui/screen/PauseScreen.h"
+#include "ui/screen/VolumeScreen.h"
 
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_ttf.h>
 
 #include <algorithm>
@@ -21,21 +22,56 @@
 
 
 void Resources::destroy() {
-    auto dTex   = [](SDL_Texture*& t){ if (t) { SDL_DestroyTexture(t); t = nullptr; } };
-    auto dChunk = [](Mix_Chunk*& c)  { if (c) { Mix_FreeChunk(c);      c = nullptr; } };
+    auto dTex   = [](SDL_Texture*& t) { if (t) { SDL_DestroyTexture(t); t = nullptr; }};
+    auto dChunk = [](Mix_Chunk*&   c) { if (c) { Mix_FreeChunk(c);        c = nullptr; }};
 
-    dTex(platformImage); dTex(smallPlatformImage);
-    dTex(projectileImage); dTex(heartImage); dTex(bgImage);
-    if (titleFont) { TTF_CloseFont(titleFont); titleFont = nullptr; }
-    if (font)      { TTF_CloseFont(font);      font      = nullptr; }
-    dChunk(jumpSound); dChunk(jumpSound2); dChunk(deathSound);
-    dChunk(projectileSound); dChunk(meleeSound);dChunk(voidDeathSound);
-    dChunk(damageSound); dChunk(gameEndSound);
-    for (int i = 0; i < 4; i++) { dChunk(specialSounds[i]); }
+    // destroy images
+    dTex(platformImage); 
+    dTex(smallPlatformImage);
+    dTex(projectileImage); 
+    dTex(heartImage); 
+    dTex(bgImage);
+
+    // destroy fonts
+    if (titleFont) { 
+        TTF_CloseFont(titleFont); 
+        titleFont = nullptr; 
+    }
+    if (font) { 
+        TTF_CloseFont(font);      
+        font = nullptr; 
+    }
+    if (smallFont) {
+        TTF_CloseFont(smallFont);
+        smallFont = nullptr;
+    }
+
+    // destroy sounds
+    dChunk(jumpSound); 
+    dChunk(jumpSound2); 
+    dChunk(deathSound);
+    dChunk(projectileSound); 
+    dChunk(meleeSound);
+    dChunk(voidDeathSound);
+    dChunk(damageSound); 
+    dChunk(gameEndSound);
+    for (int i = 0; i < 4; i++) { 
+        dChunk(specialSounds[i]); 
+    }
     delete[] specialSounds;
+
+    // destroy music
     if (music) { Mix_FreeMusic(music); music = nullptr; }
-    BERT.unload(); BERROTA.unload(); JORDI.unload(); LORC.unload();
-    BARCOS.unload(); ALSEXITO.unload(); SHASHA.unload(); OSCAR.unload();
+
+    // destroy character sprites
+    BERT.unload(); 
+    BERROTA.unload(); 
+    JORDI.unload(); 
+    LORC.unload();
+    BARCOS.unload(); 
+    ALSEXITO.unload(); 
+    SHASHA.unload(); 
+    OSCAR.unload();
 }
 
 TTF_Font* Game::findFont(int size) {
@@ -349,7 +385,7 @@ void Game::updateGameplay() {
     // limit total projectiles
     if (projectiles.size() > MAX_PROJ) projectiles.erase(projectiles.begin());
 
-       // update collision rects of melee attacks
+    // update collision rects of melee attacks
     for (auto it = meleeHitboxes.begin(); it != meleeHitboxes.end(); ) {
         it->update();
         if (!it->isAlive()) {
@@ -369,26 +405,75 @@ void Game::updateGameplay() {
             continue;
         }
         ++it;
-    }  // <-- melee loop ends HERE
+    }
 
     // spawn special hitbox on last animation frame
     auto trySpawnSpecialHitbox = [&](Player& attacker) {
-        if (attacker.status != Status::SPECIAL_STATIC) return;
+        // do nothing if no special is active, or hitbox already spawned
+        if (attacker.status != Status::SPECIAL_STATIC &&
+            attacker.status != Status::SPECIAL_SIDE &&
+            attacker.status != Status::SPECIAL_UP &&
+            attacker.status != Status::SPECIAL_DOWN) {
+            return;
+        }
         if (attacker.specialHitboxSpawned) return;
-        if (attacker.currentSpriteIndex < 5.0f) return;
+
+        if (attacker.specialTimer > Player::SPECIAL_DURATION - 5) return;
+
         attacker.specialHitboxSpawned = true;
 
-        constexpr int HW = 110, HH_EXTRA = 20;
-        int hh = attacker.rect.h + HH_EXTRA;
-        int hx = (attacker.facing == Facing::RIGHT)
-            ? attacker.rect.x + attacker.rect.w - 20
-            : attacker.rect.x - HW + 20;
-        int hy = attacker.rect.y - HH_EXTRA / 2;
+        int hx, hy, hw, hh;
+        float dmgScale = 3.0f;
+        float kbScale  = 5.0f;
 
-        auto& cr = specialHitboxes.emplace_back(hx, hy, HW, hh, &attacker, 5);
-        cr.damageScale = 3.0f;
-        cr.kbScale     = 5.0f;
+        switch (attacker.status) {
+            case Status::SPECIAL_STATIC:
+                // hitbox in front of the player
+                hw = 110;
+                hh = attacker.rect.h + 20;
+                hx = (attacker.facing == Facing::RIGHT)
+                    ? attacker.rect.x + attacker.rect.w - 20
+                    : attacker.rect.x - hw + 20;
+                hy = attacker.rect.y - 10;
+                break;
+            case Status::SPECIAL_SIDE:
+                // hitbox in front of the player
+                hw = 130;
+                hh = attacker.rect.h;
+                hx = (attacker.facing == Facing::RIGHT)
+                    ? attacker.rect.x + attacker.rect.w - 30
+                    : attacker.rect.x - hw + 30;
+                hy = attacker.rect.y;
+                dmgScale = 2.5f;
+                kbScale  = 4.0f;
+                break;
+            case Status::SPECIAL_UP:
+                // hitbox above the player
+                hw = attacker.rect.w + 20;
+                hh = 90;
+                hx = attacker.rect.x - 10;
+                hy = attacker.rect.y - hh + 20;
+                dmgScale = 3.5f;
+                kbScale  = 6.0f;
+                break;
+            case Status::SPECIAL_DOWN:
+                // hitbox below the player
+                hw = attacker.rect.w + 40;
+                hh = 80;
+                hx = attacker.rect.x - 20;
+                hy = attacker.rect.y + attacker.rect.h - 20;
+                dmgScale = 4.0f;
+                kbScale  = 7.0f;
+                break;
+            default:
+                return;
+        };
+
+        auto& cr = specialHitboxes.emplace_back(hx, hy, hw, hh, &attacker, 5);
+        cr.damageScale = dmgScale;
+        cr.kbScale     = kbScale;
     };
+
     trySpawnSpecialHitbox(player1);
     trySpawnSpecialHitbox(player2);
 
@@ -499,6 +584,12 @@ void Game::renderGameplay() {
         // player statuses
         Renderer::renderText(renderer, resources.font, player1.name + ": " + player1.getStatusName(), 2, 2, BLACK);
         Renderer::renderText(renderer, resources.font, player2.name + ": " + player2.getStatusName(), 2, 32, BLACK);
+
+        // fps
+        int w, h;
+        std::string text = "fps: " + std::to_string(fps);
+        TTF_SizeText(resources.font, text.c_str(), &w, &h);
+        Renderer::renderText(renderer, resources.font, text, SW - w - 2, h + 2, BLACK);
     }
 
     // player info HUD
@@ -527,6 +618,7 @@ void Game::handleScreenTransitions() {
             switch (ps->getResult()) {
                 case PauseActionResult::RESUME:
                     Mix_ResumeMusic();
+                    Mix_Resume(-1);
                     setScreen(nullptr);
                     break;
                 case PauseActionResult::QUIT:
@@ -534,6 +626,7 @@ void Game::handleScreenTransitions() {
                     break;
                 case PauseActionResult::RESTART:
                     Mix_HaltMusic();
+                    Mix_HaltChannel(-1);
                     setScreen(std::make_unique<CharacterSelectionScreen>(
                         renderer, resources.titleFont, resources.font, resources.characterList(),
                         player1.name, player1.character,
@@ -627,6 +720,14 @@ void Game::render() {
         renderGameplay();
     }
     SDL_RenderPresent(renderer);
+
+    frames++;
+    Uint32 now = SDL_GetTicks();
+    if (now - lastFpsUpdate >= 1000) {
+        fps = frames * 1000.0f / (now - lastFpsUpdate);
+        frames = 0;
+        lastFpsUpdate = now;
+    }
 }
 
 void Game::run() {
