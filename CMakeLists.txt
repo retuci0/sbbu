@@ -9,7 +9,6 @@ pkg_check_modules(SDL2 REQUIRED sdl2)
 pkg_check_modules(SDL2_image REQUIRED SDL2_image)
 pkg_check_modules(SDL2_mixer REQUIRED SDL2_mixer)
 pkg_check_modules(SDL2_ttf  REQUIRED SDL2_ttf)
-pkg_check_modules(X11 REQUIRED x11)
 pkg_check_modules(UUID REQUIRED uuid)
 
 

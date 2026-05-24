@@ -29,8 +29,10 @@ void Resources::destroy() {
     if (titleFont) { TTF_CloseFont(titleFont); titleFont = nullptr; }
     if (font)      { TTF_CloseFont(font);      font      = nullptr; }
     dChunk(jumpSound); dChunk(jumpSound2); dChunk(deathSound);
-    dChunk(projectileSound); dChunk(voidDeathSound);
+    dChunk(projectileSound); dChunk(meleeSound);dChunk(voidDeathSound);
     dChunk(damageSound); dChunk(gameEndSound);
+    for (int i = 0; i < 4; i++) { dChunk(specialSounds[i]); }
+    delete[] specialSounds;
     if (music) { Mix_FreeMusic(music); music = nullptr; }
     BERT.unload(); BERROTA.unload(); JORDI.unload(); LORC.unload();
     BARCOS.unload(); ALSEXITO.unload(); SHASHA.unload(); OSCAR.unload();
@@ -85,6 +87,13 @@ void Game::loadResources() {
 
     resources.music = Mix_LoadMUS("assets/sound/music.mp3");
 
+    resources.specialSounds   = new Mix_Chunk*[] { 
+        loadChunk("assets/sound/special_static.wav"),
+        loadChunk("assets/sound/special_side.wav"),
+        loadChunk("assets/sound/special_up.wav"),
+        loadChunk("assets/sound/special_down.wav")
+    };
+
     if (resources.jumpSound)       { Mix_VolumeChunk(resources.jumpSound,        64); }
     if (resources.jumpSound2)      { Mix_VolumeChunk(resources.jumpSound2,       26); }
     if (resources.deathSound)      { Mix_VolumeChunk(resources.deathSound,      115); }
@@ -96,8 +105,8 @@ void Game::loadResources() {
 
     resources.BERT     = loadCharacter(renderer, BERT_STATS,    "assets/images/characters/bert");
     resources.BERROTA  = loadCharacter(renderer, BERROTA_STATS, "assets/images/characters/berrota");
-    resources.JORDI    = loadCharacter(renderer, LORC_STATS,    "assets/images/characters/lorc");
-    resources.LORC     = loadCharacter(renderer, JORDI_STATS,   "assets/images/characters/jordi");
+    resources.JORDI    = loadCharacter(renderer, JORDI_STATS,    "assets/images/characters/jordi");
+    resources.LORC     = loadCharacter(renderer, LORC_STATS,   "assets/images/characters/lorc");
     resources.BARCOS   = loadCharacter(renderer, BARCOS_STATS, "assets/images/characters/barcos");
     resources.ALSEXITO = loadCharacter(renderer, ALSEXITO_STATS, "assets/images/characters/alsexito");
 }
@@ -125,7 +134,7 @@ void Game::init() {
     renderer = SDL_CreateRenderer(window, -1,
         SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     if (!renderer) { throw std::runtime_error(std::string("CreateRenderer: ") + SDL_GetError()); }
-    SDL_RenderSetLogicalSize(renderer, 1920, 1080);
+    SDL_RenderSetLogicalSize(renderer, SW, SH);
 
     loadResources();
 }
@@ -166,6 +175,14 @@ void Game::respawn(Player& p, bool voidDeath) {
     p.lives -= 1;
     p.invulnerableTimer = Player::INV_DURATION;
     p.charge = 0.0f;
+    p.dx = 0.0f;
+    p.dy = 0.0f;
+    p.status = Status::IDLE;
+    p.onGround = false;
+    p.hasAirJumped = false;
+    p.currentSpriteIndex = 0.0f;
+    p.specialHitboxSpawned = false;
+    p.resetTimers();
 }
 
 void Game::applySfxVolume(float multiplier) {
@@ -173,10 +190,16 @@ void Game::applySfxVolume(float multiplier) {
         if (c) { Mix_VolumeChunk(c, std::clamp(static_cast<int>(base * multiplier), 0, 128)); }
     };
     set(resources.deathSound,      115);
-    set(resources.projectileSound, 26);
-    set(resources.voidDeathSound,  9);
+    set(resources.projectileSound,  26);
+    set(resources.meleeSound,       10);
+    set(resources.voidDeathSound,    9);
     set(resources.damageSound,     102);
-    set(resources.gameEndSound,    13);
+    set(resources.gameEndSound,     13);
+    if (resources.specialSounds) {
+        for (int i = 0; i < 4; ++i) {
+            set(resources.specialSounds[i], 64);
+        }
+    }
 }
 
 void Game::showEndDialog(const std::string& msg) {
@@ -225,9 +248,6 @@ void Game::handleGameplayInput() {
         player2.move((p2Left && p2Right) ? 0 : p2Left ? -1 : p2Right ? 1 : 0);
     }
 
-    if (isDown(K_P1_SHOOT)) { player1.status = Status::SHOOTING; }
-    if (isDown(K_P2_SHOOT)) { player2.status = Status::SHOOTING; }
-
     if (isPressed(K_P1_JUMP)) { player1.jump(); }
     if (isPressed(K_P2_JUMP)) { player2.jump(); }
 
@@ -260,11 +280,46 @@ void Game::handleGameplayInput() {
             meleeHitboxes.emplace_back(hx, hy, 64, 64, &player2, 5);
         }
     }
+
+    if (isPressed(K_P1_SPECIAL)) {
+        Direction dir;
+        if (isDown(K_P1_LEFT)) {
+            dir = Direction::LEFT;
+        } else if (isDown(K_P1_RIGHT)) {
+            dir = Direction::RIGHT;
+        } else if (isDown(K_P1_JUMP)) {
+            dir = Direction::UP;
+        } else if (isDown(K_P1_DOWN)) {
+            dir = Direction::DOWN;
+        } else {
+            dir = Direction::NONE;
+        }
+        if (player1.trySpecial(resources.specialSounds, dir)) {
+            // ...
+        }
+    }
+    if (isPressed(K_P2_SPECIAL)) {
+        Direction dir;
+        if (isDown(K_P2_LEFT)) {
+            dir = Direction::LEFT;
+        } else if (isDown(K_P2_RIGHT)) {
+            dir = Direction::RIGHT;
+        } else if (isDown(K_P2_JUMP)) {
+            dir = Direction::UP;
+        } else if (isDown(K_P2_DOWN)) {
+            dir = Direction::DOWN;
+        } else {
+            dir = Direction::NONE;
+        }
+        if (player2.trySpecial(resources.specialSounds, dir)) {
+            // ...
+        }
+    }
 }
 
 void Game::updateGameplay() {
-    player1.update(platforms);
-    player2.update(platforms);
+    player1.update(platforms, isDown(K_P1_DOWN));
+    player2.update(platforms, isDown(K_P2_DOWN));
 
     // update projectiles
     for (auto it = projectiles.begin(); it != projectiles.end(); ) {
@@ -274,19 +329,18 @@ void Game::updateGameplay() {
             it = projectiles.erase(it);
             continue;
         }
-        // collision with player 1
+        // check for collisions
         if (it->owner != &player1 && SDL_HasIntersection(&it->rect, &player1.rect)) {
-            if (player1.invulnerableTimer > 0) continue;
-            player1.getHit(it->direction);
-            player1.hp -= it->owner->character->stats.projectileDamage;
+            if (player1.invulnerableTimer > 0) { ++it; continue; };
+            player1.getHit(it->direction, it->owner->character->stats.projectileDamage);
+            it->owner->charge = std::min(it->owner->charge + 0.1f, Player::MAX_CHARGE);
             it = projectiles.erase(it);
             continue;
         }
-        // collision with player 2
         if (it->owner != &player2 && SDL_HasIntersection(&it->rect, &player2.rect)) {
-            if (player2.invulnerableTimer > 0) continue;
-            player2.getHit(it->direction);
-            player2.hp -= it->owner->character->stats.projectileDamage;
+            if (player2.invulnerableTimer > 0) { ++it; continue; };
+            player2.getHit(it->direction, it->owner->character->stats.projectileDamage);
+            it->owner->charge = std::min(it->owner->charge + 0.1f, Player::MAX_CHARGE);
             it = projectiles.erase(it);
             continue;
         }
@@ -295,30 +349,69 @@ void Game::updateGameplay() {
     // limit total projectiles
     if (projectiles.size() > MAX_PROJ) projectiles.erase(projectiles.begin());
 
-    // update collision rects of melee attacks
+       // update collision rects of melee attacks
     for (auto it = meleeHitboxes.begin(); it != meleeHitboxes.end(); ) {
-    it->update();
-    if (!it->isAlive()) {
-        it = meleeHitboxes.erase(it);
-        continue;
+        it->update();
+        if (!it->isAlive()) {
+            it = meleeHitboxes.erase(it);
+            continue;
+        }
+        if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
+            player2.getHit(player1.facing, it->owner->character->stats.damage);
+            it = meleeHitboxes.erase(it);
+            player1.charge = std::min(player1.charge + 0.1f, Player::MAX_CHARGE);
+            continue;
+        }
+        if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
+            player1.getHit(player2.facing, it->owner->character->stats.damage);
+            it = meleeHitboxes.erase(it);
+            player2.charge = std::min(player2.charge + 0.1f, Player::MAX_CHARGE);
+            continue;
+        }
+        ++it;
+    }  // <-- melee loop ends HERE
+
+    // spawn special hitbox on last animation frame
+    auto trySpawnSpecialHitbox = [&](Player& attacker) {
+        if (attacker.status != Status::SPECIAL_STATIC) return;
+        if (attacker.specialHitboxSpawned) return;
+        if (attacker.currentSpriteIndex < 5.0f) return;
+        attacker.specialHitboxSpawned = true;
+
+        constexpr int HW = 110, HH_EXTRA = 20;
+        int hh = attacker.rect.h + HH_EXTRA;
+        int hx = (attacker.facing == Facing::RIGHT)
+            ? attacker.rect.x + attacker.rect.w - 20
+            : attacker.rect.x - HW + 20;
+        int hy = attacker.rect.y - HH_EXTRA / 2;
+
+        auto& cr = specialHitboxes.emplace_back(hx, hy, HW, hh, &attacker, 5);
+        cr.damageScale = 3.0f;
+        cr.kbScale     = 5.0f;
+    };
+    trySpawnSpecialHitbox(player1);
+    trySpawnSpecialHitbox(player2);
+
+    for (auto it = specialHitboxes.begin(); it != specialHitboxes.end(); ) {
+        it->update();
+        if (!it->isAlive()) { it = specialHitboxes.erase(it); continue; }
+        if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
+            if (player2.invulnerableTimer == 0) {
+                int dmg = static_cast<int>(player1.character->stats.damage * it->damageScale);
+                player2.getHit(player1.facing, dmg, it->kbScale);
+                it = specialHitboxes.erase(it);
+                continue;
+            }
+        } else if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
+            if (player1.invulnerableTimer == 0) {
+                int dmg = static_cast<int>(player2.character->stats.damage * it->damageScale);
+                player1.getHit(player2.facing, dmg, it->kbScale);
+                it = specialHitboxes.erase(it);
+                continue;
+            }
+        }
+        ++it;
     }
-    // check collision against opponent
-    if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
-        player2.getHit(player1.facing);
-        player2.hp -= player1.character->stats.damage;
-        it = meleeHitboxes.erase(it);  // single hit
-        player1.charge = std::min(player1.charge + 0.1f, Player::MAX_CHARGE);
-        continue;
-    }
-    if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
-        player1.getHit(player2.facing);
-        player1.hp -= player2.character->stats.damage;
-        it = meleeHitboxes.erase(it);
-        player2.charge = std::min(player2.charge + 0.1f, Player::MAX_CHARGE);
-        continue;
-    }
-    ++it;
-}
 
     // life and death (so poetical, ik)
     auto handleDeath = [&](Player& p) {
@@ -341,7 +434,7 @@ void Game::renderPlayerHud(const Player& player) const {
 
     // icon
     SDL_Texture* icon;
-    if (player.invulnerableTimer > 0) {
+    if (player.invulnerableTimer > 0 && player.damagedTimer == 0) {
         icon = player.character->deadIcon;
     } else {
         icon = player.character->icon;
@@ -401,6 +494,7 @@ void Game::renderGameplay() {
         player2.drawHitbox(renderer);
         for (auto& pr : projectiles) { pr.drawHitbox(renderer); }
         for (auto& cr : meleeHitboxes) { cr.drawHitbox(renderer); }
+        for (auto& cr : specialHitboxes) { cr.drawHitbox(renderer); }
         
         // player statuses
         Renderer::renderText(renderer, resources.font, player1.name + ": " + player1.getStatusName(), 2, 2, BLACK);
@@ -423,6 +517,7 @@ void Game::handleScreenTransitions() {
             player2.resetTimers();
             projectiles.clear();
             meleeHitboxes.clear();
+            specialHitboxes.clear();
             if (resources.music) { Mix_PlayMusic(resources.music, -1); }
             setScreen(nullptr);
         }
@@ -508,7 +603,7 @@ void Game::update() {
             setScreen(std::make_unique<CharacterSelectionScreen>(
                 renderer, resources.titleFont, resources.font, resources.characterList(),
                 "player 1", &resources.BERT,
-                "player 2", &resources.BERROTA));
+                "player 2", &resources.BERT));
         } else if (player2.lives == -1) {
             showEndDialog("GG!\n1st: " + player1.name + " (" + player1.character->stats.name + ")\n"
                           "2nd: " + player2.name + " (" + player2.character->stats.name + ")");
@@ -516,7 +611,7 @@ void Game::update() {
             setScreen(std::make_unique<CharacterSelectionScreen>(
                 renderer, resources.titleFont, resources.font, resources.characterList(),
                 "player 1", &resources.BERT,
-                "player 2", &resources.BERROTA));
+                "player 2", &resources.BERT));
         }
     }
 }

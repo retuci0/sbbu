@@ -23,7 +23,11 @@ enum class Status {
     JUMPING,
     SHOOTING,
     ATTACKING,
-    DAMAGED
+    DAMAGED,
+    SPECIAL_STATIC,
+    SPECIAL_SIDE,
+    SPECIAL_UP,
+    SPECIAL_DOWN
 };
 
 class Player {
@@ -41,13 +45,16 @@ public:
     int hp        = 0;
     int lives     = 2;  // remaining (total = 3)
 
-    bool onGround     = false;
-    bool hasAirJumped = false;
+    bool onGround       = false;
+    bool hasAirJumped   = false;
+    bool specialHitboxSpawned = false;
 
     static constexpr int EDGE_CLIMB_THRESHOLD   = 16;
 
     int damagedTimer                            = 0;
     static constexpr int DAMAGED_DURATION       = 10;
+    int shootTimer                              = 0;
+    static constexpr int SHOOT_DURATION         = 10;
     int shootCooldown                           = 0;
     static constexpr int SHOOT_COOLDOWN         = 25;
     int meleeTimer                              = 0;
@@ -56,6 +63,10 @@ public:
     static constexpr int MELEE_COOLDOWN         = 20;
     int invulnerableTimer                       = 0;
     static constexpr int INV_DURATION           = 300;
+    int specialCooldown                         = 0;
+    static constexpr int SPECIAL_COOLDOWN       = 60;
+    int specialTimer                            = 0;
+    static constexpr int SPECIAL_DURATION       = 24;
 
     float charge = 0.0f;
     static constexpr float MAX_CHARGE = 1.0f;
@@ -81,11 +92,12 @@ public:
     void move(int direction);  // -1 left, 0 stop, +1 right
     void jump();
 
-    void getHit(Facing side);
+    void getHit(Facing side, int damage, float kbScale = 1.0f);
     bool tryShoot(Mix_Chunk* projSound);
     bool tryMelee(Mix_Chunk* meleeSound);
+    bool trySpecial(Mix_Chunk** specialSounds, Direction dir);
 
-    void update(const std::vector<Platform>& platforms);
+    void update(const std::vector<Platform>& platforms, bool downKeyPressed);
     void updateTimers();
     void resetTimers();
 

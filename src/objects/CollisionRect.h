@@ -14,6 +14,8 @@ public:
     SDL_Rect rect = {};
     Player* owner;
     int lifetime = 0;
+    float damageScale = 1.0f;
+    float kbScale     = 1.0f;
 
     void update() { if (lifetime > 0) --lifetime; }
     bool isAlive() const { return lifetime > 0; }

@@ -15,15 +15,16 @@
 
 
 void Player::init(int x, int y, const Character* ch, const std::string& playerName, Mix_Chunk* dmgSound) {
-    character    = ch;
-    name         = playerName;
-    damageSound  = dmgSound;
-    hp           = ch->stats.health;
-    lives        = 2;
-    dx = dy      = 0.0f;
-    status       = Status::IDLE;
-    facing       = Facing::RIGHT;
-    currentSpriteIndex = 0.0f;
+    character           = ch;
+    name                = playerName;
+    damageSound         = dmgSound;
+    hp                  = ch->stats.health;
+    lives               = 2;
+    dx = dy             = 0.0f;
+    status              = Status::IDLE;
+    facing              = Facing::RIGHT;
+    currentTexture      = character->idle;
+    currentSpriteIndex  = 0.0f;
 
     int w = 125, h = 89;
     if (ch->idle) {
@@ -33,6 +34,13 @@ void Player::init(int x, int y, const Character* ch, const std::string& playerNa
 }
 
 void Player::move(int direction) {
+    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE ||
+        status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN ||
+        status == Status::SHOOTING
+    ) {
+        return;
+    }
+
     if (status == Status::ATTACKING || status == Status::DAMAGED) {
         dx = direction * character->stats.velocity;
         return;
@@ -51,6 +59,13 @@ void Player::move(int direction) {
 }
 
 void Player::jump() {
+    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE ||
+        status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN ||
+        status == Status::SHOOTING
+    ) {
+        return;
+    }
+    
     if (onGround) {
         dy = -character->stats.jumpVelocity;
         status = Status::JUMPING;
@@ -64,7 +79,7 @@ void Player::jump() {
     }
 }
 
-void Player::getHit(Facing side) {
+void Player::getHit(Facing side, int damage, float kbScale) {
     if (invulnerableTimer > 0) return;
 
     if (damageSound) { 
@@ -74,20 +89,83 @@ void Player::getHit(Facing side) {
     status = Status::DAMAGED;
     damagedTimer = DAMAGED_DURATION;
 
-    float damageTaken = static_cast<float>(character->stats.health - hp);
+    hp -= damage;
+
+    float kbMult = static_cast<float>(character->stats.health - hp);
     float w = character->stats.weight;
 
     if (side == Facing::LEFT) {
-        dx = (-damageTaken / 3.3f) * w;
+        dx = (-kbMult / 3.3f) * w * kbScale;
     } else {
-        dx = (damageTaken / 3.3f) * w;
+        dx = (kbMult / 3.3f) * w * kbScale;
     }
-    dy = (-damageTaken / 5.0f) * w;
+    dy = (-kbMult / 5.0f) * w * kbScale;
 
-    charge = std::max(0.0f, charge - damageTaken * 0.05f);
+    charge = std::max(0.0f, charge - damage * 0.05f);
 }
 
-void Player::update(const std::vector<Platform>& platforms) {
+bool Player::tryShoot(Mix_Chunk* projSound) {
+    if (shootCooldown > 0) return false;
+    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE ||
+        status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN ||
+        status == Status::SHOOTING
+    ) {
+        return false;
+    }
+    if (projSound) Mix_PlayChannel(-1, projSound, 0);
+    shootCooldown = SHOOT_COOLDOWN;
+    shootTimer = SHOOT_DURATION;
+    status = Status::SHOOTING;
+    return true;
+}
+
+bool Player::tryMelee(Mix_Chunk* meleeSound) {
+    if (meleeCooldown > 0) return false;
+    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE ||
+        status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN ||
+        status == Status::SHOOTING
+    ) {
+        return false;
+    }
+    status = Status::ATTACKING;
+    meleeTimer = MELEE_DURATION;  // hitbox active for 8 frames
+    meleeCooldown = MELEE_COOLDOWN;
+    currentSpriteIndex = 0.0f;
+    if (meleeSound) Mix_PlayChannel(-1, meleeSound, 0);
+    return true;
+}
+
+bool Player::trySpecial(Mix_Chunk** sounds, Direction dir) {
+    if (specialCooldown > 0) return false;
+    if (charge < MAX_CHARGE) return false;
+    
+    // if already in special state
+    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE ||
+        status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN
+    ) { 
+        return false;
+    }
+    dx = 0;
+
+    Mix_Chunk* sound = nullptr;
+    switch (dir) {
+        case Direction::NONE:  status = Status::SPECIAL_STATIC; sound = sounds[0]; break;
+        case Direction::LEFT:  // fallthrough
+        case Direction::RIGHT: status = Status::SPECIAL_SIDE;   sound = sounds[1]; break;
+        case Direction::UP:    status = Status::SPECIAL_UP;     sound = sounds[2]; break;
+        case Direction::DOWN:  status = Status::SPECIAL_DOWN;   sound = sounds[3]; break;
+    }
+    specialTimer         = SPECIAL_DURATION;
+    specialHitboxSpawned = false;
+    specialCooldown      = SPECIAL_COOLDOWN;
+
+    currentSpriteIndex = 0.0f;
+    if (sound) Mix_PlayChannel(-1, sound, 0);
+    charge = 0.0f;
+    return true;
+}
+
+void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed) {
     // apply gravity
     dy = std::min(
         character->stats.terminalVelocity,
@@ -97,8 +175,13 @@ void Player::update(const std::vector<Platform>& platforms) {
     // move horizontally
     rect.x += static_cast<int>(dx);
 
+    // invulnerable while damaged
+    if (invulnerableTimer == 0) { invulnerableTimer = damagedTimer; }
+    
+
     // horizontal collision + edge climbing
     for (const auto& p : platforms) {
+        if (downKeyPressed) continue;
         if (SDL_HasIntersection(&rect, &p.rect)) {
             int feetY       = rect.y + rect.h;
             int platformTop = p.rect.y;
@@ -133,7 +216,6 @@ void Player::update(const std::vector<Platform>& platforms) {
                 }
                 onGround = true;
             }
-            // dy < 0 (jumping upward): phase through — no collision
         }
     }
 
@@ -150,67 +232,77 @@ void Player::update(const std::vector<Platform>& platforms) {
     // decrement timers
     updateTimers();
 
+    // adapt hitbox to current sprite's size
+    int w, h;
+    SDL_QueryTexture(currentTexture, nullptr, nullptr, &w, &h);
+    if (facing == Facing::LEFT && w != rect.w) {
+        rect.x -= w - rect.w;
+    }
+    rect.w = w;
+    rect.h = h;
+
     // clamp charge to [0, 1]
     charge = std::clamp(charge, 0.0f, 1.0f);
 
     // sync status
-    if (status != Status::DAMAGED && status != Status::ATTACKING && status != Status::SHOOTING) {
-        if (!onGround) {
-            status = Status::JUMPING;
-        } else if (dx != 0.0f) {
-            status = Status::WALKING;
-        } else {
-            status = Status::IDLE;
-        }
+    if (status != Status::DAMAGED && status != Status::ATTACKING &&
+        status != Status::SHOOTING &&
+        status != Status::SPECIAL_STATIC && status != Status::SPECIAL_SIDE &&
+        status != Status::SPECIAL_UP && status != Status::SPECIAL_DOWN) {
+        if (!onGround) status = Status::JUMPING;
+        else if (dx != 0.0f) status = Status::WALKING;
+        else status = Status::IDLE;
     }
 
     animate();
 }
 
-    bool Player::tryShoot(Mix_Chunk* projSound) {
-        if (shootCooldown > 0) return false;
-        if (projSound) Mix_PlayChannel(-1, projSound, 0);
-        shootCooldown = SHOOT_COOLDOWN;
-        status = Status::SHOOTING;
-        return true;
-    }
-
-    bool Player::tryMelee(Mix_Chunk* meleeSound) {
-        if (meleeCooldown > 0) return false;
-        status = Status::ATTACKING;
-        meleeTimer = MELEE_DURATION;  // hitbox active for 8 frames
-        meleeCooldown = MELEE_COOLDOWN;
-        currentSpriteIndex = 0.0f;
-        if (meleeSound) Mix_PlayChannel(-1, meleeSound, 0);
-        return true;
-    }
-
-    void Player::updateTimers() {
-        if (shootCooldown > 0) --shootCooldown;
-        if (meleeCooldown > 0) --meleeCooldown;
-        if (invulnerableTimer > 0) --invulnerableTimer;
-        if (meleeTimer > 0) {
-            --meleeTimer;
-            if (meleeTimer == 0 && status == Status::ATTACKING) {
-                status = Status::IDLE;  // let the sync block take over next frame
-            }
-        }
-        if (status == Status::DAMAGED) {
-            if (damagedTimer > 0) {
-                --damagedTimer;
-            } else {
-                status = Status::IDLE;  // let the sync block take over next frame
-            }
+void Player::updateTimers() {
+    if (shootCooldown > 0) --shootCooldown;
+    if (meleeCooldown > 0) --meleeCooldown;
+    if (specialCooldown > 0) --specialCooldown;
+    if (invulnerableTimer > 0) --invulnerableTimer;
+    if (shootTimer > 0) {
+        --shootTimer;
+        if (shootTimer == 0 && status == Status::SHOOTING) {
+            status = Status::IDLE;  // let the sync block take over next frame
         }
     }
-
-    void Player::resetTimers() {
-        shootCooldown       = 0;
-        meleeCooldown       = 0;
-        meleeTimer          = 0;
-        damagedTimer        = 0;
-        invulnerableTimer   = 0;
+    if (meleeTimer > 0) {
+        --meleeTimer;
+        if (meleeTimer == 0 && status == Status::ATTACKING) {
+            status = Status::IDLE;  // let the sync block take over next frame
+        }
     }
+    if (status == Status::DAMAGED) {
+        if (damagedTimer > 0) {
+            --damagedTimer;
+        } else {
+            status = Status::IDLE;  // let the sync block take over next frame
+        }
+    }
+    if (specialTimer > 0) {
+        --specialTimer;
+        if (specialTimer == 0 && (status == Status::SPECIAL_STATIC 
+            || status == Status::SPECIAL_SIDE
+            || status == Status::SPECIAL_UP
+            || status == Status::SPECIAL_DOWN)
+        ) {
+            status = Status::IDLE;  // let the sync block take over next frame
+        }
+    }
+}
+
+void Player::resetTimers() {
+    shootCooldown       = 0;
+    meleeCooldown       = 0;
+    specialCooldown     = 0;
+    meleeTimer          = 0;
+    damagedTimer        = 0;
+    invulnerableTimer   = 0;
+    specialTimer        = 0;
+    specialHitboxSpawned = false;
+}
 
 void Player::drawSprite(SDL_Renderer* r, SDL_Texture* tex, bool flipH) {
     if (!tex) { return; }
@@ -219,9 +311,11 @@ void Player::drawSprite(SDL_Renderer* r, SDL_Texture* tex, bool flipH) {
     SDL_RendererFlip flip = flipH ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
 
     if (invulnerableTimer > 0) {
-        float wave = (1.0f + std::sin(invulnerableTimer * 0.15f)) * 0.5f;
-        Uint8 a = static_cast<Uint8>(60 + wave * 195);
-        SDL_SetTextureAlphaMod(tex, a);
+        if (status != Status::DAMAGED) {
+            float wave = (1.0f + std::sin(invulnerableTimer * 0.15f)) * 0.5f;
+            Uint8 a = static_cast<Uint8>(60 + wave * 195);
+            SDL_SetTextureAlphaMod(tex, a);
+        }
     } else {
         SDL_SetTextureAlphaMod(tex, 255);
     }
@@ -247,6 +341,18 @@ void Player::animate() {
         case Status::ATTACKING:
             advanceFrame(character->attackFrames, 0.6f);
             break;
+        case Status::SPECIAL_STATIC:
+            advanceFrame(character->specialStaticFrames, 0.3f);
+            break;
+        case Status::SPECIAL_SIDE:
+            advanceFrame(character->specialSideFrames, 0.5f);
+            break;
+        case Status::SPECIAL_UP:
+            advanceFrame(character->specialUpFrames, 0.5f);
+            break;
+        case Status::SPECIAL_DOWN:
+            advanceFrame(character->specialDownFrames, 0.5f);
+            break;
         default:
             currentSpriteIndex = 0.0f;
             break;
@@ -255,26 +361,33 @@ void Player::animate() {
 
 void Player::draw(SDL_Renderer* r, TTF_Font* font) {
     bool flipH = (facing == Facing::LEFT);
-    int idx = static_cast<int>(currentSpriteIndex);
+    auto drawAnimatedSprite = [&](const std::vector<SDL_Texture*>& frames) -> void {
+        if (frames.empty()) return;
+        int i = static_cast<int>(currentSpriteIndex) % static_cast<int>(frames.size());
+        drawSprite(r, frames[i], flipH);
+    };
 
     switch (status) {
         case Status::WALKING:
-            if (!character->walkFrames.empty()) {
-                int i = idx % static_cast<int>(character->walkFrames.size());
-                drawSprite(r, character->walkFrames[i], flipH);
-            }
+            drawAnimatedSprite(character->walkFrames);
             break;
         case Status::JUMPING:
-            if (!character->jumpFrames.empty()) {
-                int i = idx % static_cast<int>(character->jumpFrames.size());
-                drawSprite(r, character->jumpFrames[i], flipH);
-            }
+            drawAnimatedSprite(character->jumpFrames);
             break;
         case Status::ATTACKING:
-            if (!character->attackFrames.empty()) {
-                int i = idx % static_cast<int>(character->attackFrames.size());
-                drawSprite(r, character->attackFrames[i], flipH);
-            }
+            drawAnimatedSprite(character->attackFrames);
+            break;
+        case Status::SPECIAL_STATIC:
+            drawAnimatedSprite(character->specialStaticFrames);
+            break;
+        case Status::SPECIAL_SIDE:
+            drawAnimatedSprite(character->specialSideFrames);
+            break;
+        case Status::SPECIAL_UP:
+            drawAnimatedSprite(character->specialUpFrames);
+            break;
+        case Status::SPECIAL_DOWN:
+            drawAnimatedSprite(character->specialDownFrames);
             break;
         case Status::SHOOTING:
             drawSprite(r, character->shoot, flipH);
@@ -316,6 +429,8 @@ std::string Player::getStatusName() const {
             return "shooting";
         case Status::DAMAGED:
             return "damaged";
+        case Status::SPECIAL_STATIC:
+            return "special (static) " + std::to_string(static_cast<int>(currentSpriteIndex) + 1) + "/6)";
         default:
             return "idling";
         }

@@ -27,9 +27,15 @@ struct Character {
     std::vector<SDL_Texture*> walkFrames;   // 5 frames
     std::vector<SDL_Texture*> jumpFrames;   // 5 frames
     std::vector<SDL_Texture*> attackFrames; // 5 frames
+    std::vector<SDL_Texture*> specialStaticFrames;
+    std::vector<SDL_Texture*> specialSideFrames;
+    std::vector<SDL_Texture*> specialUpFrames;
+    std::vector<SDL_Texture*> specialDownFrames;
+    
     SDL_Texture* idle       = nullptr;
     SDL_Texture* shoot      = nullptr;
     SDL_Texture* damage     = nullptr;
+
     SDL_Texture* icon       = nullptr;
     SDL_Texture* deadIcon   = nullptr;
 

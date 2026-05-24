@@ -44,6 +44,8 @@ struct Resources {
     Mix_Chunk* gameEndSound         = nullptr;
     Mix_Music* music                = nullptr;
 
+    Mix_Chunk** specialSounds       = nullptr;
+
     Character BERT;
     Character BERROTA;
     Character LORC;
@@ -70,10 +72,7 @@ protected:
     void onKey(SDL_Keycode key, KeyAction action) override;
 
 private:
-    static constexpr int SW = 1920, SH = 1080;
-    static constexpr int MAX_PROJ      = 8;
-    static constexpr int PROJ_COOLDOWN = 25;
-    static constexpr int ATTACK_COOLDOWN = 20;
+    static constexpr int MAX_PROJ = 8;
 
     SDL_Window*   window   = nullptr;
     SDL_Renderer* renderer = nullptr;
@@ -88,6 +87,7 @@ private:
 
     std::vector<Projectile> projectiles;
     std::vector<CollisionRect> meleeHitboxes;
+    std::vector<CollisionRect> specialHitboxes;
 
     Player player1, player2;
     std::vector<Platform> platforms;

@@ -36,14 +36,11 @@ cmake --build . -j$(nproc)
 
 must be run next to `assets/` folder
 
-```bash
-cd ../super-bert-bros
-../super-bert-bros-cpp/build/super_bert_bros
-```
+`./run.sh` from root dir will do.
 
 ## controls
 
-| Action           | Player 1    | Player 2  |
+| action           | player 1    | player 2  |
 |------------------|-------------|-----------|
 | move             | A / D       | ← / →     |
 | jump             | SPACE       | ↑         |

@@ -24,10 +24,10 @@ struct Color {
     }
 
     constexpr Color(int argb) {
-        a = (argb << 24) & 0xFF;
-        r = (argb << 16) & 0xFF;
-        g = (argb <<  8) & 0xFF;
-        b = (argb <<  0) & 0xFF;
+        a = (argb >> 24) & 0xFF;
+        r = (argb >> 16) & 0xFF;
+        g = (argb >>  8) & 0xFF;
+        b = (argb >>  0) & 0xFF;
     }
 
     

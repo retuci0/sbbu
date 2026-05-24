@@ -10,7 +10,6 @@
 #include <array>
 
 
-static constexpr int SW = 1920, SH = 1080;
 static constexpr int BOX_W = 360, BOX_H = 100;
 static constexpr int COL1_X = 100, COL2_X = 1050;
 static constexpr int ROW_START_Y = 200, ROW_STEP = 120;
@@ -21,7 +20,7 @@ static constexpr int START_BTN_W = 400, START_BTN_H = 80;
 static constexpr int COLOR_BTN_W = 160, COLOR_BTN_H = 50;
 static constexpr int COLOR_BTN_Y = NAME_BOX_Y + 80;
 
-CharacterSelectionScreen::CharacterSelectionScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, const std::array<const Character*, 8> chars,
+CharacterSelectionScreen::CharacterSelectionScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, const std::array<const Character*, 8>& chars,
                                                    const std::string& defaultName1, const Character* defaultChar1, 
                                                    const std::string& defaultName2, const Character* defaultChar2)
     : renderer(renderer), titleFont(titleFont), font(font), chars(chars),
@@ -33,7 +32,7 @@ CharacterSelectionScreen::CharacterSelectionScreen(SDL_Renderer* renderer, TTF_F
 }
 
 int CharacterSelectionScreen::findIdx(const Character* ch) const {
-    for (int i = 0; i < 4; ++i) {
+    for (int i = 0; i < 8; ++i) {
         if (chars[i] == ch) return i;
     }
     return 0;

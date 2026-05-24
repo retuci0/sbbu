@@ -20,7 +20,6 @@ void Projectile::move() {
 }
 
 void Projectile::draw(SDL_Renderer* r) {
-    move();
     if (img) { 
         SDL_RenderCopyEx(r, img, nullptr, &rect, 0, 0, direction == Facing::LEFT 
                         ? SDL_RendererFlip::SDL_FLIP_HORIZONTAL
