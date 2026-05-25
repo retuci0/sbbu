@@ -10,7 +10,6 @@
 #include <SDL2/SDL_ttf.h>
 
 #include <string>
-#include <uuid/uuid.h>
 #include <vector>
 
 
@@ -35,7 +34,7 @@ public:
     std::string name;
     const Character* character = nullptr;  // non-owning
 
-    uuid_t uuid;
+    int id;
 
     float dx = 0.0f, dy = 0.0f;
 
@@ -107,7 +106,7 @@ public:
     std::string getStatusName() const;
 
     bool operator==(const Player& other) const {
-        return uuid_compare(uuid, other.uuid) == 0;
+        return id == other.id;
     }
 
 private:

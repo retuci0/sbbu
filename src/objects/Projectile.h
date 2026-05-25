@@ -10,7 +10,7 @@ class Projectile {
 public:
     SDL_Rect rect = {};
     Facing direction;
-    float velocity = 13.0f;
+    float velocity = 19.0f;
     Player* owner = nullptr;  // non-owning
 
     SDL_Texture* img = nullptr;  // non-owning

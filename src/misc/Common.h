@@ -18,6 +18,17 @@ constexpr Color GREEN    = {   0, 255,   0, 255 };
 constexpr Color BLUE     = {   0,   0, 255, 255 };
 constexpr Color DARK_RED = {  45,   0,   0, 255 };
 
+// for network transmission
+enum InputBit : uint8_t {
+    LEFT    = 1 << 0,
+    RIGHT   = 1 << 1,
+    DOWN    = 1 << 2,
+    JUMP    = 1 << 3,
+    SHOOT   = 1 << 4,
+    MELEE   = 1 << 5,
+    SPECIAL = 1 << 6
+};
+
 
 // keybinds (edit here to remap)
 // look up key names here: https://wiki.libsdl.org/SDL2/SDLKeycodeLookup
