@@ -1,61 +1,30 @@
 #include "VolumeScreen.h"
 
+#include "../widget/Button.h"
 #include "../../misc/Common.h"
 #include "../../misc/Renderer.h"
 
-#include <algorithm>
-#include <cmath>
-#include <string>
+#include <SDL2/SDL_ttf.h>
 
 
 static constexpr int SL_X = 600, SL_W = 700, SL_H = 20;
 static constexpr int SL_SFX_Y = 420, SL_MUSIC_Y = 600;
-static constexpr int HANDLE_R = 18;
 static constexpr int OK_X = 860, OK_Y = 750, OK_W = 200, OK_H = 70;
 
-VolumeScreen::VolumeScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, float currentSfx, float currentMusic)
-    : renderer(renderer), titleFont(titleFont), font(font), sfx(currentSfx), music(currentMusic)
+VolumeScreen::VolumeScreen(SDL_Renderer* /*renderer*/, TTF_Font* titleFont, TTF_Font* font, float currentSfx, float currentMusic)
+    : titleFont(titleFont)
 {
-    buttons.emplace_back(OK_X, OK_Y, OK_W, OK_H, "ok", Color{50, 180, 50, 255}, WHITE,
-        [&]{ finished = true; result = {sfx, music}; });
+    sfxSlider   = addWidget<Slider>(SL_X, SL_SFX_Y,   SL_W, SL_H, 0.0f, 2.0f, currentSfx,   "SFX Volume");
+    musicSlider = addWidget<Slider>(SL_X, SL_MUSIC_Y, SL_W, SL_H, 0.0f, 2.0f, currentMusic, "music Volume");
+
+    addWidget<Button>(OK_X, OK_Y, OK_W, OK_H, "ok.",
+        Color{50, 180, 50, 255}, WHITE,
+        [&]{ finished = true; result = { sfxSlider->getValue(), musicSlider->getValue() }; }
+    );
 }
 
-int VolumeScreen::valToX(float v) const {
-    return SL_X + static_cast<int>(v / 2.0f * SL_W);
-}
-float VolumeScreen::xToVal(int x) const {
-    return std::clamp((x - SL_X) / static_cast<float>(SL_W) * 2.0f, 0.0f, 2.0f);
-}
-
-void VolumeScreen::drawSlider(int slY, float val, const std::string& label) {
-    Renderer::fillRect(renderer, SL_X, slY, SL_W, SL_H, { 100, 100, 100, 255 });
-    int fillW = valToX(val) - SL_X;
-    Renderer::fillRect(renderer, SL_X, slY, fillW, SL_H, { 100, 180, 100, 255 });
-    int hx = valToX(val);
-    Renderer::fillRect(renderer, hx - HANDLE_R, slY - HANDLE_R + SL_H/2, HANDLE_R*2, HANDLE_R*2, { 200, 200, 200, 255 });
-    Renderer::renderText(renderer, font, label + ": " + std::to_string(static_cast<int>(std::round(val * 100))) + "%",
-                         SL_X, slY - 50, WHITE);
-}
-
-void VolumeScreen::handleEvent(const SDL_Event& e) {
-    if (e.type == SDL_QUIT) { finished = true; return; }
-    Screen::handleEvent(e);  // handles OK button
-    if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
-        if (std::abs(e.button.y - (SL_SFX_Y   + SL_H/2)) < HANDLE_R*2) dragging = 1;
-        if (std::abs(e.button.y - (SL_MUSIC_Y + SL_H/2)) < HANDLE_R*2) dragging = 2;
-    }
-    if (e.type == SDL_MOUSEBUTTONUP) dragging = 0;
-    if (e.type == SDL_MOUSEMOTION && dragging) {
-        float val = xToVal(e.motion.x);
-        if (dragging == 1) sfx = val;
-        else music = val;
-    }
-}
-
-void VolumeScreen::render(SDL_Renderer* renderer) {
+void VolumeScreen::render(SDL_Renderer* renderer, TTF_Font* font) {
     Renderer::fillRect(renderer, 0, 0, SW, SH, {20, 20, 20, 255});
     Renderer::renderText(renderer, titleFont, "volume settings", 750, 200, WHITE);
-    drawSlider(SL_SFX_Y, sfx, "SFX Volume");
-    drawSlider(SL_MUSIC_Y, music, "Music Volume");
-    for (auto& b : buttons) b.draw(renderer, font);
+    drawWidgets(renderer, font);
 }

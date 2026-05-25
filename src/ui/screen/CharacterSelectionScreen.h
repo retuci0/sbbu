@@ -23,12 +23,14 @@ struct CharacterSelectionResult {
 
 class CharacterSelectionScreen : public Screen {
 public:
-    CharacterSelectionScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, const std::array<const Character*, CHARACTER_NUM>&,
+    CharacterSelectionScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font,
+                             const std::array<const Character*, CHARACTER_NUM>&,
                              const std::string& defaultName1, const Character* defaultChar1,
                              const std::string& defaultName2, const Character* defaultChar2);
 
-    void handleEvent(const SDL_Event& e) override;
-    void render(SDL_Renderer* renderer) override;
+    void handle(const SDL_Event& e) override;
+    void render(SDL_Renderer* renderer, TTF_Font* font) override;
+
     bool isFinished() const { return finished; }
     CharacterSelectionResult getResult() const { return result; }
 
@@ -38,15 +40,16 @@ private:
     TTF_Font* font;
     std::array<const Character*, CHARACTER_NUM> chars;
 
-    int selectedChar1, selectedChar2;
+    int selectedChar1 = 0, selectedChar2 = 0;
     std::string name1, name2;
-    Color color1, color2;
-    int activeField = 0;  // 0 = none, 1 = name1, 2 = name2, 3 = color1, 4 = color2
+    Color color1{}, color2{};
+    int activeField = 0;    // 0 = none, 1 = name1, 2 = name2
     bool nameError = false;
-    bool finished = false;
+    bool finished  = false;
     CharacterSelectionResult result;
 
-    int findIdx(const Character* ch) const;
+    int  findIdx(const Character* ch) const;
     void pickColorFor(int player);  // 1 or 2
     void setDefaultColors();
+    void tryStart();  // shared confirm logic
 };

@@ -40,8 +40,9 @@ set(HEADERS
     src/objects/Player.h
     src/objects/Projectile.h
     src/objects/Platform.h
-    src/ui/Button.h
     src/ui/Screen.h
+    src/ui/widget/Button.h
+    src/ui/widget/Slider.h
     src/ui/screen/CharacterSelectionScreen.h
     src/ui/screen/PauseScreen.h
     src/ui/screen/VolumeScreen.h
