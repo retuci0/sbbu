@@ -1,9 +1,9 @@
 #include "RemoteSetupScreen.h"
+
 #include "../widget/Button.h"
 #include "../../misc/Renderer.h"
 #include "../../misc/Common.h"
 
-#include <sstream>
 
 RemoteSetupScreen::RemoteSetupScreen(SDL_Renderer* r, TTF_Font* tf, TTF_Font* f)
     : renderer(r), titleFont(tf), font(f) {
