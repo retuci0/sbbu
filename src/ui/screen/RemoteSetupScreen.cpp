@@ -5,8 +5,8 @@
 #include "../../misc/Common.h"
 
 
-RemoteSetupScreen::RemoteSetupScreen(SDL_Renderer* r, TTF_Font* tf, TTF_Font* f)
-    : renderer(r), titleFont(tf), font(f) {
+RemoteSetupScreen::RemoteSetupScreen(SDL_Renderer* r, TTF_Font* tf)
+    : renderer(r), titleFont(tf) {
     addWidget<Button>(SW/2-300, SH-150, 250, 70, "HOST",
                       Color{60,100,60}, WHITE, [&]{ isHost = true; tryConnect(); });
     addWidget<Button>(SW/2+50,  SH-150, 250, 70, "CLIENT",
@@ -58,16 +58,16 @@ void RemoteSetupScreen::render(SDL_Renderer* r, TTF_Font* f) {
     Renderer::fillRect(r, 0, 0, SW, SH, Color{20,20,40});
     Renderer::renderText(r, titleFont, "Online Setup", SW/2-120, 100, WHITE);
 
-    Renderer::renderText(r, font, "Server IP:", SW/2-200, SH/2-70, WHITE);
+    Renderer::renderText(r, f, "Server IP:", SW/2-200, SH/2-70, WHITE);
     SDL_Color ipBg = (activeField == 1) ? Color{ 100,100,180 }.toSdlColor() : Color{ 60,60,60 }.toSdlColor();
-    Renderer::renderButton(r, font, ipInput, SW/2-200, SH/2-40, 400, 50, ipBg, WHITE);
+    Renderer::renderButton(r, f, ipInput, SW/2-200, SH/2-40, 400, 50, ipBg, WHITE);
 
-    Renderer::renderText(r, font, "Port:", SW/2-200, SH/2, WHITE);
+    Renderer::renderText(r, f, "Port:", SW/2-200, SH/2, WHITE);
     SDL_Color portBg = (activeField == 2) ? Color{ 100,100,180 }.toSdlColor() : Color{ 60,60,60 }.toSdlColor();
-    Renderer::renderButton(r, font, portInput, SW/2-200, SH/2+30, 400, 50, portBg, WHITE);
+    Renderer::renderButton(r, f, portInput, SW/2-200, SH/2+30, 400, 50, portBg, WHITE);
 
     if (!statusMsg.empty()) {
-        Renderer::renderText(r, font, statusMsg, SW/2-150, SH/2+120, Color{255,100,100});
+        Renderer::renderText(r, f, statusMsg, SW/2-150, SH/2+120, Color{255,100,100});
     }
 
     drawWidgets(r, f);

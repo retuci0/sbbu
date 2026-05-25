@@ -1,6 +1,7 @@
 #include "Renderer.h"
 
 #include "Color.h"
+#include <SDL2/SDL_render.h>
 
 
 void Renderer::renderText(SDL_Renderer* r, TTF_Font* font, const std::string& text, int x, int y, Color c) {
@@ -49,4 +50,41 @@ SDL_Rect Renderer::renderButton(SDL_Renderer* r, TTF_Font* font, const std::stri
     renderText(r, font, text, x + (w - tw) / 2, y + (h - th) / 2, fg);
     // return SDL_Rect for hit-checks
     return {x, y, w, h};
+}
+
+int Renderer::fillCircle(SDL_Renderer* renderer, int x, int y, int r, Color color) {
+    int offsetx, offsety, d;
+    int status;
+
+    offsetx = 0;
+    offsety = r;
+    d = r - 1;
+    status = 0;
+
+    while (offsety >= offsetx) {
+        SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+        status += SDL_RenderDrawLine(renderer, x - offsety, y + offsetx, x + offsety, y + offsetx);
+        status += SDL_RenderDrawLine(renderer, x - offsetx, y + offsety, x + offsetx, y + offsety);
+        status += SDL_RenderDrawLine(renderer, x - offsetx, y - offsety, x + offsetx, y - offsety);
+        status += SDL_RenderDrawLine(renderer, x - offsety, y - offsetx, x + offsety, y - offsetx);
+
+        if (status < 0) {
+            status = -1;
+            break;
+        }
+
+        if (d >= 2*offsetx) {
+            d -= 2*offsetx + 1;
+            offsetx += 1;
+        } else if (d < 2 * (r - offsety)) {
+            d += 2 * offsety - 1;
+            offsety -= 1;
+        } else {
+            d += 2 * (offsety - offsetx - 1);
+            offsety -= 1;
+            offsetx += 1;
+        }
+    }
+
+    return status;
 }

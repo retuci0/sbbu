@@ -25,7 +25,7 @@
 class CharacterSelectionScreen;
 class PauseScreen;
 class VolumeScreen;
-class MultiplayerModeScreen;
+class TitleScreen;
 class RemoteSetupScreen;
 class WaitingScreen;
 
@@ -34,6 +34,7 @@ struct Resources {
     SDL_Texture* platformImage      = nullptr;
     SDL_Texture* smallPlatformImage = nullptr;
     SDL_Texture* projectileImage    = nullptr;
+    SDL_Texture* shockwaveImage     = nullptr;
     SDL_Texture* heartImage         = nullptr;
     SDL_Texture* bgImage            = nullptr;
 
@@ -133,6 +134,7 @@ private:
 
     void render();
     void renderPlayerHud(const Player& player) const;
+    void renderMinimap() const;
     void renderGameplay();
     void handleScreenTransitions();
 

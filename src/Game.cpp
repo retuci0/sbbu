@@ -6,7 +6,7 @@
 #include "misc/Renderer.h"
 #include "net/Packets.h"
 #include "ui/screen/CharacterSelectionScreen.h"
-#include "ui/screen/MultiplayerModeScreen.h"
+#include "ui/screen/TitleScreen.h"
 #include "ui/screen/PauseScreen.h"
 #include "ui/screen/RemoteSetupScreen.h"
 #include "ui/screen/VolumeScreen.h"
@@ -24,6 +24,12 @@
 #include <stdexcept>
 #include <random>
 
+static constexpr int PADDING = 2;
+static constexpr int MM_W = 200;
+static constexpr int MM_H = 120;
+static constexpr int MM_X = PADDING;
+static constexpr int MM_Y = SH - MM_H - PADDING;
+
 
 /* --- RESOURCES --- */
 
@@ -34,11 +40,12 @@ void Resources::destroy() {
     dTex(platformImage);
     dTex(smallPlatformImage);
     dTex(projectileImage);
+    dTex(shockwaveImage);
     dTex(heartImage);
     dTex(bgImage);
 
     if (titleFont) { TTF_CloseFont(titleFont); titleFont = nullptr; }
-    if (font)      { TTF_CloseFont(font);      font      = nullptr; }
+    if (font)      { TTF_CloseFont(font);           font      = nullptr; }
     if (smallFont) { TTF_CloseFont(smallFont); smallFont = nullptr; }
 
     dChunk(jumpSound);
@@ -101,6 +108,7 @@ void Game::loadResources() {
     resources.platformImage      = loadTex("assets/images/platform/platform_big.png");
     resources.smallPlatformImage = loadTex("assets/images/platform/platform_small.png");
     resources.projectileImage    = loadTex("assets/images/projectile/projectile.png");
+    resources.shockwaveImage     = loadTex("assets/images/projectile/shockwave.png");
     resources.heartImage         = loadTex("assets/images/ui/heart.png");
     resources.bgImage            = loadTex("assets/images/ui/background.png");
 
@@ -556,7 +564,7 @@ void Game::updateGameplay() {
                 hy = attacker.rect.y + attacker.rect.h - 20;
                 dmgScale = 4.0f; kbScale = 7.0f;
                 if (attacker.onGround)
-                    shockwaves.emplace_back(attacker.rect.x + attacker.rect.w / 2,
+                    shockwaves.emplace_back(resources.shockwaveImage, attacker.rect.x + attacker.rect.w / 2,
                                            attacker.rect.y + attacker.rect.h - 16, &attacker);
                 break;
             default: return;
@@ -661,9 +669,75 @@ void Game::renderPlayerHud(const Player& player) const {
         bool isRemotePlayer = (networkMode == NetworkMode::REMOTE_HOST && player == player2)
                            || (networkMode == NetworkMode::REMOTE_CLIENT && player == player1);
         if (isRemotePlayer) {
-            Renderer::renderText(renderer, resources.smallFont, "[net]", x, 870, {130, 200, 255, 255});
+            Renderer::renderText(renderer, resources.smallFont, "[net]", x, 870, { 130, 200, 255, 255 });
         }
     }
+}
+
+void Game::renderMinimap() const {
+    // world bounds
+    int minX = INT_MAX, maxX = INT_MIN, minY = INT_MAX, maxY = INT_MIN;
+
+    // platforms
+    for (const auto& p : platforms) {
+        const SDL_Rect& r = p.rect;
+        minX = std::min(minX, r.x);
+        maxX = std::max(maxX, r.x + r.w);
+        minY = std::min(minY, r.y);
+        maxY = std::max(maxY, r.y + r.h);
+    }
+
+    // players
+    auto expand = [&](const Player& player) {
+        minX = std::min(minX, player.rect.x);
+        maxX = std::max(maxX, player.rect.x + player.rect.w);
+        minY = std::min(minY, player.rect.y);
+        maxY = std::max(maxY, player.rect.y + player.rect.h);
+    };
+    expand(player1);
+    expand(player2);
+
+    // padding
+    int padding = 100;
+    minX -= padding;
+    maxX += padding;
+    minY -= padding;
+    maxY += padding;
+
+    float worldW = static_cast<float>(maxX - minX);
+    float worldH = static_cast<float>(maxY - minY);
+    if (worldW <= 0.0f || worldH <= 0.0f) return; // safety
+
+    // minimap thingy
+    Renderer::fillRect(renderer, MM_X, MM_Y, MM_W, MM_H, { 40, 40, 40, 200 });
+    Renderer::outlineRect(renderer, MM_X, MM_Y, MM_W, MM_H, { 255, 255, 255, 100 }, 2);
+
+    auto worldToMinimap = [&](float wx, float wy) -> std::pair<float, float> {
+        float mx = MM_X + ((wx - minX) / worldW) * MM_W;
+        float my = MM_Y + ((wy - minY) / worldH) * MM_H;
+        return { mx, my };
+    };
+
+    // draw platforms
+    for (const auto& p : platforms) {
+        const SDL_Rect& r = p.rect;
+        auto [mx1, my1] = worldToMinimap(r.x, r.y);
+        auto [mx2, my2] = worldToMinimap(r.x + r.w, r.y + r.h);
+        int mw = static_cast<int>(mx2 - mx1);
+        int mh = static_cast<int>(my2 - my1);
+        if (mw > 0 && mh > 0) {
+            Renderer::fillRect(renderer, static_cast<int>(mx1), static_cast<int>(my1), mw, mh, { 101, 67, 33, 200 });
+        }
+    }
+
+    // draw players with their respective color
+    auto drawPlayer = [&](const Player& player, Color color) {
+        auto [mx, my] = worldToMinimap(player.rect.x + player.rect.w / 2.0f,
+                                       player.rect.y + player.rect.h / 2.0f);
+        Renderer::fillCircle(renderer, static_cast<int>(mx), static_cast<int>(my), 2, color);
+    };
+    drawPlayer(player1, player1.color);
+    drawPlayer(player2, player2.color);
 }
 
 void Game::renderGameplay() {
@@ -678,6 +752,8 @@ void Game::renderGameplay() {
     player1.draw(renderer, resources.smallFont);
     player2.draw(renderer, resources.smallFont);
     for (auto& pr : projectiles) pr.draw(renderer);
+    for (auto& sw : shockwaves)   sw.draw(renderer);
+
 
     if (debug) {
         for (auto& p : platforms)          p.drawHitbox(renderer);
@@ -701,6 +777,12 @@ void Game::renderGameplay() {
 
     renderPlayerHud(player1);
     renderPlayerHud(player2);
+    
+    if (player1.rect.x < -player1.rect.w || player1.rect.x > SW
+            || player2.rect.x < -player2.rect.w || player2.rect.x > SW
+    ) {
+        renderMinimap();
+    }
 }
 
 
@@ -708,7 +790,7 @@ void Game::renderGameplay() {
 
 void Game::handleScreenTransitions() {
     // multiplayer mode screen (initial screen)
-    if (auto* mm = dynamic_cast<MultiplayerModeScreen*>(screen.get())) {
+    if (auto* mm = dynamic_cast<TitleScreen*>(screen.get())) {
         if (!mm->isFinished()) return;
         if (mm->getResult() == MultiplayerModeResult::LOCAL) {
             networkMode = NetworkMode::LOCAL;
@@ -716,8 +798,7 @@ void Game::handleScreenTransitions() {
                 renderer, resources.titleFont, resources.font, resources.characterList(),
                 "player 1", &resources.BERT, "player 2", &resources.BERT));
         } else {
-            setScreen(std::make_unique<RemoteSetupScreen>(
-                renderer, resources.titleFont, resources.font));
+            setScreen(std::make_unique<RemoteSetupScreen>(renderer, resources.titleFont));
         }
         return;
     }
@@ -811,7 +892,7 @@ void Game::handleScreenTransitions() {
                     if (network) network->disconnect();
                     network.reset();
                     networkMode = NetworkMode::NONE;
-                    setScreen(std::make_unique<MultiplayerModeScreen>(
+                    setScreen(std::make_unique<TitleScreen>(
                         renderer, resources.titleFont, resources.font));
                 } else {
                     setScreen(std::make_unique<CharacterSelectionScreen>(
@@ -909,14 +990,14 @@ void Game::update() {
         Mix_HaltMusic();
         if (network) { network->disconnect(); network.reset(); }
         networkMode = NetworkMode::NONE;
-        setScreen(std::make_unique<MultiplayerModeScreen>(renderer, resources.titleFont, resources.font));
+        setScreen(std::make_unique<TitleScreen>(renderer, resources.titleFont, resources.font));
     } else if (player2.lives == -1) {
         showEndDialog("GG!\n1st: " + player1.name + " (" + player1.character->stats.name + ")\n"
                      "2nd: " + player2.name + " (" + player2.character->stats.name + ")");
         Mix_HaltMusic();
         if (network) { network->disconnect(); network.reset(); }
         networkMode = NetworkMode::NONE;
-        setScreen(std::make_unique<MultiplayerModeScreen>(renderer, resources.titleFont, resources.font));
+        setScreen(std::make_unique<TitleScreen>(renderer, resources.titleFont, resources.font));
     }
 }
 
@@ -943,7 +1024,7 @@ void Game::render() {
 void Game::run() {
     // start on multiplayer mode selection screen
     playTitleMusic();
-    setScreen(std::make_unique<MultiplayerModeScreen>(renderer, resources.titleFont, resources.font));
+    setScreen(std::make_unique<TitleScreen>(renderer, resources.titleFont, resources.font));
 
     while (running) {
         beginFrame();

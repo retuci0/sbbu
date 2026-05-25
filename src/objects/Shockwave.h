@@ -33,8 +33,8 @@ public:
 
 class Shockwave {
 public:
-    Shockwave(int spawnX, int spawnY, Player* owner)
-        : owner(owner),
+    Shockwave(SDL_Texture* img, int spawnX, int spawnY, Player* owner)
+        : img(img), owner(owner),
           rects(ShockwaveRect(spawnX, spawnY, 32, 32, owner),
                 ShockwaveRect(spawnX, spawnY, 32, 32, owner))
     {
@@ -45,6 +45,13 @@ public:
     void update() {
         rects.first.update();
         rects.second.update();
+    }
+
+    void draw(SDL_Renderer* r) {
+        if (img) {
+            SDL_RenderCopy(r, img, nullptr, &rects.first.rect);
+            SDL_RenderCopy(r, img, nullptr, &rects.second.rect);
+        }
     }
 
     std::optional<Facing> checkCollision(const Player& player) {
@@ -69,5 +76,6 @@ public:
 
 private:
     Player* owner;
+    SDL_Texture* img;
     std::pair<ShockwaveRect, ShockwaveRect> rects;
 };

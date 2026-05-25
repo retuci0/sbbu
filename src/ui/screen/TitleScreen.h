@@ -8,13 +8,14 @@ enum class MultiplayerModeResult {
     ONLINE 
 };
 
-class MultiplayerModeScreen : public Screen {
+class TitleScreen : public Screen {
 public:
-    MultiplayerModeScreen(SDL_Renderer* r, TTF_Font* titleFont, TTF_Font* font);
+    TitleScreen(SDL_Renderer* r, TTF_Font* titleFont, TTF_Font* font);
     void handle(const SDL_Event& e) override;
     void render(SDL_Renderer* r, TTF_Font* f) override;
     bool isFinished() const { return finished; }
     MultiplayerModeResult getResult() const { return result; }
+    
 private:
     SDL_Renderer* renderer;
     TTF_Font *titleFont, *font;

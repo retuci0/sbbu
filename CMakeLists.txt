@@ -25,7 +25,7 @@ set(SRC
     src/objects/Projectile.cpp
     src/objects/Platform.cpp
     src/ui/screen/CharacterSelectionScreen.cpp
-    src/ui/screen/MultiplayerModeScreen.cpp
+    src/ui/screen/TitleScreen.cpp
     src/ui/screen/PauseScreen.cpp
     src/ui/screen/RemoteSetupScreen.cpp
     src/ui/screen/VolumeScreen.cpp
@@ -55,7 +55,7 @@ set(HEADERS
     src/ui/widget/Button.h
     src/ui/widget/Slider.h
     src/ui/screen/CharacterSelectionScreen.h
-    src/ui/screen/MultiplayerModeScreen.h
+    src/ui/screen/TitleScreen.h
     src/ui/screen/PauseScreen.h
     src/ui/screen/RemoteSetupScreen.h
     src/ui/screen/VolumeScreen.h
