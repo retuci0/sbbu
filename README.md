@@ -28,7 +28,7 @@ super bert bros is a local (and now remote too) multiplayer brawler game, heavil
 
 ### player 2 (the that's not on the left side)
 
-| action       | Key          |
+| action       | key          |
 |--------------|--------------|
 | move left    | `←`          |
 | Move Right   | `→`          |
@@ -65,21 +65,30 @@ super bert bros is a local (and now remote too) multiplayer brawler game, heavil
 ## remote play
 
 ### hosting a game
+
 1. select **"online multiplayer"** in the main menu.
 2. choose **"host game"**.
 3. wait for the client to connect (the game will show their IP).
 4. pick characters - the game will automatically send the setup to the client.
 
 ### joining a game
+
 1. select **"online multiplayer"** -> **"join game"**.
 2. enter the host's IP address and port (default `67689`).
 3. wait for the host to start the match
 
 > **note:** there will be lag. cry about it.
 
-## building from Source
+## screenshots
 
-### Dependencies
+<img src="img/character_selection.png" alt="character selection screeen">
+<img src="img/game.png" alt="gameplay">
+<img src="img/special.png" alt="static special attack">
+
+## building from source
+
+### dependencies
+
 on arch:
 
 `sudo pacman -S sdl2 sdl2_image sdl2_mixer sdl2_ttf sdl2_net`

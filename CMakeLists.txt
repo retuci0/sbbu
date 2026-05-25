@@ -80,6 +80,9 @@ target_link_libraries(super_bert_bros
     ${SDL2_ttf_LIBRARIES}
     ${SDL2_net_LIBRARIES}
 )
+if (MINGW OR WIN32)
+    target_link_libraries(super_bert_bros ws2_32)
+endif()
 
 target_compile_options(super_bert_bros PRIVATE
     ${SDL2_CFLAGS_OTHER}

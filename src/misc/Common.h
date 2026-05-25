@@ -7,29 +7,6 @@
 #include <SDL2/SDL_ttf.h>
 
 
-constexpr int CHARACTER_NUM = 9;
-
-// colors
-
-constexpr Color WHITE    = { 255, 255, 255, 255 };
-constexpr Color BLACK    = {   0,   0,   0, 255 };
-constexpr Color RED      = { 255,   0,   0, 255 };
-constexpr Color GREEN    = {   0, 255,   0, 255 };
-constexpr Color BLUE     = {   0,   0, 255, 255 };
-constexpr Color DARK_RED = {  45,   0,   0, 255 };
-
-// for network transmission
-enum InputBit : uint8_t {
-    LEFT    = 1 << 0,
-    RIGHT   = 1 << 1,
-    DOWN    = 1 << 2,
-    JUMP    = 1 << 3,
-    SHOOT   = 1 << 4,
-    MELEE   = 1 << 5,
-    SPECIAL = 1 << 6
-};
-
-
 // keybinds (edit here to remap)
 // look up key names here: https://wiki.libsdl.org/SDL2/SDLKeycodeLookup
 
@@ -54,6 +31,30 @@ constexpr SDL_Keycode K_FULLSCREEN = SDLK_F11;
 constexpr SDL_Keycode K_PAUSE      = SDLK_ESCAPE;
 constexpr SDL_Keycode K_QUIT       = SDLK_0;
 
+
+// amount of characters
+constexpr int CHARACTER_NUM = 9;
+
+
+// colors
+
+constexpr Color WHITE    = { 255, 255, 255, 255 };
+constexpr Color BLACK    = {   0,   0,   0, 255 };
+constexpr Color RED      = { 255,   0,   0, 255 };
+constexpr Color GREEN    = {   0, 255,   0, 255 };
+constexpr Color BLUE     = {   0,   0, 255, 255 };
+constexpr Color DARK_RED = {  45,   0,   0, 255 };
+
+// for network transmission
+enum InputBit : uint8_t {
+    LEFT    = 1 << 0,
+    RIGHT   = 1 << 1,
+    DOWN    = 1 << 2,
+    JUMP    = 1 << 3,
+    SHOOT   = 1 << 4,
+    MELEE   = 1 << 5,
+    SPECIAL = 1 << 6
+};
 
 enum class Facing { 
     LEFT, 

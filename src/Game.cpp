@@ -221,16 +221,16 @@ void Game::respawn(Player& p, bool voidDeath) {
     p.hp                 = p.character->stats.health;
     p.rect.x             = spawnX;
     p.rect.y             = -2000;
-    p.lives              -= 1;
-    p.invulnerableTimer  = Player::INV_DURATION;
+    p.lives             -= 1;
+    p.status             = Status::IDLE;
     p.charge             = 0.0f;
     p.dx = p.dy          = 0.0f;
-    p.status             = Status::IDLE;
     p.onGround           = false;
     p.hasAirJumped       = false;
     p.currentSpriteIndex = 0.0f;
     p.specialHitboxSpawned = false;
     p.resetTimers();
+    p.invulnerableTimer  = Player::INV_DURATION;
 }
 
 void Game::applySfxVolume(float multiplier) {

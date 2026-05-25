@@ -147,7 +147,7 @@ void CharacterSelectionScreen::render(SDL_Renderer* renderer, TTF_Font* font) {
     Renderer::renderText(renderer, font, "player 2", COL2_X, 150, WHITE);
 
     constexpr std::array<const char*, 6> charNames = {
-        "BERT", "BERROTA", "JORDI", "LORC", "BARCOS", "ALSEXITO"
+        "BERT", "BERROTA", "LORC", "JORDI", "BARCOS", "ALSEXITO"
     };
 
     for (int i = 0; i < (int)charNames.size(); ++i) {
