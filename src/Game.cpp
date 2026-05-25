@@ -204,6 +204,11 @@ void Game::init() {
 
     lastFpsUpdate = SDL_GetTicks();
     loadResources();
+    
+    // load config
+    options.loadFromFile();
+    applySfxVolume(options.sfxVolume);
+    Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
 }
 
 void Game::setupPlayers(const Character* c1, const std::string& n1,
@@ -304,33 +309,33 @@ void Game::showEndDialog(const std::string& msg) {
 
 void Game::handleGameplayInput() {
     // player 1 - always local
-    bool p1Left  = isDown(K_P1_LEFT);
-    bool p1Right = isDown(K_P1_RIGHT);
+    bool p1Left  = isDown(options.keyP1Left);
+    bool p1Right = isDown(options.keyP1Right);
 
     if (player1.status != Status::DAMAGED)
         player1.move((p1Left && p1Right) ? 0 : p1Left ? -1 : p1Right ? 1 : 0);
 
-    if (isPressed(K_P1_JUMP))  player1.jump();
+    if (isPressed(options.keyP1Jump))  player1.jump();
 
-    if (isPressed(K_P1_SHOOT)) {
+    if (isPressed(options.keyP1Shoot)) {
         if (player1.tryShoot(resources.projectileSound)) {
             int px = (player1.facing == Facing::LEFT) ? player1.rect.x - 20 : player1.rect.x + 20;
             projectiles.emplace_back(resources.projectileImage, px, player1.rect.y, player1.facing, &player1);
         }
     }
-    if (isPressed(K_P1_MELEE)) {
+    if (isPressed(options.keyP1Melee)) {
         if (player1.tryMelee(resources.meleeSound)) {
             int hx = player1.rect.x + (player1.facing == Facing::RIGHT ? player1.rect.w - 64 : 0);
             meleeHitboxes.emplace_back(hx, player1.rect.y + player1.rect.h - 64, 64, 64, &player1, 5);
         }
     }
-    if (isPressed(K_P1_SPECIAL)) {
+    if (isPressed(options.keyP1Special)) {
         Direction dir;
-        if      (isDown(K_P1_LEFT))  dir = Direction::LEFT;
-        else if (isDown(K_P1_RIGHT)) dir = Direction::RIGHT;
-        else if (isDown(K_P1_JUMP))  dir = Direction::UP;
-        else if (isDown(K_P1_DOWN))  dir = Direction::DOWN;
-        else                         dir = Direction::NONE;
+        if      (isDown(options.keyP1Left))  dir = Direction::LEFT;
+        else if (isDown(options.keyP1Right)) dir = Direction::RIGHT;
+        else if (isDown(options.keyP1Jump))  dir = Direction::UP;
+        else if (isDown(options.keyP1Down))  dir = Direction::DOWN;
+        else                                      dir = Direction::NONE;
         player1.trySpecial(resources.specialSounds, dir);
     }
 
@@ -349,14 +354,14 @@ void Game::handleGameplayInput() {
         p2MeleePr  = remoteIsPressed(InputBit::MELEE);
         p2SpecialPr = remoteIsPressed(InputBit::SPECIAL);
     } else {
-        p2Left     = isDown(K_P2_LEFT);
-        p2Right    = isDown(K_P2_RIGHT);
-        p2Down     = isDown(K_P2_DOWN);
-        p2JumpDn   = isDown(K_P2_JUMP);
-        p2JumpPr   = isPressed(K_P2_JUMP);
-        p2ShootPr  = isPressed(K_P2_SHOOT);
-        p2MeleePr  = isPressed(K_P2_MELEE);
-        p2SpecialPr = isPressed(K_P2_SPECIAL);
+        p2Left     = isDown(options.keyP2Left);
+        p2Right    = isDown(options.keyP2Right);
+        p2Down     = isDown(options.keyP2Down);
+        p2JumpDn   = isDown(options.keyP2Jump);
+        p2JumpPr   = isPressed(options.keyP2Jump);
+        p2ShootPr  = isPressed(options.keyP2Shoot);
+        p2MeleePr  = isPressed(options.keyP2Melee);
+        p2SpecialPr = isPressed(options.keyP2Special);
     }
 
     if (player2.status != Status::DAMAGED)
@@ -479,13 +484,13 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
 
 void Game::netSendClientInputs() {
     uint8_t inputs = 0;
-    if (isDown(K_P1_LEFT))   inputs |= InputBit::LEFT;
-    if (isDown(K_P1_RIGHT))  inputs |= InputBit::RIGHT;
-    if (isDown(K_P1_DOWN))   inputs |= InputBit::DOWN;
-    if (isDown(K_P1_JUMP))   inputs |= InputBit::JUMP;
-    if (isDown(K_P1_SHOOT))  inputs |= InputBit::SHOOT;
-    if (isDown(K_P1_MELEE))  inputs |= InputBit::MELEE;
-    if (isDown(K_P1_SPECIAL))inputs |= InputBit::SPECIAL;
+    if (isDown(options.keyP1Left))   inputs |= InputBit::LEFT;
+    if (isDown(options.keyP1Right))  inputs |= InputBit::RIGHT;
+    if (isDown(options.keyP1Down))   inputs |= InputBit::DOWN;
+    if (isDown(options.keyP1Jump))   inputs |= InputBit::JUMP;
+    if (isDown(options.keyP1Shoot))  inputs |= InputBit::SHOOT;
+    if (isDown(options.keyP1Melee))  inputs |= InputBit::MELEE;
+    if (isDown(options.keyP1Special))inputs |= InputBit::SPECIAL;
 
     ClientInputPacket cip(netFrame, inputs, lastSentInputs);
     network->send(cip);
@@ -496,10 +501,10 @@ void Game::netSendClientInputs() {
 /* --- LOGIC AND SHI --- */
 
 void Game::updateGameplay() {
-    player1.update(platforms, isDown(K_P1_DOWN));
+    player1.update(platforms, isDown(options.keyP1Down));
     bool p2Down = (networkMode == NetworkMode::REMOTE_HOST)
                   ? remoteIsDown(InputBit::DOWN)
-                  : isDown(K_P2_DOWN);
+                  : isDown(options.keyP2Down);
     player2.update(platforms, p2Down);
 
     // projectiles
@@ -769,7 +774,7 @@ void Game::renderGameplay() {
     for (auto& sw : shockwaves)   sw.draw(renderer);
 
 
-    if (debug) {
+    if (options.debug) {
         for (auto& p : platforms)          p.drawHitbox(renderer);
         player1.drawHitbox(renderer);
         player2.drawHitbox(renderer);
@@ -917,7 +922,7 @@ void Game::handleScreenTransitions() {
                 break;
             case PauseActionResult::CHANGE_VOLUME:
                 setScreen(std::make_unique<VolumeScreen>(
-                    renderer, resources.titleFont, resources.font, sfxVolume, musicVolume));
+                    renderer, resources.titleFont, resources.font, options.sfxVolume, options.musVolume));
                 break;
         }
         return;
@@ -927,10 +932,10 @@ void Game::handleScreenTransitions() {
     if (auto* vs = dynamic_cast<VolumeScreen*>(screen.get())) {
         if (!vs->isFinished()) return;
         auto vols = vs->getResult();
-        sfxVolume   = vols.sfx;
-        musicVolume = vols.music;
-        applySfxVolume(sfxVolume);
-        Mix_VolumeMusic(static_cast<int>(9 * musicVolume));
+        options.sfxVolume   = vols.sfx;
+        options.musVolume = vols.music;
+        applySfxVolume(options.sfxVolume);
+        Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
         setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont));
         return;
     }
@@ -947,7 +952,7 @@ void Game::processEvents() {
         if (screen) {
             screen->handle(e);
         } else {
-            if (e.type == SDL_KEYDOWN && e.key.keysym.sym == K_PAUSE) {
+            if (e.type == SDL_KEYDOWN && e.key.keysym.sym == options.keyPause) {
                 Mix_PauseMusic();
                 setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont));
                 continue;
@@ -1055,9 +1060,9 @@ void Game::setScreen(std::unique_ptr<Screen> newScreen) {
 
 void Game::onKey(SDL_Keycode key, KeyAction action) {
     if (action != KeyAction::PRESS) return;
-    if (key == K_QUIT)       { running = false; return; }
-    if (key == K_HITBOX)     { debug = !debug;  return; }
-    if (key == K_FULLSCREEN) {
+    if (key == options.keyQuit)       { running = false; return; }
+    if (key == options.keyDebug)      { options.debug = !options.debug;  return; }
+    if (key == options.keyFullscreen) {
         Uint32 flags = SDL_GetWindowFlags(window);
         SDL_SetWindowFullscreen(window,
             (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP);
@@ -1070,6 +1075,7 @@ void Game::onKey(SDL_Keycode key, KeyAction action) {
 /* --- CLEANUP --- */
 
 void Game::cleanup() {
+    options.saveToFile();
     if (network) { network->disconnect(); network.reset(); }
     resources.destroy();
     if (renderer) { SDL_DestroyRenderer(renderer); renderer = nullptr; }

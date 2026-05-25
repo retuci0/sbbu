@@ -1,6 +1,7 @@
 #pragma once
 
 #include "InputHandler.h"
+#include "Options.h"
 #include "objects/CollisionRect.h"
 #include "objects/Platform.h"
 #include "objects/Player.h"
@@ -100,9 +101,9 @@ private:
     SDL_Window*   window   = nullptr;
     SDL_Renderer* renderer = nullptr;
     Resources     resources;
+    Options       options;
 
     bool running = true;
-    bool debug   = false;
     bool paused  = false;
 
     std::unique_ptr<Screen> screen;
@@ -115,9 +116,6 @@ private:
 
     Player player1, player2;
     std::vector<Platform> platforms;
-
-    float sfxVolume   = 1.0f;
-    float musicVolume = 1.0f;
 
     float fps;
     int frames;

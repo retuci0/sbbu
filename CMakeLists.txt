@@ -16,6 +16,7 @@ set(SRC
     src/Main.cpp
     src/Game.cpp
     src/InputHandler.cpp
+    src/Options.cpp
     src/misc/Characters.cpp
     src/misc/Renderer.cpp
     src/net/ByteBuffer.cpp
@@ -37,6 +38,7 @@ set(SRC
 set(HEADERS
     src/Game.h
     src/InputHandler.h
+    src/Options.h
     src/misc/Characters.h
     src/misc/Color.h
     src/misc/Common.h
