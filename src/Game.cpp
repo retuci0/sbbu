@@ -457,13 +457,17 @@ void Game::updateGameplay() {
                 kbScale  = 6.0f;
                 break;
             case Status::SPECIAL_DOWN:
-                // hitbox below the player
                 hw = attacker.rect.w + 40;
                 hh = 80;
                 hx = attacker.rect.x - 20;
                 hy = attacker.rect.y + attacker.rect.h - 20;
                 dmgScale = 4.0f;
                 kbScale  = 7.0f;
+                if (attacker.onGround) {  // only when landing
+                    shockwaves.emplace_back(attacker.rect.x + attacker.rect.w / 2,
+                                            attacker.rect.y + attacker.rect.h - 16,
+                                            &attacker);
+                }
                 break;
             default:
                 return;
@@ -476,6 +480,28 @@ void Game::updateGameplay() {
 
     trySpawnSpecialHitbox(player1);
     trySpawnSpecialHitbox(player2);
+
+    for (auto it = shockwaves.begin(); it != shockwaves.end(); ) {
+        it->update();
+ 
+        auto tryHit = [&](Player& target) {
+            if (&target == it->getOwner()) return;
+            if (target.invulnerableTimer > 0) return;
+            auto dir = it->checkCollision(target);
+            if (!dir) return;
+            int dmg = static_cast<int>(it->getOwner()->character->stats.damage * 1.5f);
+            target.getHit(*dir, dmg);
+        };
+ 
+        tryHit(player1);
+        tryHit(player2);
+ 
+        if (!it->isAlive()) {
+            it = shockwaves.erase(it);
+        } else {
+            ++it;
+        }
+    }
 
     for (auto it = specialHitboxes.begin(); it != specialHitboxes.end(); ) {
         it->update();
@@ -577,9 +603,10 @@ void Game::renderGameplay() {
         for (auto& p : platforms) { p.drawHitbox(renderer); }
         player1.drawHitbox(renderer);
         player2.drawHitbox(renderer);
-        for (auto& pr : projectiles) { pr.drawHitbox(renderer); }
-        for (auto& cr : meleeHitboxes) { cr.drawHitbox(renderer); }
+        for (auto& pr : projectiles)        { pr.drawHitbox(renderer); }
+        for (auto& cr : meleeHitboxes)   { cr.drawHitbox(renderer); }
         for (auto& cr : specialHitboxes) { cr.drawHitbox(renderer); }
+        for (auto& sw : shockwaves)          { sw.drawHitboxes(renderer); }
         
         // player statuses
         Renderer::renderText(renderer, resources.font, player1.name + ": " + player1.getStatusName(), 2, 2, BLACK);

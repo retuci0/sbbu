@@ -7,6 +7,7 @@
 #include "objects/Projectile.h"
 #include "misc/Characters.h"
 #include "misc/Common.h"
+#include "objects/Shockwave.h"
 #include "ui/Screen.h"
 
 #include <SDL2/SDL.h>
@@ -94,6 +95,7 @@ private:
     void setScreen(std::unique_ptr<Screen> screen);
 
     std::vector<Projectile> projectiles;
+    std::vector<Shockwave> shockwaves;
     std::vector<CollisionRect> meleeHitboxes;
     std::vector<CollisionRect> specialHitboxes;
 
