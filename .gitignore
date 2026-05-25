@@ -44,6 +44,7 @@ _deps
 CMakeUserPresets.json
 
 *-prefix/
+.cache/
 
 todo.txt
 crash_logs/

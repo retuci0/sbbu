@@ -32,7 +32,7 @@ private:
     RemoteSetupResult result;
 
     std::string ipInput = "127.0.0.1";
-    std::string portInput = "67689";
+    std::string portInput = "60789";
     int activeField = 0;
     bool isHost = true;
     bool connecting = false;

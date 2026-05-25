@@ -76,7 +76,12 @@ struct Resources {
     }
 };
 
-enum class NetworkMode { NONE, LOCAL, REMOTE_HOST, REMOTE_CLIENT };
+enum class NetworkMode { 
+    NONE, 
+    LOCAL, 
+    REMOTE_HOST, 
+    REMOTE_CLIENT 
+};
 
 class Game : public InputHandler {
 public:
