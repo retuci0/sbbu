@@ -3,6 +3,9 @@
 #include "../widget/Button.h"
 #include "../../misc/Renderer.h"
 #include "../../misc/Common.h"
+#include <SDL2/SDL_net.h>
+#include <iostream>
+#include <ostream>
 
 
 RemoteSetupScreen::RemoteSetupScreen(SDL_Renderer* r, TTF_Font* tf)
@@ -18,16 +21,22 @@ void RemoteSetupScreen::tryConnect() {
     uint16_t port = static_cast<uint16_t>(std::stoi(portInput));
     if (isHost) {
         result.network = Network::createHost(port);
-        if (result.network && result.network->isConnected()) {
+        if (result.network) {
             result.role = RemoteSetupRole::HOST;
             finished = true;
-        } else statusMsg = "failed to host on port " + portInput;
+        } else {
+            statusMsg = "failed to host on port " + portInput;
+            std::cout << SDLNet_GetError() << std::endl;
+        }
     } else {
         result.network = Network::createClient(ipInput.c_str(), port);
         if (result.network) {
             result.role = RemoteSetupRole::CLIENT;
             finished = true;
-        } else statusMsg = "couldn't connect to " + ipInput + ":" + portInput;
+        } else {
+            statusMsg = "couldn't connect to " + ipInput + ":" + portInput;
+            std::cout << SDLNet_GetError() << std::endl;
+        }
     }
     connecting = false;
 }

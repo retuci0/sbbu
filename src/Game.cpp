@@ -14,6 +14,7 @@
 
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_net.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_timer.h>
@@ -171,14 +172,21 @@ void Game::playGameMusic() {
 /* --- SETUP --- */
 
 void Game::init() {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0)
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
         throw std::runtime_error(std::string("SDL_Init: ") + SDL_GetError());
-    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG))
+    }
+    if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
         throw std::runtime_error(std::string("IMG_Init: ") + IMG_GetError());
-    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) != 0)
+    }
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) != 0) {
         throw std::runtime_error(std::string("Mix_OpenAudio: ") + Mix_GetError());
-    if (TTF_Init() != 0)
+    }
+    if (TTF_Init() != 0) {
         throw std::runtime_error(std::string("TTF_Init: ") + TTF_GetError());
+    }
+    if (SDLNet_Init() < 0) {
+        throw std::runtime_error(std::string("SDLNet_Init: ") + SDLNet_GetError());
+    }
 
     window = SDL_CreateWindow(
         "super bert bros (please don't sue me nintendo)",
