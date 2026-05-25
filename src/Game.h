@@ -14,6 +14,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_render.h>
 #include <SDL2/SDL_stdinc.h>
 #include <SDL2/SDL_ttf.h>
 
@@ -37,6 +38,7 @@ struct Resources {
     SDL_Texture* shockwaveImage     = nullptr;
     SDL_Texture* heartImage         = nullptr;
     SDL_Texture* bgImage            = nullptr;
+    SDL_Texture* titleBgImage       = nullptr;
 
     // fonts
     TTF_Font* titleFont             = nullptr;

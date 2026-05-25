@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Screen.h"
+#include <SDL2/SDL_render.h>
 
 
 enum class MultiplayerModeResult { 
@@ -10,7 +11,7 @@ enum class MultiplayerModeResult {
 
 class TitleScreen : public Screen {
 public:
-    TitleScreen(SDL_Renderer* r, TTF_Font* titleFont, TTF_Font* font);
+    TitleScreen(SDL_Renderer* r, SDL_Texture* bg, TTF_Font* font);
     void handle(const SDL_Event& e) override;
     void render(SDL_Renderer* r, TTF_Font* f) override;
     bool isFinished() const { return finished; }
@@ -18,7 +19,8 @@ public:
     
 private:
     SDL_Renderer* renderer;
-    TTF_Font *titleFont, *font;
+    TTF_Font* font;
+    SDL_Texture* bg;
     bool finished = false;
     MultiplayerModeResult result = MultiplayerModeResult::LOCAL;
 };

@@ -44,6 +44,7 @@ void Resources::destroy() {
     dTex(shockwaveImage);
     dTex(heartImage);
     dTex(bgImage);
+    dTex(titleBgImage);
 
     if (titleFont) { TTF_CloseFont(titleFont); titleFont = nullptr; }
     if (font)      { TTF_CloseFont(font);           font      = nullptr; }
@@ -112,6 +113,7 @@ void Game::loadResources() {
     resources.shockwaveImage     = loadTex("assets/images/projectile/shockwave.png");
     resources.heartImage         = loadTex("assets/images/ui/heart.png");
     resources.bgImage            = loadTex("assets/images/ui/background.png");
+    resources.titleBgImage       = loadTex("assets/images/ui/titlescreen.png");
 
     resources.titleFont = findFont(50);
     resources.font      = findFont(30);
@@ -172,6 +174,7 @@ void Game::playGameMusic() {
 /* --- SETUP --- */
 
 void Game::init() {
+    // init sdl
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
         throw std::runtime_error(std::string("SDL_Init: ") + SDL_GetError());
     }
@@ -189,14 +192,14 @@ void Game::init() {
     }
 
     window = SDL_CreateWindow(
-        "super bert bros (please don't sue me nintendo)",
+        "super bert bros ultimate",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         SW, SH, SDL_WINDOW_SHOWN);
-    if (!window) throw std::runtime_error(std::string("CreateWindow: ") + SDL_GetError());
+    if (!window) throw std::runtime_error(std::string("SDL_CreateWindow: ") + SDL_GetError());
 
     renderer = SDL_CreateRenderer(window, -1,
         SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-    if (!renderer) throw std::runtime_error(std::string("CreateRenderer: ") + SDL_GetError());
+    if (!renderer) throw std::runtime_error(std::string("SDL_CreateRenderer: ") + SDL_GetError());
     SDL_RenderSetLogicalSize(renderer, SW, SH);
 
     lastFpsUpdate = SDL_GetTicks();
@@ -269,9 +272,12 @@ void Game::showEndDialog(const std::string& msg) {
     while (waiting && SDL_GetTicks() - start < 5000) {
         SDL_Event ev;
         while (SDL_PollEvent(&ev)) {
-            if (ev.type == SDL_QUIT)                             waiting = false;
-            if (ev.type == SDL_KEYDOWN &&
-                ev.key.keysym.sym == SDLK_RETURN)               waiting = false;
+            if (ev.type == SDL_QUIT) {
+                waiting = false;
+            } 
+            if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_RETURN) {
+                waiting = false;
+            }
         }
         Renderer::fillRect(renderer, 0, 0, SW, SH, {0, 0, 0, 180});
         int lineY = SH / 2 - 80;
@@ -901,7 +907,7 @@ void Game::handleScreenTransitions() {
                     network.reset();
                     networkMode = NetworkMode::NONE;
                     setScreen(std::make_unique<TitleScreen>(
-                        renderer, resources.titleFont, resources.font));
+                        renderer, resources.titleBgImage, resources.font));
                 } else {
                     setScreen(std::make_unique<CharacterSelectionScreen>(
                         renderer, resources.titleFont, resources.font, resources.characterList(),
@@ -998,14 +1004,14 @@ void Game::update() {
         Mix_HaltMusic();
         if (network) { network->disconnect(); network.reset(); }
         networkMode = NetworkMode::NONE;
-        setScreen(std::make_unique<TitleScreen>(renderer, resources.titleFont, resources.font));
+        setScreen(std::make_unique<TitleScreen>(renderer, resources.titleBgImage, resources.font));
     } else if (player2.lives == -1) {
         showEndDialog("GG!\n1st: " + player1.name + " (" + player1.character->stats.name + ")\n"
                      "2nd: " + player2.name + " (" + player2.character->stats.name + ")");
         Mix_HaltMusic();
         if (network) { network->disconnect(); network.reset(); }
         networkMode = NetworkMode::NONE;
-        setScreen(std::make_unique<TitleScreen>(renderer, resources.titleFont, resources.font));
+        setScreen(std::make_unique<TitleScreen>(renderer, resources.titleBgImage, resources.font));
     }
 }
 
@@ -1030,9 +1036,9 @@ void Game::render() {
 }
 
 void Game::run() {
-    // start on multiplayer mode selection screen
+    // start on title screen
     playTitleMusic();
-    setScreen(std::make_unique<TitleScreen>(renderer, resources.titleFont, resources.font));
+    setScreen(std::make_unique<TitleScreen>(renderer, resources.titleBgImage, resources.font));
 
     while (running) {
         beginFrame();
