@@ -17,6 +17,7 @@ set(SRC
     src/Game.cpp
     src/InputHandler.cpp
     src/Options.cpp
+    src/Resources.cpp
     src/misc/Characters.cpp
     src/misc/Renderer.cpp
     src/net/ByteBuffer.cpp
@@ -26,6 +27,7 @@ set(SRC
     src/objects/Projectile.cpp
     src/objects/Platform.cpp
     src/ui/screen/CharacterSelectionScreen.cpp
+    src/ui/screen/ControlsScreen.cpp
     src/ui/screen/TitleScreen.cpp
     src/ui/screen/PauseScreen.cpp
     src/ui/screen/RemoteSetupScreen.cpp
@@ -39,6 +41,7 @@ set(HEADERS
     src/Game.h
     src/InputHandler.h
     src/Options.h
+    src/Resources.h
     src/misc/Characters.h
     src/misc/Color.h
     src/misc/Common.h
@@ -57,6 +60,7 @@ set(HEADERS
     src/ui/widget/Button.h
     src/ui/widget/Slider.h
     src/ui/screen/CharacterSelectionScreen.h
+    src/ui/screen/ControlsScreen.h
     src/ui/screen/TitleScreen.h
     src/ui/screen/PauseScreen.h
     src/ui/screen/RemoteSetupScreen.h

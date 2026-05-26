@@ -9,7 +9,8 @@ enum class PauseActionResult {
     RESUME,
     QUIT,
     RESTART,
-    CHANGE_VOLUME
+    CHANGE_VOLUME,
+    CHANGE_CONTROLS
 };
 
 class PauseScreen : public Screen {

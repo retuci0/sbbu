@@ -12,10 +12,11 @@ PauseScreen::PauseScreen(SDL_Renderer* /*renderer*/, int /*sw*/, int /*sh*/, TTF
 {
     const Color bg = {255, 255, 255, 255};
 
-    addWidget<Button>(300,  450, 600, 150, "resume",        bg, BLACK, [&]{ result = PauseActionResult::RESUME;        finished = true; });
-    addWidget<Button>(1000, 450, 600, 150, "quit",          bg, BLACK, [&]{ result = PauseActionResult::QUIT;          finished = true; });
-    addWidget<Button>(300,  700, 600, 150, "restart",       bg, BLACK, [&]{ result = PauseActionResult::RESTART;       finished = true; });
-    addWidget<Button>(1000, 700, 600, 150, "change volume", bg, BLACK, [&]{ result = PauseActionResult::CHANGE_VOLUME; finished = true; });
+    addWidget<Button>(300,  450, 600, 150, "resume",        bg, BLACK, [&]{ result = PauseActionResult::RESUME;             finished = true; });
+    addWidget<Button>(1000, 450, 600, 150, "quit",          bg, BLACK, [&]{ result = PauseActionResult::QUIT;               finished = true; });
+    addWidget<Button>(300,  700, 600, 150, "restart",       bg, BLACK, [&]{ result = PauseActionResult::RESTART;            finished = true; });
+    addWidget<Button>(1000, 700, 600, 150, "change volume", bg, BLACK, [&]{ result = PauseActionResult::CHANGE_VOLUME;      finished = true; });
+    addWidget<Button>(650,  700, 600, 150, "controls",      bg, BLACK, [&]{ result = PauseActionResult::CHANGE_CONTROLS;    finished = true; });
 }
 
 void PauseScreen::render(SDL_Renderer* renderer, TTF_Font* font) {

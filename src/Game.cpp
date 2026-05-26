@@ -6,6 +6,7 @@
 #include "misc/Renderer.h"
 #include "net/Packets.h"
 #include "ui/screen/CharacterSelectionScreen.h"
+#include "ui/screen/ControlsScreen.h"
 #include "ui/screen/TitleScreen.h"
 #include "ui/screen/PauseScreen.h"
 #include "ui/screen/RemoteSetupScreen.h"
@@ -25,6 +26,9 @@
 #include <stdexcept>
 #include <random>
 
+
+/* --- CONSTANTS --- */
+
 static constexpr int PADDING = 2;
 static constexpr int MM_W = 200;
 static constexpr int MM_H = 120;
@@ -32,129 +36,7 @@ static constexpr int MM_X = PADDING;
 static constexpr int MM_Y = SH - MM_H - PADDING;
 
 
-/* --- RESOURCES --- */
-
-void Resources::destroy() {
-    auto dTex   = [](SDL_Texture*& t) { if (t) { SDL_DestroyTexture(t); t = nullptr; } };
-    auto dChunk = [](Mix_Chunk*&   c) { if (c) { Mix_FreeChunk(c);      c = nullptr; } };
-
-    dTex(platformImage);
-    dTex(smallPlatformImage);
-    dTex(projectileImage);
-    dTex(shockwaveImage);
-    dTex(heartImage);
-    dTex(bgImage);
-    dTex(titleBgImage);
-
-    if (titleFont) { TTF_CloseFont(titleFont); titleFont = nullptr; }
-    if (font)      { TTF_CloseFont(font);           font      = nullptr; }
-    if (smallFont) { TTF_CloseFont(smallFont); smallFont = nullptr; }
-
-    dChunk(jumpSound);
-    dChunk(jumpSound2);
-    dChunk(deathSound);
-    dChunk(projectileSound);
-    dChunk(meleeSound);
-    dChunk(voidDeathSound);
-    dChunk(damageSound);
-    dChunk(gameEndSound);
-
-    if (specialSounds) {
-        for (int i = 0; i < 4; ++i) dChunk(specialSounds[i]);
-        delete[] specialSounds;
-        specialSounds = nullptr;
-    }
-
-    if (music) { Mix_FreeMusic(music); music = nullptr; }
-    if (titleScreenMusic) { Mix_FreeMusic(titleScreenMusic); titleScreenMusic = nullptr; }
-
-    BERT.unload();
-    BERROTA.unload();
-    JORDI.unload();
-    LORC.unload();
-    BARCOS.unload();
-    ALSEXITO.unload();
-    SHASHA.unload();
-    OSCAR.unload();
-    FLAN.unload();
-}
-
-TTF_Font* Game::findFont(int size) {
-    static const char* candidates[] = {
-        "assets/font.ttf",
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-        "/System/Library/Fonts/Helvetica.ttc",
-        "C:/Windows/Fonts/arial.ttf",
-        nullptr
-    };
-    for (int i = 0; candidates[i]; ++i) {
-        TTF_Font* f = TTF_OpenFont(candidates[i], size);
-        if (f) return f;
-    }
-    throw std::runtime_error("no TTF font found: place a font.ttf in the working directory.");
-}
-
-void Game::loadResources() {
-    auto loadTex = [&](const char* path) -> SDL_Texture* {
-        SDL_Texture* t = IMG_LoadTexture(renderer, path);
-        if (!t) SDL_Log("missing texture: %s (%s)", path, IMG_GetError());
-        return t;
-    };
-    auto loadChunk = [&](const char* path) -> Mix_Chunk* {
-        Mix_Chunk* c = Mix_LoadWAV(path);
-        if (!c) SDL_Log("missing sound: %s (%s)", path, Mix_GetError());
-        return c;
-    };
-
-    resources.platformImage      = loadTex("assets/images/platform/platform_big.png");
-    resources.smallPlatformImage = loadTex("assets/images/platform/platform_small.png");
-    resources.projectileImage    = loadTex("assets/images/projectile/projectile.png");
-    resources.shockwaveImage     = loadTex("assets/images/projectile/shockwave.png");
-    resources.heartImage         = loadTex("assets/images/ui/heart.png");
-    resources.bgImage            = loadTex("assets/images/ui/background.png");
-    resources.titleBgImage       = loadTex("assets/images/ui/titlescreen.png");
-
-    resources.titleFont = findFont(50);
-    resources.font      = findFont(30);
-    resources.smallFont = findFont(21);
-
-    resources.jumpSound         = loadChunk("assets/sound/jump.wav");
-    resources.jumpSound2        = loadChunk("assets/sound/jump2.wav");
-    resources.deathSound        = loadChunk("assets/sound/death.wav");
-    resources.projectileSound   = loadChunk("assets/sound/projectile.wav");
-    resources.meleeSound        = loadChunk("assets/sound/punch.wav");
-    resources.voidDeathSound    = loadChunk("assets/sound/void_death.wav");
-    resources.damageSound       = loadChunk("assets/sound/damage.wav");
-    resources.gameEndSound      = loadChunk("assets/sound/game_end.wav");
-    resources.music             = Mix_LoadMUS("assets/sound/music.mp3");
-    resources.titleScreenMusic  = Mix_LoadMUS("assets/sound/titlescreenmusic.mp3");
-
-    resources.specialSounds = new Mix_Chunk*[4] {
-        loadChunk("assets/sound/special_static.wav"),
-        loadChunk("assets/sound/special_side.wav"),
-        loadChunk("assets/sound/special_up.wav"),
-        loadChunk("assets/sound/special_down.wav")
-    };
-
-    if (resources.jumpSound)        Mix_VolumeChunk(resources.jumpSound,        64);
-    if (resources.jumpSound2)       Mix_VolumeChunk(resources.jumpSound2,       26);
-    if (resources.deathSound)       Mix_VolumeChunk(resources.deathSound,      115);
-    if (resources.projectileSound)  Mix_VolumeChunk(resources.projectileSound,  26);
-    if (resources.voidDeathSound)   Mix_VolumeChunk(resources.voidDeathSound,    9);
-    if (resources.damageSound)      Mix_VolumeChunk(resources.damageSound,     102);
-    if (resources.gameEndSound)     Mix_VolumeChunk(resources.gameEndSound,     13);
-    if (resources.music)            Mix_VolumeMusic(9);
-    if (resources.titleScreenMusic) Mix_VolumeMusic(9);
-
-    resources.BERT     = loadCharacter(renderer, BERT_STATS,     "assets/images/characters/bert");
-    resources.BERROTA  = loadCharacter(renderer, BERROTA_STATS,  "assets/images/characters/berrota");
-    resources.JORDI    = loadCharacter(renderer, JORDI_STATS,    "assets/images/characters/jordi");
-    resources.LORC     = loadCharacter(renderer, LORC_STATS,     "assets/images/characters/lorc");
-    resources.BARCOS   = loadCharacter(renderer, BARCOS_STATS,   "assets/images/characters/barcos");
-    resources.ALSEXITO = loadCharacter(renderer, ALSEXITO_STATS, "assets/images/characters/alsexito");
-    // SHASHA, OSCAR, SASU, FLAN not yet available
-}
+/* --- MUSIC --- */
 
 void Game::playTitleMusic() {
     if (resources.titleScreenMusic) {
@@ -203,11 +85,11 @@ void Game::init() {
     SDL_RenderSetLogicalSize(renderer, SW, SH);
 
     lastFpsUpdate = SDL_GetTicks();
-    loadResources();
+    resources.load(renderer);
     
     // load config
     options.loadFromFile();
-    applySfxVolume(options.sfxVolume);
+    resources.applySfxVolume(options.sfxVolume);
     Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
 }
 
@@ -255,20 +137,6 @@ void Game::respawn(Player& p, bool voidDeath) {
     p.specialHitboxSpawned = false;
     p.resetTimers();
     p.invulnerableTimer  = Player::INV_DURATION;
-}
-
-void Game::applySfxVolume(float multiplier) {
-    auto set = [&](Mix_Chunk* c, int base) {
-        if (c) Mix_VolumeChunk(c, std::clamp(static_cast<int>(base * multiplier), 0, 128));
-    };
-    set(resources.deathSound,      115);
-    set(resources.projectileSound,  26);
-    set(resources.meleeSound,       10);
-    set(resources.voidDeathSound,    9);
-    set(resources.damageSound,     102);
-    set(resources.gameEndSound,     13);
-    if (resources.specialSounds)
-        for (int i = 0; i < 4; ++i) set(resources.specialSounds[i], 64);
 }
 
 void Game::showEndDialog(const std::string& msg) {
@@ -924,6 +792,10 @@ void Game::handleScreenTransitions() {
                 setScreen(std::make_unique<VolumeScreen>(
                     renderer, resources.titleFont, resources.font, options.sfxVolume, options.musVolume));
                 break;
+            case PauseActionResult::CHANGE_CONTROLS:
+                setScreen(std::make_unique<ControlsScreen>(
+                    renderer, resources.titleFont, resources.font, options));
+                break;
         }
         return;
     }
@@ -934,8 +806,15 @@ void Game::handleScreenTransitions() {
         auto vols = vs->getResult();
         options.sfxVolume   = vols.sfx;
         options.musVolume = vols.music;
-        applySfxVolume(options.sfxVolume);
+        resources.applySfxVolume(options.sfxVolume);
         Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
+        setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont));
+        return;
+    }
+
+    if (auto* cs = dynamic_cast<ControlsScreen*>(screen.get())) {
+        if (!cs->isFinished()) return;
+        options.saveToFile();
         setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont));
         return;
     }

@@ -9,6 +9,13 @@
 #include <queue>
 
 
+enum class NetworkMode { 
+    NONE, 
+    LOCAL, 
+    REMOTE_HOST, 
+    REMOTE_CLIENT 
+};
+
 class Network {
 public:
     using OnConnectCallback     = std::function<void()>;
