@@ -191,60 +191,45 @@ bool Player::trySpecial(Mix_Chunk** sounds, Direction dir) {
 
 void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed) {
     // apply gravity
-    dy = std::min(
-        character->stats.terminalVelocity,
-        dy + character->stats.gravity
-    );
+    dy = std::min(character->stats.terminalVelocity, dy + character->stats.gravity);
 
-    // move horizontally
+    // invulnerability sync
+    if (invulnerableTimer == 0) invulnerableTimer = damagedTimer;
+
+    // drop-through
+    if (downKeyPressed && onGround && droppingTimer == 0) droppingTimer = DROP_DURATION;
+    if (droppingTimer > 0) --droppingTimer;
+    const bool dropping = (droppingTimer > 0);
+
+    // horizontal move
     rect.x += static_cast<int>(dx);
 
-    // invulnerable while damaged
-    if (invulnerableTimer == 0) { invulnerableTimer = damagedTimer; }
-    
+    // snapshot the player's bottom before the vertical move
+    // to know whether it approached from above
+    const int prevBottom = rect.y + rect.h;
 
-    // horizontal collision + edge climbing
-    for (const auto& p : platforms) {
-        if (downKeyPressed) continue;
-        if (SDL_HasIntersection(&rect, &p.rect)) {
-            int feetY       = rect.y + rect.h;
-            int platformTop = p.rect.y;
-            int edgeOverlap = feetY - platformTop;
-
-            // if feet are just barely overlapping the top of the platform,
-            // step the player up onto it (edge climb) rather than blocking them
-            if (edgeOverlap > 0 && edgeOverlap <= EDGE_CLIMB_THRESHOLD && dy >= 0) {
-                rect.y = platformTop - rect.h;
-                dy = 0;
-            } else {
-                if (dy >= 0) {
-                    if (dx > 0) rect.x = p.rect.x - rect.w;
-                    if (dx < 0) rect.x = p.rect.x + p.rect.w;
-                }
-            }
-        }
-    }
-
-    // move vertically
+    // vertical move
     rect.y += static_cast<int>(dy);
     onGround = false;
 
-    for (const auto& p : platforms) {
-        if (SDL_HasIntersection(&rect, &p.rect)) {
-            if (dy >= 0) {
-                // landing on top of platform
-                rect.y = p.rect.y - rect.h;
-                dy = 0;
-                if (!onGround) {
-                    hasAirJumped = false;
-                }
-                onGround = true;
-            }
+    // land on top of platforms (only while falling, only from above, only if not dropping)
+    if (!dropping && dy >= 0) {
+        for (const auto& p : platforms) {
+            // prevents sticking from underneath when jumping up
+            if (prevBottom > p.rect.y) continue;
+
+            if (!SDL_HasIntersection(&rect, &p.rect)) continue;
+
+            rect.y         = p.rect.y - rect.h;
+            dy             = 0.0f;
+            onGround       = true;
+            hasAirJumped   = false;
         }
     }
 
-    if (!onGround) {
-        SDL_Rect probe = { rect.x, rect.y + 2, rect.w, rect.h };
+    // when stationary on a platform
+    if (!onGround && !dropping) {
+        SDL_Rect probe = { rect.x, rect.y + rect.h, rect.w, 3 };
         for (const auto& p : platforms) {
             if (SDL_HasIntersection(&probe, &p.rect)) {
                 onGround = true;

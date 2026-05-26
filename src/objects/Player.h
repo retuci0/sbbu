@@ -66,6 +66,8 @@ public:
     static constexpr int SPECIAL_COOLDOWN       = 60;
     int specialTimer                            = 0;
     static constexpr int SPECIAL_DURATION       = 24;
+    int droppingTimer = 0;
+    static constexpr int DROP_DURATION = 15;
 
     float charge = 0.0f;
     static constexpr float MAX_CHARGE = 1.0f;
