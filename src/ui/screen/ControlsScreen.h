@@ -12,10 +12,11 @@ public:
     ControlsScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, Options& options);
 
     void handle(const SDL_Event& e) override;
-    void render(SDL_Renderer* renderer, TTF_Font* font) override;
+    void render(SDL_Renderer* renderer) override;
     bool isFinished() const { return finished; }
 
 private:
     TTF_Font* titleFont;
+    TTF_Font* font;
     bool finished = false;
 };

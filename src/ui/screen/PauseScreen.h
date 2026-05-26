@@ -15,15 +15,16 @@ enum class PauseActionResult {
 
 class PauseScreen : public Screen {
 public:
-    PauseScreen(SDL_Renderer* renderer, int sw, int sh, TTF_Font* titleFont);
+    PauseScreen(SDL_Renderer* renderer, int sw, int sh, TTF_Font* titleFont, TTF_Font* font);
 
-    void render(SDL_Renderer* renderer, TTF_Font* font) override;
+    void render(SDL_Renderer* renderer) override;
 
     bool isFinished() const { return finished; }
     PauseActionResult getResult() const { return result; }
 
 private:
     TTF_Font* titleFont;
+    TTF_Font* font;
     bool finished = false;
     PauseActionResult result = PauseActionResult::RESUME;
 };

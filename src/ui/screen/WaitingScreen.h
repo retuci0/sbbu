@@ -6,7 +6,7 @@
 class WaitingScreen : public Screen {
 public:
     WaitingScreen(SDL_Renderer* r, TTF_Font* titleFont, TTF_Font* font);
-    void render(SDL_Renderer* r, TTF_Font* f) override;
+    void render(SDL_Renderer* r) override;
     void update() override;
 
 private:

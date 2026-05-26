@@ -19,15 +19,16 @@ struct RemoteSetupResult {
 
 class RemoteSetupScreen : public Screen {
 public:
-    RemoteSetupScreen(SDL_Renderer* r, TTF_Font* titleFont);
+    RemoteSetupScreen(SDL_Renderer* r, TTF_Font* titleFont, TTF_Font* font);
     void handle(const SDL_Event& e) override;
-    void render(SDL_Renderer* r, TTF_Font* f) override;
+    void render(SDL_Renderer* r) override;
     bool isFinished() const { return finished; }
+    bool shouldGoBack() const { return goBack; }
     RemoteSetupResult takeResult() { return std::move(result); }
     
 private:
     SDL_Renderer* renderer;
-    TTF_Font *titleFont;
+    TTF_Font *titleFont, *font;
     bool finished = false;
     RemoteSetupResult result;
 
@@ -36,6 +37,7 @@ private:
     int activeField = 0;
     bool isHost = true;
     bool connecting = false;
+    bool goBack = false;
     std::string statusMsg;
 
     void tryConnect();

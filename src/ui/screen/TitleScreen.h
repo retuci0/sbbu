@@ -13,7 +13,7 @@ class TitleScreen : public Screen {
 public:
     TitleScreen(SDL_Renderer* r, SDL_Texture* bg, TTF_Font* font);
     void handle(const SDL_Event& e) override;
-    void render(SDL_Renderer* r, TTF_Font* f) override;
+    void render(SDL_Renderer* r) override;
     bool isFinished() const { return finished; }
     MultiplayerModeResult getResult() const { return result; }
     

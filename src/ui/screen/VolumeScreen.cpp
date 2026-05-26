@@ -12,7 +12,7 @@ static constexpr int SL_SFX_Y = 420, SL_MUSIC_Y = 600;
 static constexpr int OK_X = 860, OK_Y = 750, OK_W = 200, OK_H = 70;
 
 VolumeScreen::VolumeScreen(SDL_Renderer* /*renderer*/, TTF_Font* titleFont, TTF_Font* font, float currentSfx, float currentMusic)
-    : titleFont(titleFont)
+    : titleFont(titleFont), font(font)
 {
     sfxSlider   = addWidget<Slider>(SL_X, SL_SFX_Y,   SL_W, SL_H, 0.0f, 2.0f, currentSfx,   "SFX Volume");
     musicSlider = addWidget<Slider>(SL_X, SL_MUSIC_Y, SL_W, SL_H, 0.0f, 2.0f, currentMusic, "music Volume");
@@ -23,7 +23,7 @@ VolumeScreen::VolumeScreen(SDL_Renderer* /*renderer*/, TTF_Font* titleFont, TTF_
     );
 }
 
-void VolumeScreen::render(SDL_Renderer* renderer, TTF_Font* font) {
+void VolumeScreen::render(SDL_Renderer* renderer) {
     Renderer::fillRect(renderer, 0, 0, SW, SH, {20, 20, 20, 255});
     Renderer::renderText(renderer, titleFont, "volume settings", 750, 200, WHITE);
     drawWidgets(renderer, font);

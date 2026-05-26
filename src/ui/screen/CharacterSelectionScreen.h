@@ -29,7 +29,7 @@ public:
                              const std::string& defaultName2, const Character* defaultChar2);
 
     void handle(const SDL_Event& e) override;
-    void render(SDL_Renderer* renderer, TTF_Font* font) override;
+    void render(SDL_Renderer* renderer) override;
 
     bool isFinished() const { return finished; }
     CharacterSelectionResult getResult() const { return result; }

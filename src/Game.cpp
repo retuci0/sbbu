@@ -23,6 +23,7 @@
 #include <SDL2/SDL_ttf.h>
 
 #include <algorithm>
+#include <memory>
 #include <stdexcept>
 #include <random>
 
@@ -185,8 +186,13 @@ void Game::handleGameplayInput() {
     }
     if (isPressed(options.keyP1Melee)) {
         if (player1.tryMelee(resources.meleeSound)) {
-            int hx = player1.rect.x + (player1.facing == Facing::RIGHT ? player1.rect.w - 64 : 0);
-            meleeHitboxes.emplace_back(hx, player1.rect.y + player1.rect.h - 64, 64, 64, &player1, 5);
+            const int hw = 86;
+            const int hh = 76;
+            int hx = (player1.facing == Facing::RIGHT)
+                   ? player1.rect.x + player1.rect.w - 36
+                   : player1.rect.x - hw + 36;
+            int hy = player1.rect.y + (player1.rect.h - hh) / 2;
+            meleeHitboxes.emplace_back(hx, hy, hw, hh, &player1, 6);
         }
     }
     if (isPressed(options.keyP1Special)) {
@@ -237,8 +243,13 @@ void Game::handleGameplayInput() {
     }
     if (p2MeleePr) {
         if (player2.tryMelee(resources.meleeSound)) {
-            int hx = player2.rect.x + (player2.facing == Facing::RIGHT ? player2.rect.w - 64 : 0);
-            meleeHitboxes.emplace_back(hx, player2.rect.y + player2.rect.h - 64, 64, 64, &player2, 5);
+            const int hw = 86;
+            const int hh = 76;
+            int hx = (player2.facing == Facing::RIGHT)
+                   ? player2.rect.x + player2.rect.w - 36
+                   : player2.rect.x - hw + 36;
+            int hy = player2.rect.y + (player2.rect.h - hh) / 2;
+            meleeHitboxes.emplace_back(hx, hy, hw, hh, &player2, 6);
         }
     }
     if (p2SpecialPr) {
@@ -363,8 +374,11 @@ void Game::netSendStateUpdate() {
         ProjectileState ps;
         ps.x = static_cast<float>(projectile.rect.x);
         ps.y = static_cast<float>(projectile.rect.y);
+        ps.velocity = projectile.velocity;
         ps.facing = static_cast<uint8_t>(projectile.direction);
         ps.ownerId = projectile.owner ? static_cast<uint8_t>(projectile.owner->id) : 0;
+        ps.parryFreezeTimer = static_cast<uint8_t>(std::clamp(projectile.parryFreezeTimer, 0, 255));
+        ps.parryFlashTimer = static_cast<uint8_t>(std::clamp(projectile.parryFlashTimer, 0, 255));
         sup.projectiles.push_back(ps);
     }
 
@@ -407,6 +421,9 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
                                      static_cast<int>(ps.y),
                                      static_cast<Facing>(ps.facing),
                                      owner);
+            projectiles.back().velocity = ps.velocity;
+            projectiles.back().parryFreezeTimer = ps.parryFreezeTimer;
+            projectiles.back().parryFlashTimer = ps.parryFlashTimer;
         }
     }
     hasTargetState = true;
@@ -430,8 +447,11 @@ void Game::netInterpolateRemoteState() {
         const auto& target = targetProjectiles[i];
         projectiles[i].rect.x = approach(projectiles[i].rect.x, target.x);
         projectiles[i].rect.y = approach(projectiles[i].rect.y, target.y);
+        projectiles[i].velocity = target.velocity;
         projectiles[i].direction = static_cast<Facing>(target.facing);
         projectiles[i].owner = (target.ownerId == 1) ? &player2 : &player1;
+        projectiles[i].parryFreezeTimer = target.parryFreezeTimer;
+        projectiles[i].parryFlashTimer = target.parryFlashTimer;
     }
 }
 
@@ -460,44 +480,6 @@ void Game::updateGameplay() {
                   : isDown(options.keyP2Down);
     player2.update(platforms, p2Down);
 
-    // projectiles
-    for (auto it = projectiles.begin(); it != projectiles.end(); ) {
-        it->move();
-        if (it->rect.x >= SW || it->rect.x <= 0) { it = projectiles.erase(it); continue; }
-        if (it->owner != &player1 && SDL_HasIntersection(&it->rect, &player1.rect)) {
-            if (player1.invulnerableTimer > 0) { ++it; continue; }
-            player1.getHit(it->direction, it->owner->character->stats.projectileDamage);
-            it->owner->charge = std::min(it->owner->charge + 0.1f, Player::MAX_CHARGE);
-            it = projectiles.erase(it); continue;
-        }
-        if (it->owner != &player2 && SDL_HasIntersection(&it->rect, &player2.rect)) {
-            if (player2.invulnerableTimer > 0) { ++it; continue; }
-            player2.getHit(it->direction, it->owner->character->stats.projectileDamage);
-            it->owner->charge = std::min(it->owner->charge + 0.1f, Player::MAX_CHARGE);
-            it = projectiles.erase(it); continue;
-        }
-        ++it;
-    }
-    if (projectiles.size() > MAX_PROJ) projectiles.erase(projectiles.begin());
-
-    // melee hitboxes
-    for (auto it = meleeHitboxes.begin(); it != meleeHitboxes.end(); ) {
-        it->update();
-        if (!it->isAlive()) { it = meleeHitboxes.erase(it); continue; }
-        if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
-            player2.getHit(player1.facing, it->owner->character->stats.damage);
-            player1.charge = std::min(player1.charge + 0.1f, Player::MAX_CHARGE);
-            it = meleeHitboxes.erase(it); continue;
-        }
-        if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
-            player1.getHit(player2.facing, it->owner->character->stats.damage);
-            player2.charge = std::min(player2.charge + 0.1f, Player::MAX_CHARGE);
-            it = meleeHitboxes.erase(it); continue;
-        }
-        ++it;
-    }
-
-    // special hitboxes
     auto trySpawnSpecialHitbox = [&](Player& attacker) {
         if (attacker.status != Status::SPECIAL_STATIC &&
             attacker.status != Status::SPECIAL_SIDE   &&
@@ -548,6 +530,65 @@ void Game::updateGameplay() {
     };
     trySpawnSpecialHitbox(player1);
     trySpawnSpecialHitbox(player2);
+
+    auto tryParryProjectile = [&](Projectile& projectile) {
+        auto tryHitbox = [&](const CollisionRect& hitbox) {
+            if (!hitbox.owner || projectile.owner == hitbox.owner) return false;
+            if (projectile.parryFreezeTimer > 0) return false;
+            if (!SDL_HasIntersection(&projectile.rect, &hitbox.rect)) return false;
+
+            projectile.parry(hitbox.owner);
+            hitbox.owner->charge = std::min(hitbox.owner->charge + 0.2f, Player::MAX_CHARGE);
+            if (resources.parrySound) Mix_PlayChannel(-1, resources.parrySound, 0);
+            return true;
+        };
+
+        for (const auto& hitbox : meleeHitboxes) {
+            if (tryHitbox(hitbox)) return true;
+        }
+        for (const auto& hitbox : specialHitboxes) {
+            if (tryHitbox(hitbox)) return true;
+        }
+        return false;
+    };
+
+    // projectiles
+    for (auto it = projectiles.begin(); it != projectiles.end(); ) {
+        if (tryParryProjectile(*it)) { ++it; continue; }
+        it->move();
+        if (it->rect.x >= SW || it->rect.x <= 0) { it = projectiles.erase(it); continue; }
+        if (it->owner != &player1 && SDL_HasIntersection(&it->rect, &player1.rect)) {
+            if (player1.invulnerableTimer > 0) { ++it; continue; }
+            player1.getHit(it->direction, it->owner->character->stats.projectileDamage);
+            it->owner->charge = std::min(it->owner->charge + 0.1f, Player::MAX_CHARGE);
+            it = projectiles.erase(it); continue;
+        }
+        if (it->owner != &player2 && SDL_HasIntersection(&it->rect, &player2.rect)) {
+            if (player2.invulnerableTimer > 0) { ++it; continue; }
+            player2.getHit(it->direction, it->owner->character->stats.projectileDamage);
+            it->owner->charge = std::min(it->owner->charge + 0.1f, Player::MAX_CHARGE);
+            it = projectiles.erase(it); continue;
+        }
+        ++it;
+    }
+    if (projectiles.size() > MAX_PROJ) projectiles.erase(projectiles.begin());
+
+    // melee hitboxes
+    for (auto it = meleeHitboxes.begin(); it != meleeHitboxes.end(); ) {
+        it->update();
+        if (!it->isAlive()) { it = meleeHitboxes.erase(it); continue; }
+        if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
+            player2.getHit(player1.facing, it->owner->character->stats.damage);
+            player1.charge = std::min(player1.charge + 0.1f, Player::MAX_CHARGE);
+            it = meleeHitboxes.erase(it); continue;
+        }
+        if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
+            player1.getHit(player2.facing, it->owner->character->stats.damage);
+            player2.charge = std::min(player2.charge + 0.1f, Player::MAX_CHARGE);
+            it = meleeHitboxes.erase(it); continue;
+        }
+        ++it;
+    }
 
     // shockwaves
     for (auto it = shockwaves.begin(); it != shockwaves.end(); ) {
@@ -778,7 +819,7 @@ void Game::handleScreenTransitions() {
                 renderer, resources.titleFont, resources.font, resources.characterList(),
                 "player 1", &resources.BERT, "player 2", &resources.BERT));
         } else {
-            setScreen(std::make_unique<RemoteSetupScreen>(renderer, resources.titleFont));
+            setScreen(std::make_unique<RemoteSetupScreen>(renderer, resources.titleFont, resources.font));
         }
         return;
     }
@@ -786,6 +827,10 @@ void Game::handleScreenTransitions() {
     // remote setup (p2p)
     if (auto* rs = dynamic_cast<RemoteSetupScreen*>(screen.get())) {
         if (!rs->isFinished()) return;
+        if (rs->shouldGoBack()) {
+            setScreen(std::make_unique<TitleScreen>(renderer, resources.titleBgImage, resources.font));
+            return;
+        }
         auto setupResult = rs->takeResult();
         network = std::move(setupResult.network);
 
@@ -911,14 +956,14 @@ void Game::handleScreenTransitions() {
         options.musVolume = vols.music;
         resources.applySfxVolume(options.sfxVolume);
         Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
-        setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont));
+        setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font));
         return;
     }
 
     if (auto* cs = dynamic_cast<ControlsScreen*>(screen.get())) {
         if (!cs->isFinished()) return;
         options.saveToFile();
-        setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont));
+        setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font));
         return;
     }
 
@@ -947,7 +992,7 @@ void Game::processEvents() {
         } else {
             if (e.type == SDL_KEYDOWN && e.key.keysym.sym == options.keyPause) {
                 Mix_PauseMusic();
-                setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont));
+                setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font));
                 continue;
             }
             processEvent(e);
@@ -1023,7 +1068,7 @@ void Game::render() {
         // if pause or volume screen, render the gameplay underneath
         if (dynamic_cast<PauseScreen*>(screen.get()) || dynamic_cast<VolumeScreen*>(screen.get()))
             renderGameplay();
-        screen->render(renderer, resources.font);
+        screen->render(renderer);
     } else {
         renderGameplay();
     }

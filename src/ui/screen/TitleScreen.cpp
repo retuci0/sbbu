@@ -19,8 +19,8 @@ void TitleScreen::handle(const SDL_Event& e) {
     if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) finished = true;
 }
 
-void TitleScreen::render(SDL_Renderer* r, TTF_Font* f) {
+void TitleScreen::render(SDL_Renderer* r) {
     SDL_Rect bgRect = { 0, 0, SW, SH };
     SDL_RenderCopy(renderer, bg, nullptr, &bgRect);
-    drawWidgets(r, f);
+    drawWidgets(r, font);
 }

@@ -1,6 +1,7 @@
 #include "Resources.h"
 
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_render.h>
 
 #include <algorithm>
@@ -39,6 +40,7 @@ void Resources::load(SDL_Renderer* renderer) {
     deathSound        = loadChunk("assets/sound/death.wav");
     projectileSound   = loadChunk("assets/sound/projectile.wav");
     meleeSound        = loadChunk("assets/sound/punch.wav");
+    parrySound        = loadChunk("assets/sound/parry.wav");
     voidDeathSound    = loadChunk("assets/sound/void_death.wav");
     damageSound       = loadChunk("assets/sound/damage.wav");
     gameEndSound      = loadChunk("assets/sound/game_end.wav");
@@ -58,6 +60,8 @@ void Resources::load(SDL_Renderer* renderer) {
     if (jumpSound2)       Mix_VolumeChunk(jumpSound2,       26);
     if (deathSound)       Mix_VolumeChunk(deathSound,      115);
     if (projectileSound)  Mix_VolumeChunk(projectileSound,  26);
+    if (meleeSound)       Mix_VolumeChunk(meleeSound,       17);
+    if (parrySound)       Mix_VolumeChunk(parrySound,       21);
     if (voidDeathSound)   Mix_VolumeChunk(voidDeathSound,    9);
     if (damageSound)      Mix_VolumeChunk(damageSound,       6);
     if (gameEndSound)     Mix_VolumeChunk(gameEndSound,     13);
@@ -80,7 +84,8 @@ void Resources::applySfxVolume(float multiplier) {
     };
     set(deathSound,      115);
     set(projectileSound,  26);
-    set(meleeSound,       10);
+    set(meleeSound,       17);
+    set(parrySound,       21);
     set(voidDeathSound,    9);
     set(damageSound,     102);
     set(gameEndSound,     13);
@@ -112,6 +117,7 @@ void Resources::destroy() {
     dChunk(deathSound);
     dChunk(projectileSound);
     dChunk(meleeSound);
+    dChunk(parrySound);
     dChunk(voidDeathSound);
     dChunk(damageSound);
     dChunk(gameEndSound);

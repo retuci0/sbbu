@@ -13,7 +13,7 @@ void WaitingScreen::update() {
     }
 }
 
-void WaitingScreen::render(SDL_Renderer* r, TTF_Font* f) {
+void WaitingScreen::render(SDL_Renderer* r) {
     Renderer::fillRect(r, 0, 0, SW, SH, Color{20,20,40});
     std::string dots(dotCount, '.');
     std::string msg = "waiting for host to start the game" + dots;

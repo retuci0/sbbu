@@ -38,7 +38,7 @@ void GameEndScreen::handle(const SDL_Event& e) {
     }
 }
 
-void GameEndScreen::render(SDL_Renderer* renderer, TTF_Font* /*font*/) {
+void GameEndScreen::render(SDL_Renderer* renderer) {
     Renderer::fillRect(renderer, 0, 0, SW, SH, {0, 0, 0, 180});
 
     int tw = 0, th = 0;

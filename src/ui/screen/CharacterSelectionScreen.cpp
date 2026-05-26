@@ -142,7 +142,7 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
 }
 
 
-void CharacterSelectionScreen::render(SDL_Renderer* renderer, TTF_Font* font) {
+void CharacterSelectionScreen::render(SDL_Renderer* renderer) {
     Renderer::fillRect(renderer, 0, 0, SW, SH, {30, 30, 30, 255});
     Renderer::renderText(renderer, titleFont, "character selection", 650, 60, WHITE);
     Renderer::renderText(renderer, font, "player 1", COL1_X, 150, WHITE);

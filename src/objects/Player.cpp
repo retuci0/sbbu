@@ -193,9 +193,6 @@ void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed)
     // apply gravity
     dy = std::min(character->stats.terminalVelocity, dy + character->stats.gravity);
 
-    // invulnerability sync
-    if (invulnerableTimer == 0) invulnerableTimer = damagedTimer;
-
     // drop-through
     if (downKeyPressed && onGround && droppingTimer == 0) droppingTimer = DROP_DURATION;
     if (droppingTimer > 0) --droppingTimer;
@@ -320,16 +317,15 @@ void Player::drawSprite(SDL_Renderer* r, SDL_Texture* tex, bool flipH) {
     SDL_RendererFlip flip = flipH ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
 
     if (invulnerableTimer > 0) {
-        if (status != Status::DAMAGED) {
-            float wave = (1.0f + std::sin(invulnerableTimer * 0.15f)) * 0.5f;
-            Uint8 a = static_cast<Uint8>(60 + wave * 195);
-            SDL_SetTextureAlphaMod(tex, a);
-        }
+        float wave = (1.0f + std::sin(invulnerableTimer * 0.08f)) * 0.5f;
+        Uint8 a = static_cast<Uint8>(120 + wave * 135);
+        SDL_SetTextureAlphaMod(tex, a);
     } else {
         SDL_SetTextureAlphaMod(tex, 255);
     }
 
     SDL_RenderCopyEx(r, tex, nullptr, &dst, 0.0, nullptr, flip);
+    SDL_SetTextureAlphaMod(tex, 255);
 }
 
 void Player::animate() {

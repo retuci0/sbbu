@@ -110,9 +110,11 @@ struct PlayerState {
 };
 
 struct ProjectileState {
-    float x = 0.0f, y = 0.0f;
+    float x = 0.0f, y = 0.0f, velocity = 0.0f;
     uint8_t facing = 0;
     uint8_t ownerId = 0;
+    uint8_t parryFreezeTimer = 0;
+    uint8_t parryFlashTimer = 0;
 };
 
 class StateUpdatePacket : public Packet {
@@ -146,8 +148,11 @@ public:
             const auto& pr = projectiles[i];
             out.writeFloat(pr.x);
             out.writeFloat(pr.y);
+            out.writeFloat(pr.velocity);
             out.writeUint8(pr.facing);
             out.writeUint8(pr.ownerId);
+            out.writeUint8(pr.parryFreezeTimer);
+            out.writeUint8(pr.parryFlashTimer);
         }
     }
     void read(ByteBuffer& in) override {
@@ -173,8 +178,11 @@ public:
             ProjectileState pr;
             pr.x = in.readFloat();
             pr.y = in.readFloat();
+            pr.velocity = in.readFloat();
             pr.facing = in.readUint8();
             pr.ownerId = in.readUint8();
+            pr.parryFreezeTimer = in.readUint8();
+            pr.parryFlashTimer = in.readUint8();
             projectiles.push_back(pr);
         }
     }

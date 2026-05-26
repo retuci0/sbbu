@@ -12,7 +12,7 @@ static constexpr int ROW_W   = 600,  ROW_H   = 55;
 
 
 ControlsScreen::ControlsScreen(SDL_Renderer* r, TTF_Font* titleFont, TTF_Font* font, Options& o)
-    : titleFont(titleFont)
+    : titleFont(titleFont), font(font)
 {
     struct Row { const char* name; SDL_KeyCode& key; };
 
@@ -58,7 +58,7 @@ void ControlsScreen::handle(const SDL_Event& e) {
     Screen::handle(e);
 }
 
-void ControlsScreen::render(SDL_Renderer* r, TTF_Font* font) {
+void ControlsScreen::render(SDL_Renderer* r) {
     Renderer::fillRect(r, 0, 0, SW, SH, {20, 20, 20, 255});
     Renderer::renderText(r, titleFont, "controls", SW/2 - 100, 60, WHITE);
 

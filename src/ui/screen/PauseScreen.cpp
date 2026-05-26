@@ -13,8 +13,8 @@ void openAssetsFolder() {
     openFolder(std::filesystem::current_path().string() + "/assets/");
 }
 
-PauseScreen::PauseScreen(SDL_Renderer* /*renderer*/, int sw, int sh, TTF_Font* titleFont)
-    : titleFont(titleFont)
+PauseScreen::PauseScreen(SDL_Renderer* /*renderer*/, int sw, int sh, TTF_Font* titleFont, TTF_Font* font)
+    : titleFont(titleFont), font(font)
 {
     const Color bg = {255, 255, 255, 255};
 
@@ -40,7 +40,7 @@ PauseScreen::PauseScreen(SDL_Renderer* /*renderer*/, int sw, int sh, TTF_Font* t
     addWidget<Button>(startX + btnW + colGap,     startY + 2 * (btnH + gap), btnW, btnH, "assets folder", bg, BLACK,  openAssetsFolder);
 }
 
-void PauseScreen::render(SDL_Renderer* renderer, TTF_Font* font) {
+void PauseScreen::render(SDL_Renderer* renderer) {
     Renderer::fillRect(renderer, 0, 0, SW, SH, {0, 0, 0, 150});
     Renderer::fillRect(renderer, 200, 150, 1500, 150, BLACK);
     Renderer::renderText(renderer, titleFont, "game paused.", 750, 190, WHITE);

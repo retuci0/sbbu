@@ -18,7 +18,7 @@ public:
     }
 
     virtual void update() {}
-    virtual void render(SDL_Renderer* r, TTF_Font* font) = 0;
+    virtual void render(SDL_Renderer* r) = 0;
 
 protected:
     std::vector<std::unique_ptr<Widget>> widgets;
