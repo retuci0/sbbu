@@ -6,17 +6,38 @@
 
 #include <SDL2/SDL_ttf.h>
 
+#include <filesystem>
 
-PauseScreen::PauseScreen(SDL_Renderer* /*renderer*/, int /*sw*/, int /*sh*/, TTF_Font* titleFont)
+
+void openAssetsFolder() {
+    openFolder(std::filesystem::current_path().string() + "/assets/");
+}
+
+PauseScreen::PauseScreen(SDL_Renderer* /*renderer*/, int sw, int sh, TTF_Font* titleFont)
     : titleFont(titleFont)
 {
     const Color bg = {255, 255, 255, 255};
 
-    addWidget<Button>(300,  450, 600, 150, "resume",        bg, BLACK, [&]{ result = PauseActionResult::RESUME;             finished = true; });
-    addWidget<Button>(1000, 450, 600, 150, "quit",          bg, BLACK, [&]{ result = PauseActionResult::QUIT;               finished = true; });
-    addWidget<Button>(300,  700, 600, 150, "restart",       bg, BLACK, [&]{ result = PauseActionResult::RESTART;            finished = true; });
-    addWidget<Button>(1000, 700, 600, 150, "change volume", bg, BLACK, [&]{ result = PauseActionResult::CHANGE_VOLUME;      finished = true; });
-    addWidget<Button>(650,  700, 600, 150, "controls",      bg, BLACK, [&]{ result = PauseActionResult::CHANGE_CONTROLS;    finished = true; });
+    const int btnW = 400;
+    const int btnH = 80;
+    const int gap  = 40;
+    const int colGap = 60;
+
+    int totalWidth  = 2 * btnW + colGap;
+    int startX      = (sw - totalWidth) / 2;
+    int startY      = sh / 3 + 100;
+
+    // row 0
+    addWidget<Button>(startX,                     startY, btnW, btnH, "resume",        bg, BLACK, [&]{ result = PauseActionResult::RESUME;          finished = true; });
+    addWidget<Button>(startX + btnW + colGap,     startY, btnW, btnH, "quit",          bg, BLACK, [&]{ result = PauseActionResult::QUIT;            finished = true; });
+
+    // row 1
+    addWidget<Button>(startX,                     startY + btnH + gap, btnW, btnH, "restart",       bg, BLACK, [&]{ result = PauseActionResult::RESTART;         finished = true; });
+    addWidget<Button>(startX + btnW + colGap,     startY + btnH + gap, btnW, btnH, "change volume", bg, BLACK, [&]{ result = PauseActionResult::CHANGE_VOLUME;   finished = true; });
+
+    // row 2
+    addWidget<Button>(startX,                     startY + 2 * (btnH + gap), btnW, btnH, "controls",      bg, BLACK, [&]{ result = PauseActionResult::CHANGE_CONTROLS; finished = true; });
+    addWidget<Button>(startX + btnW + colGap,     startY + 2 * (btnH + gap), btnW, btnH, "assets folder", bg, BLACK,  openAssetsFolder);
 }
 
 void PauseScreen::render(SDL_Renderer* renderer, TTF_Font* font) {

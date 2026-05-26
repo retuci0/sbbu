@@ -6,6 +6,15 @@
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_ttf.h>
 
+#include <string>
+
+#ifdef _WIN32
+    #include <windows.h>
+    #include <shellapi.h>
+#else
+    #include <cstdlib>
+#endif
+
 
 // amount of characters
 constexpr int CHARACTER_NUM = 9;
@@ -52,4 +61,14 @@ constexpr int SH = 1080;
 // hit testing
 inline bool pointInRect(int px, int py, const SDL_Rect& r) {
     return px >= r.x && px < r.x + r.w && py >= r.y && py < r.y + r.h;
+}
+
+// open a folder with the user's preferred file manager
+inline void openFolder(const std::string& path) {
+#if defined _WIN32
+    ShellExecuteA(NULL, "open", path.c_str(), NULL, NULL, SW_SHOWNORMAL);
+#else
+    std::string command = "xdg-open \"" + path + "\"";
+    std::system(command.c_str());
+#endif
 }

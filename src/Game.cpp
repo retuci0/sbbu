@@ -452,11 +452,12 @@ void Game::updateGameplay() {
                 dmgScale = 4.0f; kbScale = 7.0f;
                 if (attacker.onGround)
                     shockwaves.emplace_back(resources.shockwaveImage, attacker.rect.x + attacker.rect.w / 2,
-                                           attacker.rect.y + attacker.rect.h - 16, &attacker);
+                                           attacker.rect.y + attacker.rect.h - 32, &attacker);
                 break;
-            default: return;
+            default: 
+                return;
         }
-        auto& cr     = specialHitboxes.emplace_back(hx, hy, hw, hh, &attacker, 5);
+        auto& cr = specialHitboxes.emplace_back(hx, hy, hw, hh, &attacker, 5);
         cr.damageScale = dmgScale;
         cr.kbScale     = kbScale;
     };

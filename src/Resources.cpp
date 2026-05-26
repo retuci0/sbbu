@@ -59,7 +59,7 @@ void Resources::load(SDL_Renderer* renderer) {
     if (deathSound)       Mix_VolumeChunk(deathSound,      115);
     if (projectileSound)  Mix_VolumeChunk(projectileSound,  26);
     if (voidDeathSound)   Mix_VolumeChunk(voidDeathSound,    9);
-    if (damageSound)      Mix_VolumeChunk(damageSound,     102);
+    if (damageSound)      Mix_VolumeChunk(damageSound,       6);
     if (gameEndSound)     Mix_VolumeChunk(gameEndSound,     13);
     if (music)            Mix_VolumeMusic(9);
     if (titleScreenMusic) Mix_VolumeMusic(9);

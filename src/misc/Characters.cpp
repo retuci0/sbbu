@@ -64,6 +64,9 @@ Character loadCharacter(SDL_Renderer* renderer, const CharacterStats& stats, con
     Character c;
     c.stats = stats;
 
+    for (int i = 0; i < 3; ++i) {
+        c.specialDownFrames.push_back(loadTex(renderer, folder + "/special/down/" + std::to_string(i) + ".png"));
+    }
     for (int i = 0; i < 5; ++i) {
         c.walkFrames.push_back(loadTex(renderer, folder + "/walk/" + std::to_string(i) + ".png"));
         c.jumpFrames.push_back(loadTex(renderer, folder + "/jump/" + std::to_string(i) + ".png"));
@@ -73,7 +76,6 @@ Character loadCharacter(SDL_Renderer* renderer, const CharacterStats& stats, con
     }
     for (int i = 0; i < 6; i++) {
         c.specialStaticFrames.push_back(loadTex(renderer, folder + "/special/static/" + std::to_string(i) + ".png"));
-        c.specialDownFrames.push_back(loadTex(renderer, folder + "/special/down/" + std::to_string(i) + ".png"));
     }
     c.idle      = loadTex(renderer, folder + "/idle/0.png");
     c.shoot     = loadTex(renderer, folder + "/shoot/0.png");

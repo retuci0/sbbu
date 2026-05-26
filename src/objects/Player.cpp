@@ -375,7 +375,7 @@ void Player::animate() {
             advanceFrame(character->specialUpFrames, 0.5f);
             break;
         case Status::SPECIAL_DOWN:
-            advanceFrame(character->specialDownFrames, 0.5f);
+            advanceFrame(character->specialDownFrames, 0.21f);
             break;
         default:
             currentSpriteIndex = 0.0f;
