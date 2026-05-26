@@ -1,9 +1,12 @@
 #pragma once
 
 #include "ByteBuffer.h"
-#include <memory>
+
+#include <algorithm>
 #include <cstdint>
 #include <string>
+#include <vector>
+
 
 enum class PacketDirection : uint8_t {
     CLIENTBOUND,   // s2c
@@ -16,7 +19,9 @@ enum class PacketType : uint8_t {
     CLIENT_INPUT,
     STATE_UPDATE,
     GAME_SETUP,
-    DISCONNECT
+    DISCONNECT,
+    PING,
+    PONG
 };
 
 class Packet {
@@ -38,9 +43,7 @@ inline std::vector<uint8_t> Packet::encode() const {
     return buf.getData();
 }
 
-// ----------------------------------------------------------------------
-// HandshakePacket
-// ----------------------------------------------------------------------
+
 class HandshakePacket : public Packet {
 public:
     HandshakePacket() = default;
@@ -59,9 +62,6 @@ public:
     uint32_t protocolVersion = 0;
 };
 
-// ----------------------------------------------------------------------
-// HandshakeAckPacket
-// ----------------------------------------------------------------------
 class HandshakeAckPacket : public Packet {
 public:
     PacketType getType() const override { return PacketType::HANDSHAKE_ACK; }
@@ -71,9 +71,7 @@ public:
     void read(ByteBuffer& in) override {}
 };
 
-// ----------------------------------------------------------------------
-// ClientInputPacket
-// ----------------------------------------------------------------------
+
 class ClientInputPacket : public Packet {
 public:
     ClientInputPacket() = default;
@@ -99,9 +97,7 @@ public:
     uint8_t  lastInputs = 0;
 };
 
-// ----------------------------------------------------------------------
-// PlayerState (plain data)
-// ----------------------------------------------------------------------
+
 struct PlayerState {
     float x = 0.0f, y = 0.0f, dx = 0.0f, dy = 0.0f;
     int16_t hp = 0;
@@ -113,9 +109,12 @@ struct PlayerState {
     uint8_t onGround = 0;
 };
 
-// ----------------------------------------------------------------------
-// StateUpdatePacket
-// ----------------------------------------------------------------------
+struct ProjectileState {
+    float x = 0.0f, y = 0.0f;
+    uint8_t facing = 0;
+    uint8_t ownerId = 0;
+};
+
 class StateUpdatePacket : public Packet {
 public:
     StateUpdatePacket() = default;
@@ -140,6 +139,16 @@ public:
         };
         writePlayer(p1);
         writePlayer(p2);
+
+        uint8_t count = static_cast<uint8_t>(std::min<size_t>(projectiles.size(), 255));
+        out.writeUint8(count);
+        for (uint8_t i = 0; i < count; ++i) {
+            const auto& pr = projectiles[i];
+            out.writeFloat(pr.x);
+            out.writeFloat(pr.y);
+            out.writeUint8(pr.facing);
+            out.writeUint8(pr.ownerId);
+        }
     }
     void read(ByteBuffer& in) override {
         frame = in.readUint32();
@@ -156,15 +165,26 @@ public:
         };
         readPlayer(p1);
         readPlayer(p2);
+
+        uint8_t count = in.readUint8();
+        projectiles.clear();
+        projectiles.reserve(count);
+        for (uint8_t i = 0; i < count; ++i) {
+            ProjectileState pr;
+            pr.x = in.readFloat();
+            pr.y = in.readFloat();
+            pr.facing = in.readUint8();
+            pr.ownerId = in.readUint8();
+            projectiles.push_back(pr);
+        }
     }
 
     uint32_t frame = 0;
     PlayerState p1, p2;
+    std::vector<ProjectileState> projectiles;
 };
 
-// ----------------------------------------------------------------------
-// GameSetupPacket
-// ----------------------------------------------------------------------
+
 class GameSetupPacket : public Packet {
 public:
     GameSetupPacket() = default;
@@ -203,9 +223,7 @@ public:
     uint8_t r2 = 0, g2 = 0, b2 = 0;
 };
 
-// ----------------------------------------------------------------------
-// DisconnectPacket
-// ----------------------------------------------------------------------
+
 class DisconnectPacket : public Packet {
 public:
     PacketType getType() const override { return PacketType::DISCONNECT; }
@@ -213,4 +231,48 @@ public:
 
     void write(ByteBuffer& out) const override {}
     void read(ByteBuffer& in) override {}
+};
+
+class PingPacket : public Packet {
+public:
+    PingPacket() = default;
+    PingPacket(uint32_t sequence, uint32_t sentTicks)
+        : sequence(sequence), sentTicks(sentTicks) {}
+
+    PacketType getType() const override { return PacketType::PING; }
+    PacketDirection getDirection() const override { return PacketDirection::SERVERBOUND; }
+
+    void write(ByteBuffer& out) const override {
+        out.writeUint32(sequence);
+        out.writeUint32(sentTicks);
+    }
+    void read(ByteBuffer& in) override {
+        sequence = in.readUint32();
+        sentTicks = in.readUint32();
+    }
+
+    uint32_t sequence = 0;
+    uint32_t sentTicks = 0;
+};
+
+class PongPacket : public Packet {
+public:
+    PongPacket() = default;
+    PongPacket(uint32_t sequence, uint32_t sentTicks)
+        : sequence(sequence), sentTicks(sentTicks) {}
+
+    PacketType getType() const override { return PacketType::PONG; }
+    PacketDirection getDirection() const override { return PacketDirection::CLIENTBOUND; }
+
+    void write(ByteBuffer& out) const override {
+        out.writeUint32(sequence);
+        out.writeUint32(sentTicks);
+    }
+    void read(ByteBuffer& in) override {
+        sequence = in.readUint32();
+        sentTicks = in.readUint32();
+    }
+
+    uint32_t sequence = 0;
+    uint32_t sentTicks = 0;
 };

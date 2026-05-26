@@ -27,7 +27,8 @@ public:
     ~Network();
 
     bool isConnected() const { return connected; }
-    void disconnect();
+    Uint32 getLastReceiveTicks() const { return lastReceiveTicks; }
+    void disconnect(bool notifyPeer = true);
 
     void poll();  // receive and process UDP
     bool recv(std::unique_ptr<Packet>& out);  // receive (pop) one packet
@@ -44,6 +45,7 @@ private:
     UDPsocket   socket = nullptr;
     IPaddress   remoteAddr;
     bool        connected = false;
+    Uint32      lastReceiveTicks = 0;
     OnConnectCallback   onConnect;
     OnDisconnectCallback onDisconnect;
 

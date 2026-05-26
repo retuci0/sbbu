@@ -31,6 +31,7 @@ class VolumeScreen;
 class TitleScreen;
 class RemoteSetupScreen;
 class WaitingScreen;
+class GameEndScreen;
 
 class Game : public InputHandler {
 public:
@@ -75,7 +76,7 @@ private:
     void respawn(Player& p, bool voidDeath);
 
     void applySfxVolume(float multiplier);
-    void showEndDialog(const std::string& msg);
+    void showEndScreen(const std::string& title, const std::string& details);
     
     void update();
     void updateGameplay();
@@ -99,12 +100,22 @@ private:
     uint8_t remoteInputBits = 0, prevRemoteInputBits = 0;
     uint8_t lastSentInputs = 0;
     uint32_t netFrame = 0;
+    uint32_t lastAppliedStateFrame = 0;
+    bool hasAppliedStateFrame = false;
+    PlayerState targetPlayer1State;
+    PlayerState targetPlayer2State;
+    std::vector<ProjectileState> targetProjectiles;
+    bool hasTargetState = false;
+    uint32_t pingSequence = 0;
+    uint32_t pendingPingSequence = 0;
+    Uint32 lastPingSentTicks = 0;
+    int pingMs = -1;
 
     struct GameSetupPayload {
-        uint8_t char1Idx, char2Idx;
-        char name1[32], name2[32];
-        uint8_t r1, g1, b1;
-        uint8_t r2, g2, b2;
+        uint8_t char1Idx = 0, char2Idx = 0;
+        std::string name1, name2;
+        uint8_t r1 = 0, g1 = 0, b1 = 0;
+        uint8_t r2 = 0, g2 = 0, b2 = 0;
     } pendingSetup;
 
     bool hasPendingSetup = false;
@@ -120,5 +131,7 @@ private:
     void processNetworkPackets();
     void netSendStateUpdate();
     void netApplyStateUpdate(const StateUpdatePacket& sup);
+    void netInterpolateRemoteState();
+    void netUpdatePing();
     void netSendClientInputs();
 };

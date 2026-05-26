@@ -7,6 +7,7 @@
 #include "net/Packets.h"
 #include "ui/screen/CharacterSelectionScreen.h"
 #include "ui/screen/ControlsScreen.h"
+#include "ui/screen/GameEndScreen.h"
 #include "ui/screen/TitleScreen.h"
 #include "ui/screen/PauseScreen.h"
 #include "ui/screen/RemoteSetupScreen.h"
@@ -22,7 +23,6 @@
 #include <SDL2/SDL_ttf.h>
 
 #include <algorithm>
-#include <cstring>
 #include <stdexcept>
 #include <random>
 
@@ -34,6 +34,7 @@ static constexpr int MM_W = 200;
 static constexpr int MM_H = 120;
 static constexpr int MM_X = PADDING;
 static constexpr int MM_Y = SH - MM_H - PADDING;
+static constexpr Uint32 REMOTE_TIMEOUT_MS = 5000;
 
 
 /* --- MUSIC --- */
@@ -112,6 +113,19 @@ void Game::setupPlayers(const Character* c1, const std::string& n1,
 
     player1.color = {100, 149, 237, 230};
     player2.color = {255,  80,  80, 230};
+
+    remoteInputBits = 0;
+    prevRemoteInputBits = 0;
+    lastSentInputs = 0;
+    netFrame = 0;
+    lastAppliedStateFrame = 0;
+    hasAppliedStateFrame = false;
+    hasTargetState = false;
+    targetProjectiles.clear();
+    pingSequence = 0;
+    pendingPingSequence = 0;
+    lastPingSentTicks = 0;
+    pingMs = -1;
 }
 
 void Game::respawn(Player& p, bool voidDeath) {
@@ -139,37 +153,15 @@ void Game::respawn(Player& p, bool voidDeath) {
     p.invulnerableTimer  = Player::INV_DURATION;
 }
 
-void Game::showEndDialog(const std::string& msg) {
-    bool waiting  = true;
-    Uint32 start  = SDL_GetTicks();
-    while (waiting && SDL_GetTicks() - start < 5000) {
-        SDL_Event ev;
-        while (SDL_PollEvent(&ev)) {
-            if (ev.type == SDL_QUIT) {
-                waiting = false;
-            } 
-            if (ev.type == SDL_KEYDOWN && ev.key.keysym.sym == SDLK_RETURN) {
-                waiting = false;
-            }
-        }
-        Renderer::fillRect(renderer, 0, 0, SW, SH, {0, 0, 0, 180});
-        int lineY = SH / 2 - 80;
-        std::string line, rest = msg;
-        while (true) {
-            auto nl = rest.find('\n');
-            line    = (nl == std::string::npos) ? rest : rest.substr(0, nl);
-            int tw, th;
-            TTF_SizeText(resources.titleFont, line.c_str(), &tw, &th);
-            Renderer::renderText(renderer, resources.titleFont, line, (SW - tw) / 2, lineY, WHITE);
-            lineY += th + 10;
-            if (nl == std::string::npos) break;
-            rest = rest.substr(nl + 1);
-        }
-        Renderer::renderText(renderer, resources.font, "(press enter to close)", 800, lineY + 20,
-                             {180, 180, 180, 255});
-        SDL_RenderPresent(renderer);
-        SDL_Delay(16);
+void Game::showEndScreen(const std::string& title, const std::string& details) {
+    Mix_HaltMusic();
+    if (network) {
+        network->disconnect();
+        network.reset();
     }
+    networkMode = NetworkMode::NONE;
+    setScreen(std::make_unique<GameEndScreen>(
+        renderer, resources.titleFont, resources.font, title, details));
 }
 
 
@@ -271,13 +263,13 @@ void Game::processNetworkPackets() {
             case PacketType::CLIENT_INPUT: {
                 auto* cip = dynamic_cast<ClientInputPacket*>(pkt.get());
                 if (cip) {
-                    prevRemoteInputBits = remoteInputBits;
+                    prevRemoteInputBits = cip->lastInputs;
                     remoteInputBits = cip->inputs;
                 }
                 break;
             }
             case PacketType::STATE_UPDATE: {
-                if (networkMode == NetworkMode::REMOTE_CLIENT) {
+                if (networkMode == NetworkMode::REMOTE_CLIENT && !screen) {
                     auto* sup = dynamic_cast<StateUpdatePacket*>(pkt.get());
                     if (sup) netApplyStateUpdate(*sup);
                 }
@@ -287,10 +279,13 @@ void Game::processNetworkPackets() {
                 if (networkMode == NetworkMode::REMOTE_CLIENT) {
                     auto* gsp = dynamic_cast<GameSetupPacket*>(pkt.get());
                     if (gsp) {
+                        if (gsp->char1Idx >= CHARACTER_NUM || gsp->char2Idx >= CHARACTER_NUM) {
+                            break;
+                        }
                         pendingSetup.char1Idx = gsp->char1Idx;
                         pendingSetup.char2Idx = gsp->char2Idx;
-                        strncpy(pendingSetup.name1, gsp->name1.c_str(), 31);
-                        strncpy(pendingSetup.name2, gsp->name2.c_str(), 31);
+                        pendingSetup.name1 = gsp->name1;
+                        pendingSetup.name2 = gsp->name2;
                         pendingSetup.r1 = gsp->r1; pendingSetup.g1 = gsp->g1; pendingSetup.b1 = gsp->b1;
                         pendingSetup.r2 = gsp->r2; pendingSetup.g2 = gsp->g2; pendingSetup.b2 = gsp->b2;
                         hasPendingSetup = true;
@@ -299,12 +294,47 @@ void Game::processNetworkPackets() {
                 break;
             }
             case PacketType::DISCONNECT:
-                if (network) network->disconnect();
+                if (network) network->disconnect(false);
+                if (!screen && player1.lives >= 0 && player2.lives >= 0) {
+                    if (networkMode == NetworkMode::REMOTE_HOST) {
+                        player2.lives = -1;
+                    } else if (networkMode == NetworkMode::REMOTE_CLIENT) {
+                        player1.lives = -1;
+                    }
+                }
                 break;
+            case PacketType::PING: {
+                auto* ping = dynamic_cast<PingPacket*>(pkt.get());
+                if (ping && network && network->isConnected()) {
+                    PongPacket pong(ping->sequence, ping->sentTicks);
+                    network->send(pong);
+                }
+                break;
+            }
+            case PacketType::PONG: {
+                auto* pong = dynamic_cast<PongPacket*>(pkt.get());
+                if (pong && pong->sequence == pendingPingSequence) {
+                    pingMs = static_cast<int>(SDL_GetTicks() - pong->sentTicks);
+                    pendingPingSequence = 0;
+                }
+                break;
+            }
             default:
                 break;
         }
     }
+}
+
+void Game::netUpdatePing() {
+    if (!network || !network->isConnected()) return;
+
+    Uint32 now = SDL_GetTicks();
+    if (now - lastPingSentTicks < 1000) return;
+
+    lastPingSentTicks = now;
+    pendingPingSequence = ++pingSequence;
+    PingPacket ping(pendingPingSequence, now);
+    network->send(ping);
 }
 
 void Game::netSendStateUpdate() {
@@ -328,14 +358,32 @@ void Game::netSendStateUpdate() {
     };
     sup.p1 = fillState(player1);
     sup.p2 = fillState(player2);
+    sup.projectiles.reserve(projectiles.size());
+    for (const auto& projectile : projectiles) {
+        ProjectileState ps;
+        ps.x = static_cast<float>(projectile.rect.x);
+        ps.y = static_cast<float>(projectile.rect.y);
+        ps.facing = static_cast<uint8_t>(projectile.direction);
+        ps.ownerId = projectile.owner ? static_cast<uint8_t>(projectile.owner->id) : 0;
+        sup.projectiles.push_back(ps);
+    }
 
     network->send(sup);
 }
 
 void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
-    auto applyState = [](Player& p, const PlayerState& ps) {
-        p.rect.x = static_cast<int>(ps.x);
-        p.rect.y = static_cast<int>(ps.y);
+    if (hasAppliedStateFrame && sup.frame <= lastAppliedStateFrame) return;
+    lastAppliedStateFrame = sup.frame;
+    hasAppliedStateFrame = true;
+    targetPlayer1State = sup.p1;
+    targetPlayer2State = sup.p2;
+    targetProjectiles = sup.projectiles;
+
+    auto applyState = [](Player& p, const PlayerState& ps, bool snapPosition) {
+        if (snapPosition) {
+            p.rect.x = static_cast<int>(ps.x);
+            p.rect.y = static_cast<int>(ps.y);
+        }
         p.dx = ps.dx;
         p.dy = ps.dy;
         p.hp = ps.hp;
@@ -346,8 +394,45 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
         p.invulnerableTimer = ps.invulnerable ? Player::INV_DURATION : 0;
         p.onGround = ps.onGround != 0;
     };
-    applyState(player1, sup.p1);
-    applyState(player2, sup.p2);
+    applyState(player1, sup.p1, !hasTargetState);
+    applyState(player2, sup.p2, !hasTargetState);
+
+    if (!hasTargetState || projectiles.size() != sup.projectiles.size()) {
+        projectiles.clear();
+        projectiles.reserve(sup.projectiles.size());
+        for (const auto& ps : sup.projectiles) {
+            Player* owner = (ps.ownerId == 1) ? &player2 : &player1;
+            projectiles.emplace_back(resources.projectileImage,
+                                     static_cast<int>(ps.x),
+                                     static_cast<int>(ps.y),
+                                     static_cast<Facing>(ps.facing),
+                                     owner);
+        }
+    }
+    hasTargetState = true;
+}
+
+void Game::netInterpolateRemoteState() {
+    if (!hasTargetState) return;
+
+    auto approach = [](int current, float target) {
+        float next = static_cast<float>(current) + (target - static_cast<float>(current)) * 0.35f;
+        return static_cast<int>(next);
+    };
+
+    player1.rect.x = approach(player1.rect.x, targetPlayer1State.x);
+    player1.rect.y = approach(player1.rect.y, targetPlayer1State.y);
+    player2.rect.x = approach(player2.rect.x, targetPlayer2State.x);
+    player2.rect.y = approach(player2.rect.y, targetPlayer2State.y);
+
+    if (projectiles.size() != targetProjectiles.size()) return;
+    for (size_t i = 0; i < projectiles.size(); ++i) {
+        const auto& target = targetProjectiles[i];
+        projectiles[i].rect.x = approach(projectiles[i].rect.x, target.x);
+        projectiles[i].rect.y = approach(projectiles[i].rect.y, target.y);
+        projectiles[i].direction = static_cast<Facing>(target.facing);
+        projectiles[i].owner = (target.ownerId == 1) ? &player2 : &player1;
+    }
 }
 
 void Game::netSendClientInputs() {
@@ -660,7 +745,14 @@ void Game::renderGameplay() {
         std::string fpsStr = "fps: " + std::to_string(fps);
         int tw, th;
         TTF_SizeText(resources.font, fpsStr.c_str(), &tw, &th);
-        Renderer::renderText(renderer, resources.font, fpsStr, SW - tw - 2, th + 2, BLACK);
+        Renderer::renderText(renderer, resources.font, fpsStr, SW - tw - 2, 2, BLACK);
+
+        if (networkMode == NetworkMode::REMOTE_HOST || networkMode == NetworkMode::REMOTE_CLIENT) {
+            std::string pingStr = "ping: ";
+            pingStr += (pingMs >= 0) ? std::to_string(pingMs) + " ms" : "? ms";
+            TTF_SizeText(resources.font, pingStr.c_str(), &tw, &th);
+            Renderer::renderText(renderer, resources.font, pingStr, SW - tw - 2, 34, BLACK);
+        }
     }
 
     renderPlayerHud(player1);
@@ -717,12 +809,15 @@ void Game::handleScreenTransitions() {
             auto charList = resources.characterList();
             uint8_t i1 = pendingSetup.char1Idx;
             uint8_t i2 = pendingSetup.char2Idx;
+            if (!charList[i1] || !charList[i2] || !charList[i1]->loaded || !charList[i2]->loaded) {
+                return;
+            }
             setupPlayers(charList[i1], pendingSetup.name1, charList[i2], pendingSetup.name2);
             player1.color = { pendingSetup.r1, pendingSetup.g1, pendingSetup.b1, 230 };
             player2.color = { pendingSetup.r2, pendingSetup.g2, pendingSetup.b2, 230 };
             player1.resetTimers(); player2.resetTimers();
             projectiles.clear(); meleeHitboxes.clear(); specialHitboxes.clear();
-            if (resources.music) Mix_PlayMusic(resources.music, -1);
+            if (resources.music) playGameMusic();
             setScreen(nullptr);
             return;
         }
@@ -734,6 +829,13 @@ void Game::handleScreenTransitions() {
     if (auto* cs = dynamic_cast<CharacterSelectionScreen*>(screen.get())) {
         if (!cs->isFinished()) return;
         auto csResult = cs->getResult();
+
+        if (networkMode == NetworkMode::REMOTE_HOST && (!network || !network->isConnected())) {
+            return;
+        }
+        if (!csResult.char1 || !csResult.char2 || !csResult.char1->loaded || !csResult.char2->loaded) {
+            return;
+        }
 
         setupPlayers(csResult.char1, csResult.name1, csResult.char2, csResult.name2);
         player1.color = csResult.color1;
@@ -819,6 +921,17 @@ void Game::handleScreenTransitions() {
         setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont));
         return;
     }
+
+    if (auto* ge = dynamic_cast<GameEndScreen*>(screen.get())) {
+        if (!ge->isFinished()) return;
+        if (ge->getResult() == GameEndActionResult::QUIT) {
+            running = false;
+            return;
+        }
+        playTitleMusic();
+        setScreen(std::make_unique<TitleScreen>(renderer, resources.titleBgImage, resources.font));
+        return;
+    }
 }
 
 
@@ -850,6 +963,7 @@ void Game::update() {
         if (network) {
             network->poll();
             processNetworkPackets();
+            netUpdatePing();
         }
 
         handleScreenTransitions();
@@ -862,10 +976,23 @@ void Game::update() {
     if (network) {
         network->poll();
         processNetworkPackets();
+        netUpdatePing();
+        if (network->isConnected()
+                && (networkMode == NetworkMode::REMOTE_HOST || networkMode == NetworkMode::REMOTE_CLIENT)
+                && SDL_GetTicks() - network->getLastReceiveTicks() > REMOTE_TIMEOUT_MS
+                && player1.lives >= 0 && player2.lives >= 0) {
+            network->disconnect(false);
+            if (networkMode == NetworkMode::REMOTE_HOST) {
+                player2.lives = -1;
+            } else {
+                player1.lives = -1;
+            }
+        }
     }
 
     if (networkMode == NetworkMode::REMOTE_CLIENT) {
         netSendClientInputs();
+        netInterpolateRemoteState();
         // animate sprites locally
         player1.updateTimers();
         player2.updateTimers();
@@ -881,22 +1008,13 @@ void Game::update() {
 
     // end game
     if (player1.lives == -1 && player2.lives == -1) {
-        showEndDialog("BOTH PLAYERS DIED\nwhat a skill issue");
-        running = false;
+        showEndScreen("both players died", "what a skill issue");
     } else if (player1.lives == -1) {
-        showEndDialog("GG!\n1st: " + player2.name + " (" + player2.character->stats.name + ")\n"
-                     "2nd: " + player1.name + " (" + player1.character->stats.name + ")");
-        Mix_HaltMusic();
-        if (network) { network->disconnect(); network.reset(); }
-        networkMode = NetworkMode::NONE;
-        setScreen(std::make_unique<TitleScreen>(renderer, resources.titleBgImage, resources.font));
+        showEndScreen("gg!", "1st: " + player2.name + " (" + player2.character->stats.name + ")   "
+                            "2nd: " + player1.name + " (" + player1.character->stats.name + ")");
     } else if (player2.lives == -1) {
-        showEndDialog("GG!\n1st: " + player1.name + " (" + player1.character->stats.name + ")\n"
-                     "2nd: " + player2.name + " (" + player2.character->stats.name + ")");
-        Mix_HaltMusic();
-        if (network) { network->disconnect(); network.reset(); }
-        networkMode = NetworkMode::NONE;
-        setScreen(std::make_unique<TitleScreen>(renderer, resources.titleBgImage, resources.font));
+        showEndScreen("gg!", "1st: " + player1.name + " (" + player1.character->stats.name + ")   "
+                            "2nd: " + player2.name + " (" + player2.character->stats.name + ")");
     }
 }
 

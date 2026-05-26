@@ -13,7 +13,7 @@ public:
 
     // w
     void writeUint8(uint8_t v) { writeBytes(&v, 1); }
-    void writeInt16(int16_t v) { writeInt16(static_cast<uint16_t>(v)); }
+    void writeInt16(int16_t v) { writeUint16(static_cast<uint16_t>(v)); }
     void writeUint16(uint16_t v);
     void writeInt32(int32_t v) { writeUint32(static_cast<uint32_t>(v)); }
     void writeUint32(uint32_t v);

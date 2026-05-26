@@ -35,6 +35,8 @@ private:
         registerPacket(PacketType::STATE_UPDATE,   []{ return std::make_unique<StateUpdatePacket>(); });
         registerPacket(PacketType::GAME_SETUP,     []{ return std::make_unique<GameSetupPacket>(); });
         registerPacket(PacketType::DISCONNECT,     []{ return std::make_unique<DisconnectPacket>(); });
+        registerPacket(PacketType::PING,           []{ return std::make_unique<PingPacket>(); });
+        registerPacket(PacketType::PONG,           []{ return std::make_unique<PongPacket>(); });
     }
 
     std::unordered_map<PacketType, Factory> factories;

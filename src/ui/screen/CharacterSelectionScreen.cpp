@@ -44,7 +44,7 @@ CharacterSelectionScreen::CharacterSelectionScreen(
 
 int CharacterSelectionScreen::findIdx(const Character* ch) const {
     for (int i = 0; i < CHARACTER_NUM; ++i) {
-        if (chars[i] == ch) return i;
+        if (chars[i] && chars[i]->loaded && chars[i] == ch) return i;
     }
     return 0;
 }
@@ -117,6 +117,8 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
 
         // character selection boxes
         for (int i = 0; i < (int)chars.size(); ++i) {
+            if (!chars[i] || !chars[i]->loaded) continue;
+
             int col = i / 4, row = i % 4;
             int y  = ROW_START_Y + row * ROW_STEP;
             int x1 = COL1_X + col * (BOX_W + 20);
@@ -146,21 +148,20 @@ void CharacterSelectionScreen::render(SDL_Renderer* renderer, TTF_Font* font) {
     Renderer::renderText(renderer, font, "player 1", COL1_X, 150, WHITE);
     Renderer::renderText(renderer, font, "player 2", COL2_X, 150, WHITE);
 
-    constexpr std::array<const char*, 6> charNames = {
-        "BERT", "BERROTA", "LORC", "JORDI", "BARCOS", "ALSEXITO"
-    };
+    for (int i = 0; i < (int)chars.size(); ++i) {
+        if (!chars[i] || !chars[i]->loaded) continue;
 
-    for (int i = 0; i < (int)charNames.size(); ++i) {
         int col = i / 4, row = i % 4;
         int y  = ROW_START_Y + row * ROW_STEP;
         int x1 = COL1_X + col * (BOX_W + 20);
         int x2 = COL2_X + col * (BOX_W + 20);
+        const std::string charName = chars[i]->stats.name;
 
         SDL_Color bg1 = (selectedChar1 == i) ? SDL_Color{80, 150, 80, 255} : SDL_Color{60, 60, 60, 255};
-        Renderer::renderButton(renderer, font, charNames[i], x1, y, BOX_W, BOX_H, bg1, WHITE);
+        Renderer::renderButton(renderer, font, charName, x1, y, BOX_W, BOX_H, bg1, WHITE);
 
         SDL_Color bg2 = (selectedChar2 == i) ? SDL_Color{80, 150, 80, 255} : SDL_Color{60, 60, 60, 255};
-        Renderer::renderButton(renderer, font, charNames[i], x2, y, BOX_W, BOX_H, bg2, WHITE);
+        Renderer::renderButton(renderer, font, charName, x2, y, BOX_W, BOX_H, bg2, WHITE);
     }
 
     // character icons

@@ -30,6 +30,7 @@ Network::~Network() {
 bool Network::initAsHost(uint16_t port) {
     socket = SDLNet_UDP_Open(port);
     if (!socket) return false;
+    lastReceiveTicks = SDL_GetTicks();
     return true;
 }
 
@@ -37,11 +38,16 @@ bool Network::initAsClient(const char* hostIp, uint16_t port) {
     socket = SDLNet_UDP_Open(0);
     if (!socket) return false;
     if (SDLNet_ResolveHost(&remoteAddr, hostIp, port) < 0) return false;
+    lastReceiveTicks = SDL_GetTicks();
     sendHandshake();
     return true;
 }
 
-void Network::disconnect() {
+void Network::disconnect(bool notifyPeer) {
+    if (connected && notifyPeer) {
+        DisconnectPacket pkt;
+        send(pkt);
+    }
     if (connected && onDisconnect) onDisconnect();
     connected = false;
 }
@@ -58,6 +64,7 @@ void Network::poll() {
 
     while (SDLNet_UDP_Recv(socket, up)) {
         if (up->len < 1) continue;
+        lastReceiveTicks = SDL_GetTicks();
 
         PacketType type = static_cast<PacketType>(up->data[0]);
         auto pkt = PacketRegistry::instance().createPacket(type);
@@ -96,7 +103,8 @@ bool Network::recv(std::unique_ptr<Packet>& out) {
 }
 
 void Network::send(const Packet& pkt) {
-    if (!socket || !connected) return;
+    if (!socket) return;
+    if (!connected && pkt.getType() != PacketType::HANDSHAKE) return;
     auto data = pkt.encode();
     if (data.empty() || data.size() > MAX_PACKET_SIZE) return;
 

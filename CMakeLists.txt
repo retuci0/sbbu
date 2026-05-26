@@ -28,6 +28,7 @@ set(SRC
     src/objects/Platform.cpp
     src/ui/screen/CharacterSelectionScreen.cpp
     src/ui/screen/ControlsScreen.cpp
+    src/ui/screen/GameEndScreen.cpp
     src/ui/screen/TitleScreen.cpp
     src/ui/screen/PauseScreen.cpp
     src/ui/screen/RemoteSetupScreen.cpp
@@ -61,6 +62,7 @@ set(HEADERS
     src/ui/widget/Slider.h
     src/ui/screen/CharacterSelectionScreen.h
     src/ui/screen/ControlsScreen.h
+    src/ui/screen/GameEndScreen.h
     src/ui/screen/TitleScreen.h
     src/ui/screen/PauseScreen.h
     src/ui/screen/RemoteSetupScreen.h
