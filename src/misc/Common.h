@@ -41,7 +41,8 @@ enum InputBit : uint8_t {
     JUMP    = 1 << 3,
     SHOOT   = 1 << 4,
     MELEE   = 1 << 5,
-    SPECIAL = 1 << 6
+    SPECIAL = 1 << 6,
+    SHIELD  = 1 << 7
 };
 
 enum class Facing { 

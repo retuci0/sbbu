@@ -34,6 +34,7 @@ struct Resources {
     Mix_Chunk* parrySound           = nullptr;
     Mix_Chunk* voidDeathSound       = nullptr;
     Mix_Chunk* damageSound          = nullptr;
+    Mix_Chunk* blockSound           = nullptr;
     Mix_Chunk* gameEndSound         = nullptr;
     Mix_Chunk** specialSounds       = nullptr;
 

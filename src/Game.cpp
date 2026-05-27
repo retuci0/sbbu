@@ -169,8 +169,9 @@ void Game::showEndScreen(const std::string& title, const std::string& details) {
 
 void Game::handleGameplayInput() {
     // player 1 - always local
-    bool p1Left  = isDown(options.keyP1Left);
-    bool p1Right = isDown(options.keyP1Right);
+    bool p1Left   = isDown(options.keyP1Left);
+    bool p1Right  = isDown(options.keyP1Right);
+    bool p1Shield = isDown(options.keyP1Shield);
 
     if (player1.status != Status::DAMAGED) {
         player1.move((p1Left && p1Right) ? 0 : p1Left ? -1 : p1Right ? +1 : 0);
@@ -209,26 +210,34 @@ void Game::handleGameplayInput() {
         player1.trySpecial(resources.specialSounds, dir);
         input.specialP1 = false;
     }
+    player1.setShieldHeld(p1Shield);
+    if (p1Shield) {
+        player1.tryShield();
+    } else if (!p1Shield && !player1.shieldHeld) {
+        player1.releaseShield();
+    }
 
     // player 2 - either local or remote
-    bool p2Left, p2Right, p2Down;
+    bool p2Left, p2Right, p2Down, p2Shield;
     bool p2JumpPr, p2ShootPr, p2MeleePr, p2SpecialPr;
     bool p2JumpDn;
 
     if (networkMode == NetworkMode::REMOTE_HOST) {
-        p2Left     = remoteIsDown(InputBit::LEFT);
-        p2Right    = remoteIsDown(InputBit::RIGHT);
-        p2Down     = remoteIsDown(InputBit::DOWN);
-        p2JumpDn   = remoteIsDown(InputBit::JUMP);
-        p2JumpPr   = remoteIsPressed(InputBit::JUMP);
-        p2ShootPr  = remoteIsPressed(InputBit::SHOOT);
-        p2MeleePr  = remoteIsPressed(InputBit::MELEE);
+        p2Left      = remoteIsDown(InputBit::LEFT);
+        p2Right     = remoteIsDown(InputBit::RIGHT);
+        p2Down      = remoteIsDown(InputBit::DOWN);
+        p2Shield    = remoteIsDown(InputBit::SHIELD);
+        p2JumpDn    = remoteIsDown(InputBit::JUMP);
+        p2JumpPr    = remoteIsPressed(InputBit::JUMP);
+        p2ShootPr   = remoteIsPressed(InputBit::SHOOT);
+        p2MeleePr   = remoteIsPressed(InputBit::MELEE);
         p2SpecialPr = remoteIsPressed(InputBit::SPECIAL);
     } else {
-        p2Left     = isDown(options.keyP2Left);
-        p2Right    = isDown(options.keyP2Right);
-        p2Down     = isDown(options.keyP2Down);
-        p2JumpDn   = isDown(options.keyP2Jump);
+        p2Left      = isDown(options.keyP2Left);
+        p2Right     = isDown(options.keyP2Right);
+        p2Down      = isDown(options.keyP2Down);
+        p2Shield    = isDown(options.keyP2Shield);
+        p2JumpDn    = isDown(options.keyP2Jump);
         p2JumpPr    = input.jumpP2;    input.jumpP2    = false;
         p2ShootPr   = input.shootP2;   input.shootP2   = false;
         p2MeleePr   = input.meleeP2;   input.meleeP2   = false;
@@ -265,6 +274,12 @@ void Game::handleGameplayInput() {
         else if (p2Down)   dir = Direction::DOWN;
         else               dir = Direction::NONE;
         player2.trySpecial(resources.specialSounds, dir);
+    }
+    player2.setShieldHeld(p2Shield);
+    if (p2Shield) {
+        player2.tryShield();
+    } else if (!p2Shield && !player2.shieldHeld) {
+        player2.releaseShield();
     }
 }
 
@@ -470,6 +485,7 @@ void Game::netSendClientInputs() {
     if (isDown(options.keyP1Shoot))  inputs |= InputBit::SHOOT;
     if (isDown(options.keyP1Melee))  inputs |= InputBit::MELEE;
     if (isDown(options.keyP1Special))inputs |= InputBit::SPECIAL;
+    if (isDown(options.keyP1Shield)) inputs |= InputBit::SHIELD;
 
     ClientInputPacket cip(netFrame, inputs, lastSentInputs);
     network->send(cip);
@@ -565,15 +581,29 @@ void Game::updateGameplay(float ts) {
         if (it->rect.x >= SW || it->rect.x <= 0) { it = projectiles.erase(it); continue; }
         if (it->owner != &player1 && SDL_HasIntersection(&it->rect, &player1.rect)) {
             if (player1.invulnerableTimer > 0) { ++it; continue; }
-            player1.getHit(it->direction, it->owner->character->stats.projectileDamage);
-            it->owner->charge = std::min(it->owner->charge + 0.1f, Player::MAX_CHARGE);
-            it = projectiles.erase(it); continue;
+            if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
+                player1.blockHit(it->owner->character->stats.projectileDamage, 1.0f, resources.blockSound);
+                it = projectiles.erase(it);
+                continue;
+            } else {
+                player1.getHit(it->direction, it->owner->character->stats.projectileDamage);
+                it->owner->charge = std::min(it->owner->charge + 0.1f, Player::MAX_CHARGE);
+                it = projectiles.erase(it);
+                continue;
+            }
         }
         if (it->owner != &player2 && SDL_HasIntersection(&it->rect, &player2.rect)) {
             if (player2.invulnerableTimer > 0) { ++it; continue; }
-            player2.getHit(it->direction, it->owner->character->stats.projectileDamage);
-            it->owner->charge = std::min(it->owner->charge + 0.1f, Player::MAX_CHARGE);
-            it = projectiles.erase(it); continue;
+            if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
+                player2.blockHit(it->owner->character->stats.projectileDamage, 1.0f, resources.blockSound);
+                it = projectiles.erase(it);
+                continue;
+            } else {
+                player2.getHit(it->direction, it->owner->character->stats.projectileDamage);
+                it->owner->charge = std::min(it->owner->charge + 0.1f, Player::MAX_CHARGE);
+                it = projectiles.erase(it);
+                continue;
+            }
         }
         ++it;
     }
@@ -584,14 +614,28 @@ void Game::updateGameplay(float ts) {
         it->update(ts);
         if (!it->isAlive()) { it = meleeHitboxes.erase(it); continue; }
         if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
-            player2.getHit(player1.facing, it->owner->character->stats.damage);
-            player1.charge = std::min(player1.charge + 0.1f, Player::MAX_CHARGE);
-            it = meleeHitboxes.erase(it); continue;
+            int dmg = it->owner->character->stats.damage;
+            float kb = it->kbScale;
+            if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
+                player2.blockHit(dmg, kb, resources.blockSound);
+            } else {
+                player2.getHit(player1.facing, dmg, kb);
+                player1.charge = std::min(player1.charge + 0.1f, Player::MAX_CHARGE);
+            }
+            it = meleeHitboxes.erase(it);
+            continue;
         }
         if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
-            player1.getHit(player2.facing, it->owner->character->stats.damage);
-            player2.charge = std::min(player2.charge + 0.1f, Player::MAX_CHARGE);
-            it = meleeHitboxes.erase(it); continue;
+            int dmg = it->owner->character->stats.damage;
+            float kb = it->kbScale;
+            if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
+                player1.blockHit(dmg, kb, resources.blockSound);
+            } else {
+                player1.getHit(player2.facing, dmg, kb);
+                player2.charge = std::min(player2.charge + 0.1f, Player::MAX_CHARGE);
+            }
+            it = meleeHitboxes.erase(it);
+            continue;
         }
         ++it;
     }
@@ -600,11 +644,17 @@ void Game::updateGameplay(float ts) {
     for (auto it = shockwaves.begin(); it != shockwaves.end(); ) {
         it->update(ts);
         auto tryHit = [&](Player& target) {
-            if (&target == it->getOwner())    return;
+            if (&target == it->getOwner()) return;
             if (target.invulnerableTimer > 0) return;
             auto dir = it->checkCollision(target);
             if (!dir) return;
-            target.getHit(*dir, static_cast<int>(it->getOwner()->character->stats.damage * 1.5f));
+            int dmg = static_cast<int>(it->getOwner()->character->stats.damage * 1.5f);
+            float kb = 1.5f;
+            if (target.status == Status::SHIELDED && target.shieldTimer > 0 && !target.shieldBroken) {
+                target.blockHit(dmg, kb, resources.blockSound);
+            } else {
+                target.getHit(*dir, dmg, kb);
+            }
         };
         tryHit(player1); tryHit(player2);
         if (!it->isAlive()) it = shockwaves.erase(it); else ++it;
@@ -616,15 +666,27 @@ void Game::updateGameplay(float ts) {
         if (!it->isAlive()) { it = specialHitboxes.erase(it); continue; }
         if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
             if (player2.invulnerableTimer == 0) {
-                player2.getHit(player1.facing,
-                    static_cast<int>(player1.character->stats.damage * it->damageScale), it->kbScale);
-                it = specialHitboxes.erase(it); continue;
+                int dmg = static_cast<int>(player1.character->stats.damage * it->damageScale);
+                float kb = it->kbScale;
+                if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
+                    player2.blockHit(dmg, kb, resources.blockSound);
+                } else {
+                    player2.getHit(player1.facing, dmg, kb);
+                }
+                it = specialHitboxes.erase(it);
+                continue;
             }
         } else if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
             if (player1.invulnerableTimer == 0) {
-                player1.getHit(player2.facing,
-                    static_cast<int>(player2.character->stats.damage * it->damageScale), it->kbScale);
-                it = specialHitboxes.erase(it); continue;
+                int dmg = static_cast<int>(player2.character->stats.damage * it->damageScale);
+                float kb = it->kbScale;
+                if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
+                    player1.blockHit(dmg, kb, resources.blockSound);
+                } else {
+                    player1.getHit(player2.facing, dmg, kb);
+                }
+                it = specialHitboxes.erase(it);
+                continue;
             }
         }
         ++it;
@@ -791,7 +853,7 @@ void Game::renderGameplay(float ts, float a) {
         Renderer::renderText(renderer, resources.font,
             player2.name + ": " + player2.getStatusName(), 2, 32, BLACK);
 
-        std::string fpsStr = "fps: " + std::to_string(fps);
+        std::string fpsStr = "fps: " + std::to_string(static_cast<int>(fps));
         int tw, th;
         TTF_SizeText(resources.font, fpsStr.c_str(), &tw, &th);
         Renderer::renderText(renderer, resources.font, fpsStr, SW - tw - 2, 2, BLACK);

@@ -43,6 +43,7 @@ void Resources::load(SDL_Renderer* renderer) {
     parrySound        = loadChunk("assets/sound/parry.wav");
     voidDeathSound    = loadChunk("assets/sound/void_death.wav");
     damageSound       = loadChunk("assets/sound/damage.wav");
+    blockSound        = loadChunk("assets/sound/block.wav");
     gameEndSound      = loadChunk("assets/sound/game_end.wav");
     specialSounds = new Mix_Chunk*[4] {
         loadChunk("assets/sound/special_static.wav"),
@@ -64,6 +65,7 @@ void Resources::load(SDL_Renderer* renderer) {
     if (parrySound)       Mix_VolumeChunk(parrySound,       21);
     if (voidDeathSound)   Mix_VolumeChunk(voidDeathSound,    9);
     if (damageSound)      Mix_VolumeChunk(damageSound,       6);
+    if (blockSound)       Mix_VolumeChunk(blockSound,       72);
     if (gameEndSound)     Mix_VolumeChunk(gameEndSound,     13);
     if (music)            Mix_VolumeMusic(9);
     if (titleScreenMusic) Mix_VolumeMusic(9);
@@ -88,6 +90,7 @@ void Resources::applySfxVolume(float multiplier) {
     set(parrySound,       21);
     set(voidDeathSound,    9);
     set(damageSound,     102);
+    set(blockSound,       72);
     set(gameEndSound,     13);
     if (specialSounds) {
         for (int i = 0; i < 4; ++i) {
@@ -120,6 +123,7 @@ void Resources::destroy() {
     dChunk(parrySound);
     dChunk(voidDeathSound);
     dChunk(damageSound);
+    dChunk(blockSound);
     dChunk(gameEndSound);
 
     if (specialSounds) {

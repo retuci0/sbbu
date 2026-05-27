@@ -80,6 +80,8 @@ Character loadCharacter(SDL_Renderer* renderer, const CharacterStats& stats, con
     c.idle      = loadTex(renderer, folder + "/idle/0.png");
     c.shoot     = loadTex(renderer, folder + "/shoot/0.png");
     c.damage    = loadTex(renderer, folder + "/damage/0.png");
+    c.shielded  = loadTex(renderer, folder + "/shield/0.png");
+
     c.icon      = loadTex(renderer, folder + "/icon.png");
     c.deadIcon  = loadTex(renderer, folder + "/icon_dead.png");
 

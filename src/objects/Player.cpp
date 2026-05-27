@@ -15,6 +15,10 @@
 #include <string>
 
 
+//////////////////////////////////
+/*             INIT             */
+//////////////////////////////////
+
 void Player::init(int x, int y, const Character* ch, const std::string& playerName, Mix_Chunk* dmgSound) {
     character           = ch;
     name                = playerName;
@@ -35,10 +39,16 @@ void Player::init(int x, int y, const Character* ch, const std::string& playerNa
     prevRect = rect;
 }
 
+
+//////////////////////////////////////
+/*             MOVEMENT             */
+//////////////////////////////////////
+
 void Player::move(int direction) {
-    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE ||
-        status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN ||
-        status == Status::SHOOTING
+    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE 
+        || status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN 
+        || status == Status::SHOOTING || status == Status::SHIELDED
+        || status == Status::STUNNED
     ) {
         return;
     }
@@ -61,9 +71,10 @@ void Player::move(int direction) {
 }
 
 void Player::jump() {
-    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE ||
-        status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN ||
-        status == Status::SHOOTING
+    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE 
+        || status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN 
+        || status == Status::SHOOTING || status == Status::SHIELDED
+        || status == Status::STUNNED
     ) {
         return;
     }
@@ -81,6 +92,11 @@ void Player::jump() {
     }
 }
 
+
+/////////////////////////////////////
+/*             DEFENCE             */
+/////////////////////////////////////
+
 void Player::getHit(Facing side, int damage, float kbScale) {
     if (invulnerableTimer > 0) return;
 
@@ -88,8 +104,8 @@ void Player::getHit(Facing side, int damage, float kbScale) {
         Mix_PlayChannel(-1, damageSound, 0); 
     }
 
-    status = Status::DAMAGED;
-    damagedTimer = DAMAGED_DURATION;
+    if (status != Status::STUNNED) status = Status::DAMAGED;
+    damagedTimer = std::max(damagedTimer, static_cast<float>(DAMAGED_DURATION));
 
     hp -= damage;
 
@@ -103,14 +119,80 @@ void Player::getHit(Facing side, int damage, float kbScale) {
     }
     dy = (-kbMult / 5.0f) * w * kbScale;
 
+    // decrement charge when taking damage
     charge = std::max(0.0f, charge - damage * 0.05f);
 }
 
+void Player::setShieldHeld(bool held) {
+    shieldHeld = held;
+}
+
+bool Player::tryShield() {
+    if (shieldBroken || shieldStunTimer > 0 
+            || !onGround || status == Status::STUNNED
+    ) {
+        return false;
+    }
+
+    if (shieldTimer > 0) return true;  // already active
+    shieldTimer = SHIELD_DURATION;
+    status = Status::SHIELDED;
+    currentSpriteIndex = 0.0f;
+    return true;
+}
+
+void Player::releaseShield() {
+    if (shieldStunTimer > 0) return;
+    shieldTimer = 0.0f;
+    if (status == Status::SHIELDED)
+        status = Status::IDLE;
+}
+
+void Player::breakShield() {
+    shieldBroken = true;
+    shieldBreakTimer = SHIELD_BREAK_STUN;
+    status = Status::STUNNED;
+    stunTimer = SHIELD_BREAK_STUN;
+    shieldTimer = 0.0f;
+    shieldStunTimer = 0.0f;
+    releaseShield();
+}
+
+void Player::blockHit(int damage, float kbScale, Mix_Chunk* blockSound) {
+    if (shieldBroken) return;
+    if (shieldStunTimer > 0) return;
+
+    float cost = SHIELD_HP_HIT_COST * kbScale;
+    shieldHp -= cost;
+    if (shieldHp <= 0.0f) {
+        breakShield();
+        return;
+    }
+
+    shieldStunTimer = SHIELD_STUN_DURATION;
+
+    if (blockSound) {
+        Mix_PlayChannel(-1, blockSound, 0);
+    }
+}
+
+float Player::getShieldScale() const {
+    if (shieldBroken) return 0.0f;
+    float scale = shieldHp / SHIELD_HP_MAX;
+    return std::max(scale, SHIELD_MIN_SIZE);
+}
+
+
+////////////////////////////////////
+/*             ATTACK             */
+////////////////////////////////////
+
 bool Player::tryShoot(Mix_Chunk* projSound) {
     if (shootCooldown > 0) return false;
-    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE ||
-        status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN ||
-        status == Status::SHOOTING
+    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE 
+        || status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN 
+        || status == Status::SHOOTING || status == Status::SHIELDED
+        || status == Status::STUNNED
     ) {
         return false;
     }
@@ -123,9 +205,10 @@ bool Player::tryShoot(Mix_Chunk* projSound) {
 
 bool Player::tryMelee(Mix_Chunk* meleeSound) {
     if (meleeCooldown > 0) return false;
-    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE ||
-        status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN ||
-        status == Status::SHOOTING
+    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE 
+        || status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN 
+        || status == Status::SHOOTING || status == Status::SHIELDED
+        || status == Status::STUNNED
     ) {
         return false;
     }
@@ -140,8 +223,10 @@ bool Player::tryMelee(Mix_Chunk* meleeSound) {
 bool Player::trySpecial(Mix_Chunk** sounds, Direction dir) {
     if (specialCooldown > 0) return false;
     if (charge < MAX_CHARGE) return false;
-    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE ||
-        status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN) {
+    if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE 
+        || status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN
+        || status == Status::SHIELDED || status == Status::STUNNED
+    ) {
         return false;
     }
 
@@ -191,8 +276,16 @@ bool Player::trySpecial(Mix_Chunk** sounds, Direction dir) {
     return true;
 }
 
+
+////////////////////////////////////
+/*             UPDATE             */
+////////////////////////////////////
+
 void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed, float ts) {
     prevRect = rect;
+
+    // prevent moving while shielded
+    if (status == Status::SHIELDED) { dx = 0.0f; }
 
     // apply gravity
     dy = std::min(character->stats.terminalVelocity, dy + character->stats.gravity * ts);
@@ -255,10 +348,11 @@ void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed,
     charge = std::clamp(charge, 0.0f, 1.0f);
 
     // sync status
-    if (status != Status::DAMAGED && status != Status::ATTACKING &&
-        status != Status::SHOOTING &&
-        status != Status::SPECIAL_STATIC && status != Status::SPECIAL_SIDE &&
-        status != Status::SPECIAL_UP && status != Status::SPECIAL_DOWN) {
+    if (status != Status::DAMAGED && status != Status::ATTACKING 
+        && status != Status::SHIELDED && status != Status::SHOOTING
+        && status != Status::SPECIAL_STATIC && status != Status::SPECIAL_SIDE 
+        && status != Status::SPECIAL_UP && status != Status::SPECIAL_DOWN
+        && status != Status::STUNNED) {
         if (!onGround) status = Status::JUMPING;
         else if (dx != 0.0f) status = Status::WALKING;
         else status = Status::IDLE;
@@ -281,14 +375,14 @@ void Player::updateTimers(float ts) {
     if (meleeTimer > 0.0f) {
         meleeTimer -= ts;
         if (meleeTimer <= 0.0f && status == Status::ATTACKING) {
-            status = Status::IDLE;  // let the sync block take over next frame
+            status = Status::IDLE;
         }
     }
     if (status == Status::DAMAGED) {
         if (damagedTimer > 0.0f) {
             damagedTimer -= ts;
         } else {
-            status = Status::IDLE;  // let the sync block take over next frame
+            status = Status::IDLE;
         }
     }
     if (specialTimer > 0.0f) {
@@ -298,21 +392,77 @@ void Player::updateTimers(float ts) {
             || status == Status::SPECIAL_UP
             || status == Status::SPECIAL_DOWN)
         ) {
-            status = Status::IDLE;  // let the sync block take over next frame
+            status = Status::IDLE;
         }
+    }
+    if (stunTimer > 0.0f) {
+        stunTimer -= ts;
+        if (stunTimer <= 0.0f && status == Status::STUNNED) {
+            status = Status::IDLE;
+            shieldBroken = false;
+            shieldHp = SHIELD_HP_MAX;
+        }
+    }
+    if (shieldTimer > 0.0f) {
+        shieldTimer -= ts;
+        if (shieldTimer <= 0.0f && status == Status::SHIELDED)
+            releaseShield();
+        shieldHp -= SHIELD_HP_DRAIN * ts;
+        if (shieldHp <= 0.0f && !shieldBroken) {
+            breakShield();
+            return;
+        }
+    } else {
+        if (!shieldBroken && shieldHp < SHIELD_HP_MAX)
+            shieldHp += SHIELD_HP_REGEN * ts;
+        if (shieldHp > SHIELD_HP_MAX) shieldHp = SHIELD_HP_MAX;
+    }
+
+    if (shieldStunTimer > 0.0f) {
+        shieldStunTimer -= ts;
+        if (shieldStunTimer <= 0.0f && status == Status::SHIELDED) {
+            if (!shieldHeld) releaseShield();
+        }
+    }
+
+    if (shieldBreakTimer > 0.0f) {
+        shieldBreakTimer -= ts;
+        if (shieldBreakTimer <= 0.0f) {
+            shieldBroken = false;
+            shieldHp = SHIELD_HP_MAX;
+            if (status == Status::DAMAGED && damagedTimer <= 0.0f) {
+                status = Status::IDLE;  // ...
+            }
+        }
+    }
+
+    // autorelease shield
+    if (shieldTimer > 0.0f && !shieldHeld && shieldStunTimer <= 0.0f) {
+        releaseShield();
     }
 }
 
 void Player::resetTimers() {
-    shootCooldown       = 0;
-    meleeCooldown       = 0;
-    specialCooldown     = 0;
-    meleeTimer          = 0;
-    damagedTimer        = 0;
-    invulnerableTimer   = 0;
-    specialTimer        = 0;
+    shootCooldown        = 0.0f;
+    meleeCooldown        = 0.0f;
+    specialCooldown      = 0.0f;
+    meleeTimer           = 0.0f;
+    damagedTimer         = 0.0f;
+    invulnerableTimer    = 0.0f;
+    specialTimer         = 0.0f;
+    shieldTimer          = 0.0f;
+    shieldBreakTimer     = 0.0f;
+    shieldStunTimer      = 0.0f;
+    shieldHp             = SHIELD_HP_MAX;
+    shieldBroken         = false;
+    shieldHeld           = false;
     specialHitboxSpawned = false;
 }
+
+
+///////////////////////////////////////
+/*             RENDERING             */
+///////////////////////////////////////
 
 void Player::drawSprite(SDL_Renderer* r, SDL_Texture* tex, bool flipH, float a) {
     SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
@@ -404,13 +554,35 @@ void Player::draw(SDL_Renderer* r, TTF_Font* font, float a) {
         case Status::DAMAGED:
             drawSprite(r, character->damage, flipH, a);
             break;
+        case Status::SHIELDED:
+            drawSprite(r, character->shielded, flipH, a);
+            break;
+        case Status::STUNNED:
+            drawSprite(r, character->damage, flipH, a);
+            break;
         default:
             drawSprite(r, character->idle, flipH, a);
             break;
     }
 
     // nametag
+    drawShield(r, a);
     drawNametag(r, font, a);
+}
+
+void Player::drawShield(SDL_Renderer* r, float a) const {
+    if (status != Status::SHIELDED && shieldTimer <= 0.0f) return;
+    if (shieldBroken) return;
+    float scale = getShieldScale();
+    if (scale <= 0.0f) return;
+
+    SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
+    int cx = drawRect.x + drawRect.w / 2;
+    int cy = drawRect.y + drawRect.h / 2;
+    int radius = static_cast<int>((drawRect.w / 2.0f + drawRect.h / 2.0f) / 2 * scale);
+    Color shieldColor = color;
+    shieldColor.a = 128;
+    Renderer::fillCircle(r, cx, cy, radius, shieldColor);
 }
 
 void Player::drawNametag(SDL_Renderer* r, TTF_Font* font, float a) const {
@@ -428,6 +600,11 @@ void Player::drawHitbox(SDL_Renderer* r, float a) const {
     Renderer::outlineRect(r, drawRect.x, drawRect.y, drawRect.w, drawRect.h, RED, 2);
 }
 
+
+////////////////////////////////////////////
+/*             HELPER METHODS             */
+////////////////////////////////////////////
+
 std::string Player::getStatusName() const {
     switch (status) {
         case Status::WALKING:
@@ -442,6 +619,12 @@ std::string Player::getStatusName() const {
             return "damaged";
         case Status::SPECIAL_STATIC:
             return "special (static) " + std::to_string(static_cast<int>(currentSpriteIndex) + 1) + "/6)";
+        case Status::SPECIAL_DOWN:
+            return "special (down) " + std::to_string(static_cast<int>(currentSpriteIndex) + 1) + "/3)";
+        case Status::SHIELDED:
+            return "shielded";
+        case Status::STUNNED:
+            return "stunned";
         default:
             return "idling";
         }

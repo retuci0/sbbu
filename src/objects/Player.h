@@ -26,7 +26,9 @@ enum class Status {
     SPECIAL_STATIC,
     SPECIAL_SIDE,
     SPECIAL_UP,
-    SPECIAL_DOWN
+    SPECIAL_DOWN,
+    SHIELDED,
+    STUNNED
 };
 
 class Player {
@@ -72,6 +74,34 @@ public:
     float charge = 0.0f;
     static constexpr float MAX_CHARGE = 1.0f;
 
+
+    // shield
+
+    void setShieldHeld(bool held);
+    bool tryShield();
+    void releaseShield();
+    void breakShield();
+    void blockHit(int damage, float kbScale, Mix_Chunk* blockSound);
+    float getShieldScale() const;
+
+    static constexpr int   SHIELD_HP_MAX        = 80;
+    static constexpr int   SHIELD_DURATION      = 180;
+    static constexpr float SHIELD_HP_DRAIN      = 0.12f;
+    static constexpr float SHIELD_HP_REGEN      = 0.25f;
+    static constexpr float SHIELD_HP_HIT_COST   = 8.0f;
+    static constexpr int   SHIELD_BREAK_STUN    = 180;
+    static constexpr int   SHIELD_STUN_DURATION = 14;
+    static constexpr float SHIELD_MIN_SIZE      = 0.35f;
+    
+    float shieldTimer       = 0.0f;
+    float shieldHp          = SHIELD_HP_MAX;
+    bool  shieldBroken      = false;
+    float shieldBreakTimer  = 0.0f;
+    float shieldStunTimer   = 0.0f;
+    float stunTimer         = 0.0f;
+    bool shieldHeld         = false;
+
+
     // hitbox
     SDL_Rect rect = {};
     SDL_Rect prevRect = {};
@@ -104,6 +134,7 @@ public:
     void resetTimers();
 
     void draw(SDL_Renderer* r, TTF_Font* font, float a);
+    void drawShield(SDL_Renderer* r, float a) const;
     void drawNametag(SDL_Renderer* r, TTF_Font* font, float a) const;
     void drawHitbox(SDL_Renderer* r, float a) const;
     void animate(float ts);

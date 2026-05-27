@@ -12,6 +12,7 @@ class Platform {
 public:
     SDL_Texture* image = nullptr;  // non-owning
     SDL_Rect rect = {};
+    PlatformSize size;
 
     Platform(SDL_Texture* bigTex, SDL_Texture* smallTex, int x, int y, int w, int h, PlatformSize size);
 

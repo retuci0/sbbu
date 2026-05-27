@@ -35,6 +35,7 @@ struct Character {
     SDL_Texture* idle       = nullptr;
     SDL_Texture* shoot      = nullptr;
     SDL_Texture* damage     = nullptr;
+    SDL_Texture* shielded   = nullptr;
 
     SDL_Texture* icon       = nullptr;
     SDL_Texture* deadIcon   = nullptr;

@@ -10,7 +10,6 @@ static constexpr int COL1_X  = 250,  COL2_X  = 1050;
 static constexpr int ROW_Y   = 160,  ROW_STEP = 70;
 static constexpr int ROW_W   = 600,  ROW_H   = 55;
 
-
 ControlsScreen::ControlsScreen(SDL_Renderer* r, TTF_Font* titleFont, TTF_Font* font, Options& o)
     : titleFont(titleFont), font(font)
 {
@@ -18,32 +17,34 @@ ControlsScreen::ControlsScreen(SDL_Renderer* r, TTF_Font* titleFont, TTF_Font* f
 
     // P1 bindings
     Row p1[] = {
-        {"left",    o.keyP1Left},
-        {"right",   o.keyP1Right},
-        {"down",    o.keyP1Down},
-        {"jump",    o.keyP1Jump},
-        {"shoot",   o.keyP1Shoot},
-        {"melee",   o.keyP1Melee},
-        {"special", o.keyP1Special},
+        { "left",    o.keyP1Left    },
+        { "right",   o.keyP1Right   },
+        { "down",    o.keyP1Down    },
+        { "jump",    o.keyP1Jump    },
+        { "shoot",   o.keyP1Shoot   },
+        { "melee",   o.keyP1Melee   },
+        { "special", o.keyP1Special },
+        { "shield", o.keyP1Shield   }
     };
     // P2 bindings
     Row p2[] = {
-        {"left",    o.keyP2Left},
-        {"right",   o.keyP2Right},
-        {"down",    o.keyP2Down},
-        {"jump",    o.keyP2Jump},
-        {"shoot",   o.keyP2Shoot},
-        {"melee",   o.keyP2Melee},
-        {"special", o.keyP2Special},
+        { "left",    o.keyP2Left    },
+        { "right",   o.keyP2Right   },
+        { "down",    o.keyP2Down    },
+        { "jump",    o.keyP2Jump    },
+        { "shoot",   o.keyP2Shoot   },
+        { "melee",   o.keyP2Melee   },
+        { "special", o.keyP2Special },
+        { "shield", o.keyP2Shield   }
     };
 
-    for (int i = 0; i < 7; ++i) {
+    for (int i = 0; i < 8; ++i) {
         int y = ROW_Y + i * ROW_STEP;
         addWidget<KeybindWidget>(COL1_X, y, ROW_W, ROW_H, p1[i].name, p1[i].key);
         addWidget<KeybindWidget>(COL2_X, y, ROW_W, ROW_H, p2[i].name, p2[i].key);
     }
 
-    addWidget<Button>(SW/2 - 100, 680, 200, 60, "done",
+    addWidget<Button>(SW/2 - 100, 780, 200, 60, "done",
         Color{50, 180, 50, 255}, WHITE, [&]{ finished = true; });
 }
 
@@ -66,7 +67,7 @@ void ControlsScreen::render(SDL_Renderer* r) {
     Renderer::renderText(r, font, "player 2", COL2_X, ROW_Y - 50, Color{255, 80, 80, 255});
 
     Renderer::renderText(r, font, "click a row, then press any key; esc to cancel",
-        SW/2 - 280, 630, {140, 140, 140, 255});
+        SW/2 - 280, 720, {140, 140, 140, 255});
 
     drawWidgets(r, font);
 }
