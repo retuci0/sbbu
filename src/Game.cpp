@@ -956,14 +956,14 @@ void Game::handleScreenTransitions() {
         options.musVolume = vols.music;
         resources.applySfxVolume(options.sfxVolume);
         Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
-        setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font));
+        setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font, options));
         return;
     }
 
     if (auto* cs = dynamic_cast<ControlsScreen*>(screen.get())) {
         if (!cs->isFinished()) return;
         options.saveToFile();
-        setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font));
+        setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font, options));
         return;
     }
 
@@ -992,7 +992,7 @@ void Game::processEvents() {
         } else {
             if (e.type == SDL_KEYDOWN && e.key.keysym.sym == options.keyPause) {
                 Mix_PauseMusic();
-                setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font));
+                setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font, options));
                 continue;
             }
             processEvent(e);

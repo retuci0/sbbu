@@ -3,7 +3,9 @@
 #include "../widget/Button.h"
 #include "../../misc/Common.h"
 #include "../../misc/Renderer.h"
+#include "../../Options.h"
 
+#include <SDL2/SDL_events.h>
 #include <SDL2/SDL_ttf.h>
 
 #include <filesystem>
@@ -13,8 +15,8 @@ void openAssetsFolder() {
     openFolder(std::filesystem::current_path().string() + "/assets/");
 }
 
-PauseScreen::PauseScreen(SDL_Renderer* /*renderer*/, int sw, int sh, TTF_Font* titleFont, TTF_Font* font)
-    : titleFont(titleFont), font(font)
+PauseScreen::PauseScreen(SDL_Renderer* /*renderer*/, int sw, int sh, TTF_Font* titleFont, TTF_Font* font, Options options)
+    : titleFont(titleFont), font(font), options(options)
 {
     const Color bg = {255, 255, 255, 255};
 
@@ -45,4 +47,10 @@ void PauseScreen::render(SDL_Renderer* renderer) {
     Renderer::fillRect(renderer, 200, 150, 1500, 150, BLACK);
     Renderer::renderText(renderer, titleFont, "game paused.", 750, 190, WHITE);
     drawWidgets(renderer, font);
+}
+
+void PauseScreen::handle(const SDL_Event& event) {
+    if (event.type == SDL_KEYDOWN && event.key.keysym.sym == options.keyPause) {
+        finished = true;
+    }
 }
