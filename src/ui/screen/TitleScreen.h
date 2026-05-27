@@ -23,4 +23,5 @@ private:
     SDL_Texture* bg;
     bool finished = false;
     MultiplayerModeResult result = MultiplayerModeResult::LOCAL;
+    int selectedIndex = 0;
 };

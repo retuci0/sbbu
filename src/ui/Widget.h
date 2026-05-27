@@ -17,6 +17,11 @@ public:
 
     SDL_Rect getRect() const { return rect; }
 
+    int getX() const { return rect.x; }
+    int getY() const { return rect.y; }
+    int getW() const { return rect.w; }
+    int getH() const { return rect.h; }
+    
 protected:
     SDL_Rect rect;
 };

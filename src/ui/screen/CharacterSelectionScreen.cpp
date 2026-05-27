@@ -23,7 +23,6 @@ static constexpr int START_BTN_W = 400, START_BTN_H = 80;
 static constexpr int COLOR_BTN_W = 160, COLOR_BTN_H = 50;
 static constexpr int COLOR_BTN_Y = NAME_BOX_Y + 80;
 
-
 CharacterSelectionScreen::CharacterSelectionScreen(
         SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font,
         const std::array<const Character*, CHARACTER_NUM>& chars,
@@ -35,23 +34,20 @@ CharacterSelectionScreen::CharacterSelectionScreen(
     selectedChar1 = findIdx(defaultChar1);
     selectedChar2 = findIdx(defaultChar2);
     setDefaultColors();
-
     addWidget<Button>(START_BTN_X, START_BTN_Y, START_BTN_W, START_BTN_H,
         "start game", Color{50, 180, 50, 255}, WHITE,
         [&]{ tryStart(); });
 }
 
-
 int CharacterSelectionScreen::findIdx(const Character* ch) const {
-    for (int i = 0; i < CHARACTER_NUM; ++i) {
+    for (int i = 0; i < CHARACTER_NUM; ++i)
         if (chars[i] && chars[i]->loaded && chars[i] == ch) return i;
-    }
     return 0;
 }
 
 void CharacterSelectionScreen::setDefaultColors() {
-    color1 = {100, 149, 237, 230};  // blue
-    color2 = {255,  80,  80, 230};  // red
+    color1 = {100, 149, 237, 230};
+    color2 = {255,  80,  80, 230};
 }
 
 void CharacterSelectionScreen::tryStart() {
@@ -66,16 +62,14 @@ void CharacterSelectionScreen::pickColorFor(int player) {
     const char* defaultHex = (player == 1) ? "#6495ED" : "#FF5050";
     unsigned char defaultRgb[3] = {
         (player == 1) ? static_cast<unsigned char>(100) : static_cast<unsigned char>(255),
-        (player == 1) ? static_cast<unsigned char>(149) : static_cast<unsigned char>( 80),
-        (player == 1) ? static_cast<unsigned char>(237) : static_cast<unsigned char>( 80)
+        (player == 1) ? static_cast<unsigned char>(149) : static_cast<unsigned char>(80),
+        (player == 1) ? static_cast<unsigned char>(237) : static_cast<unsigned char>(80)
     };
     unsigned char resultRgb[3];
-
     const char* hex = tinyfd_colorChooser(
         (player == 1) ? "pick player 1 color" : "pick player 2 color",
         defaultHex, defaultRgb, resultRgb
     );
-
     if (hex) {
         SDL_Color newColor = { resultRgb[0], resultRgb[1], resultRgb[2], 230 };
         if (player == 1) color1 = newColor;
@@ -83,16 +77,15 @@ void CharacterSelectionScreen::pickColorFor(int player) {
     }
 }
 
-// ── event handling ────────────────────────────────────────────────────────────
-
 void CharacterSelectionScreen::handle(const SDL_Event& e) {
-    Screen::handle(e);  // dispatches to widgets
+    Screen::handle(e);
 
     if (e.type == SDL_QUIT) {
         finished = true;
         return;
     }
 
+    // navigation
     if (e.type == SDL_KEYDOWN) {
         switch (e.key.keysym.sym) {
             case SDLK_RETURN:
@@ -103,44 +96,64 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
                 if (activeField == 1 && !name1.empty()) name1.pop_back();
                 if (activeField == 2 && !name2.empty()) name2.pop_back();
                 break;
+            case SDLK_LEFT:
+                if (activeField == 0) activeField = 1;
+                else if (activeField == 1) activeField = 2;
+                else if (activeField == 2) activeField = 1;
+                break;
+            case SDLK_RIGHT:
+                if (activeField == 0) activeField = 2;
+                else if (activeField == 1) activeField = 2;
+                else if (activeField == 2) activeField = 1;
+                break;
+            case SDLK_UP:
+            case SDLK_DOWN: {
+                int delta = (e.key.keysym.sym == SDLK_UP) ? -1 : 1;
+                int& selected = (activeField == 1) ? selectedChar1 : selectedChar2;
+                int newIdx = selected + delta;
+                int first = -1, last = -1;
+                for (int i = 0; i < CHARACTER_NUM; ++i) {
+                    if (chars[i] && chars[i]->loaded) {
+                        if (first == -1) first = i;
+                        last = i;
+                    }
+                }
+                if (newIdx < first) newIdx = last;
+                if (newIdx > last) newIdx = first;
+                selected = newIdx;
+                break;
+            }
         }
     }
 
+    // text input
     if (e.type == SDL_TEXTINPUT) {
         nameError = false;
         if (activeField == 1 && name1.size() < 16) name1 += e.text.text;
         if (activeField == 2 && name2.size() < 16) name2 += e.text.text;
     }
 
+    // mouse
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
         const int mx = e.button.x, my = e.button.y;
-
-        // character selection boxes
         for (int i = 0; i < (int)chars.size(); ++i) {
             if (!chars[i] || !chars[i]->loaded) continue;
-
             int col = i / 4, row = i % 4;
             int y  = ROW_START_Y + row * ROW_STEP;
             int x1 = COL1_X + col * (BOX_W + 20);
             int x2 = COL2_X + col * (BOX_W + 20);
-
             if (pointInRect(mx, my, SDL_Rect{x1, y, BOX_W, BOX_H})) selectedChar1 = i;
             if (pointInRect(mx, my, SDL_Rect{x2, y, BOX_W, BOX_H})) selectedChar2 = i;
         }
-
-        // name fields
         const SDL_Rect nameField1 = {NAME_BOX_X1, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H};
         const SDL_Rect nameField2 = {NAME_BOX_X2, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H};
         if      (pointInRect(mx, my, nameField1)) activeField = 1;
         else if (pointInRect(mx, my, nameField2)) activeField = 2;
         else                                       activeField = 0;
-
-        // color picker buttons
         if (pointInRect(mx, my, SDL_Rect{COL1_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H})) pickColorFor(1);
         if (pointInRect(mx, my, SDL_Rect{COL2_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H})) pickColorFor(2);
     }
 }
-
 
 void CharacterSelectionScreen::render(SDL_Renderer* renderer) {
     Renderer::fillRect(renderer, 0, 0, SW, SH, {30, 30, 30, 255});

@@ -41,6 +41,7 @@ public:
 
 protected:
     void onKey(SDL_Keycode key, KeyAction action) override;
+    void onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action) override;
 
 private:
     static constexpr int MAX_PROJ = 8;

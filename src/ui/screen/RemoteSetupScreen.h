@@ -1,9 +1,7 @@
 #pragma once
 
 #include "../Screen.h"
-
 #include "../../net/Network.h"
-
 #include <memory>
 
 
@@ -31,7 +29,6 @@ private:
     TTF_Font *titleFont, *font;
     bool finished = false;
     RemoteSetupResult result;
-
     std::string ipInput = "127.0.0.1";
     std::string portInput = "60789";
     int activeField = 0;
@@ -39,6 +36,7 @@ private:
     bool connecting = false;
     bool goBack = false;
     std::string statusMsg;
+    int selectedWidget = 0;
 
     void tryConnect();
 };

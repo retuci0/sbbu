@@ -28,6 +28,10 @@ public:
         return true;
     }
 
+    void activate() {
+        action();
+    }
+
 private:
     std::string label;
     std::function<void()> action;

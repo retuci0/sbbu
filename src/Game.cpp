@@ -59,7 +59,7 @@ void Game::playGameMusic() {
 
 void Game::init() {
     // init sdl
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) != 0) {
         throw std::runtime_error(std::string("SDL_Init: ") + SDL_GetError());
     }
     if (!(IMG_Init(IMG_INIT_PNG) & IMG_INIT_PNG)) {
@@ -92,6 +92,7 @@ void Game::init() {
     options.loadFromFile();
     resources.applySfxVolume(options.sfxVolume);
     Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
+    InputHandler::init();
 }
 
 void Game::setupPlayers(const Character* c1, const std::string& n1,
@@ -169,9 +170,11 @@ void Game::showEndScreen(const std::string& title, const std::string& details) {
 
 void Game::handleGameplayInput() {
     // player 1 - always local
-    bool p1Left   = isDown(options.keyP1Left);
-    bool p1Right  = isDown(options.keyP1Right);
-    bool p1Shield = isDown(options.keyP1Shield);
+    // keyboard or controller for movement
+    float p1Axis = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX);
+    bool p1Left  = isDown(options.keyP1Left) || (p1Axis < -0.2f);
+    bool p1Right = isDown(options.keyP1Right) || (p1Axis > 0.2f);
+    bool p1Shield = isDown(options.keyP1Shield) || isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
 
     if (player1.status != Status::DAMAGED) {
         player1.move((p1Left && p1Right) ? 0 : p1Left ? -1 : p1Right ? +1 : 0);
@@ -190,26 +193,29 @@ void Game::handleGameplayInput() {
     }
     if (input.meleeP1) {
         if (player1.tryMelee(resources.meleeSound)) {
-            const int hw = 86;
-            const int hh = 76;
-            int hx = (player1.facing == Facing::RIGHT)
-                   ? player1.rect.x + player1.rect.w - 36
-                   : player1.rect.x - hw + 36;
+            const int hw = 86, hh = 76;
+            int hx = (player1.facing == Facing::RIGHT) ? player1.rect.x + player1.rect.w - 36 : player1.rect.x - hw + 36;
             int hy = player1.rect.y + (player1.rect.h - hh) / 2;
             meleeHitboxes.emplace_back(hx, hy, hw, hh, &player1, 6);
         }
         input.meleeP1 = false;
     }
     if (input.specialP1) {
-        Direction dir;
-        if      (isDown(options.keyP1Left))  dir = Direction::LEFT;
+        Direction dir = Direction::NONE;
+        float axisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX);
+        float axisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY);
+        if (axisX < -0.2f) dir = Direction::LEFT;
+        else if (axisX > 0.2f) dir = Direction::RIGHT;
+        else if (axisY < -0.2f) dir = Direction::UP;
+        else if (axisY > 0.2f) dir = Direction::DOWN;
+        if (isDown(options.keyP1Left)) dir = Direction::LEFT;
         else if (isDown(options.keyP1Right)) dir = Direction::RIGHT;
-        else if (isDown(options.keyP1Jump))  dir = Direction::UP;
-        else if (isDown(options.keyP1Down))  dir = Direction::DOWN;
-        else                                      dir = Direction::NONE;
+        else if (isDown(options.keyP1Jump)) dir = Direction::UP;
+        else if (isDown(options.keyP1Down)) dir = Direction::DOWN;
         player1.trySpecial(resources.specialSounds, dir);
         input.specialP1 = false;
     }
+
     player1.setShieldHeld(p1Shield);
     if (p1Shield) {
         player1.tryShield();
@@ -217,12 +223,13 @@ void Game::handleGameplayInput() {
         player1.releaseShield();
     }
 
-    // player 2 - either local or remote
+    // player2 - local or remote
     bool p2Left, p2Right, p2Down, p2Shield;
     bool p2JumpPr, p2ShootPr, p2MeleePr, p2SpecialPr;
     bool p2JumpDn;
 
     if (networkMode == NetworkMode::REMOTE_HOST) {
+        // remote player: read from network bits
         p2Left      = remoteIsDown(InputBit::LEFT);
         p2Right     = remoteIsDown(InputBit::RIGHT);
         p2Down      = remoteIsDown(InputBit::DOWN);
@@ -233,14 +240,15 @@ void Game::handleGameplayInput() {
         p2MeleePr   = remoteIsPressed(InputBit::MELEE);
         p2SpecialPr = remoteIsPressed(InputBit::SPECIAL);
     } else {
+        // local player 2 (kb only for now)
         p2Left      = isDown(options.keyP2Left);
         p2Right     = isDown(options.keyP2Right);
         p2Down      = isDown(options.keyP2Down);
         p2Shield    = isDown(options.keyP2Shield);
         p2JumpDn    = isDown(options.keyP2Jump);
-        p2JumpPr    = input.jumpP2;    input.jumpP2    = false;
-        p2ShootPr   = input.shootP2;   input.shootP2   = false;
-        p2MeleePr   = input.meleeP2;   input.meleeP2   = false;
+        p2JumpPr    = input.jumpP2;    input.jumpP2 = false;
+        p2ShootPr   = input.shootP2;   input.shootP2 = false;
+        p2MeleePr   = input.meleeP2;   input.meleeP2 = false;
         p2SpecialPr = input.specialP2; input.specialP2 = false;
     }
 
@@ -248,7 +256,6 @@ void Game::handleGameplayInput() {
         player2.move((p2Left && p2Right) ? 0 : p2Left ? -1 : p2Right ? 1 : 0);
 
     if (p2JumpPr) player2.jump();
-
     if (p2ShootPr) {
         if (player2.tryShoot(resources.projectileSound)) {
             int px = (player2.facing == Facing::LEFT) ? player2.rect.x - 20 : player2.rect.x + 20;
@@ -257,11 +264,8 @@ void Game::handleGameplayInput() {
     }
     if (p2MeleePr) {
         if (player2.tryMelee(resources.meleeSound)) {
-            const int hw = 86;
-            const int hh = 76;
-            int hx = (player2.facing == Facing::RIGHT)
-                   ? player2.rect.x + player2.rect.w - 36
-                   : player2.rect.x - hw + 36;
+            const int hw = 86, hh = 76;
+            int hx = (player2.facing == Facing::RIGHT) ? player2.rect.x + player2.rect.w - 36 : player2.rect.x - hw + 36;
             int hy = player2.rect.y + (player2.rect.h - hh) / 2;
             meleeHitboxes.emplace_back(hx, hy, hw, hh, &player2, 6);
         }
@@ -275,6 +279,7 @@ void Game::handleGameplayInput() {
         else               dir = Direction::NONE;
         player2.trySpecial(resources.specialSounds, dir);
     }
+
     player2.setShieldHeld(p2Shield);
     if (p2Shield) {
         player2.tryShield();
@@ -1216,6 +1221,29 @@ void Game::onKey(SDL_Keycode key, KeyAction action) {
     if (key == options.keyP2Special) input.specialP2 = true;
 }
 
+void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action) {
+    if (action != ControllerButtonAction::PRESS) return;
+
+    switch (button) {
+        case SDL_CONTROLLER_BUTTON_A:          // A button = jump
+            input.jumpP1 = true;
+            break;
+        case SDL_CONTROLLER_BUTTON_B:          // B button = shoot
+            input.shootP1 = true;
+            break;
+        case SDL_CONTROLLER_BUTTON_X:          // X button = melee
+            input.meleeP1 = true;
+            break;
+        case SDL_CONTROLLER_BUTTON_Y:          // Y button = special
+            input.specialP1 = true;
+            break;
+        case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+            break;
+        default:
+            break;
+    }
+}
+
 
 /* --- CLEANUP --- */
 
@@ -1225,6 +1253,7 @@ void Game::cleanup() {
     resources.destroy();
     if (renderer) { SDL_DestroyRenderer(renderer); renderer = nullptr; }
     if (window)   { SDL_DestroyWindow(window);     window   = nullptr; }
+    InputHandler::shutdown();
     Mix_CloseAudio();
     TTF_Quit();
     IMG_Quit();

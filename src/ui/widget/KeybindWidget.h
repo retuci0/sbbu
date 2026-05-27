@@ -48,6 +48,7 @@ public:
     }
 
     bool isListening() const { return listening; }
+    void startListening() { listening = true; }
 
 private:
     std::string actionName;
