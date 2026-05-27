@@ -106,6 +106,7 @@ public:
     void draw(SDL_Renderer* r, TTF_Font* font, float a);
     void drawNametag(SDL_Renderer* r, TTF_Font* font, float a) const;
     void drawHitbox(SDL_Renderer* r, float a) const;
+    void animate(float ts);
 
     std::string getStatusName() const;
 
@@ -114,6 +115,5 @@ public:
     }
 
 private:
-    void animate(float ts);
     void drawSprite(SDL_Renderer* r, SDL_Texture* tex, bool flipH, float a);
 };

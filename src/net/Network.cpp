@@ -8,7 +8,6 @@
 
 
 static constexpr int MAX_PACKET_SIZE  = 2048;
-static constexpr int PROTOCOL_VERSION =    1;
 
 std::unique_ptr<Network> Network::createHost(uint16_t port) {
     auto net = std::unique_ptr<Network>(new Network());

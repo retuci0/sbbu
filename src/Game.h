@@ -101,8 +101,9 @@ private:
     
     // network stuff
 
-    NetworkMode networkMode = NetworkMode::NONE;
     std::unique_ptr<Network> network;
+    
+    NetworkMode networkMode = NetworkMode::NONE;
     uint8_t remoteInputBits = 0, prevRemoteInputBits = 0;
     uint8_t lastSentInputs = 0;
     uint32_t netFrame = 0;
@@ -115,7 +116,7 @@ private:
     uint32_t pingSequence = 0;
     uint32_t pendingPingSequence = 0;
     Uint32 lastPingSentTicks = 0;
-    int pingMs = -1;
+    int ping = -1;
 
     struct GameSetupPayload {
         uint8_t char1Idx = 0, char2Idx = 0;
@@ -137,7 +138,6 @@ private:
     void processNetworkPackets();
     void netSendStateUpdate();
     void netApplyStateUpdate(const StateUpdatePacket& sup);
-    void netInterpolateRemoteState();
     void netUpdatePing();
     void netSendClientInputs();
 };

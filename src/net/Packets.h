@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ByteBuffer.h"
+#include "misc/Common.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -59,7 +60,7 @@ public:
         protocolVersion = in.readUint32();
     }
 
-    uint32_t protocolVersion = 0;
+    uint32_t protocolVersion = PROTOCOL_VERSION;
 };
 
 class HandshakeAckPacket : public Packet {

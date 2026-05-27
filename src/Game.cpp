@@ -125,7 +125,7 @@ void Game::setupPlayers(const Character* c1, const std::string& n1,
     pingSequence = 0;
     pendingPingSequence = 0;
     lastPingSentTicks = 0;
-    pingMs = -1;
+    ping = -1;
 }
 
 void Game::respawn(Player& p, bool voidDeath) {
@@ -332,7 +332,7 @@ void Game::processNetworkPackets() {
             case PacketType::PONG: {
                 auto* pong = dynamic_cast<PongPacket*>(pkt.get());
                 if (pong && pong->sequence == pendingPingSequence) {
-                    pingMs = static_cast<int>(SDL_GetTicks() - pong->sentTicks);
+                    ping = static_cast<int>(SDL_GetTicks() - pong->sentTicks);
                     pendingPingSequence = 0;
                 }
                 break;
@@ -798,7 +798,7 @@ void Game::renderGameplay(float ts, float a) {
 
         if (networkMode == NetworkMode::REMOTE_HOST || networkMode == NetworkMode::REMOTE_CLIENT) {
             std::string pingStr = "ping: ";
-            pingStr += (pingMs >= 0) ? std::to_string(pingMs) + " ms" : "? ms";
+            pingStr += (ping >= 0) ? std::to_string(ping) + " ms" : "? ms";
             TTF_SizeText(resources.font, pingStr.c_str(), &tw, &th);
             Renderer::renderText(renderer, resources.font, pingStr, SW - tw - 2, 34, BLACK);
         }
@@ -1045,7 +1045,8 @@ void Game::update(float ts) {
 
     if (networkMode == NetworkMode::REMOTE_CLIENT) {
         netSendClientInputs();
-        // animate sprites locally
+        player1.animate(ts);
+        player2.animate(ts);
         player1.updateTimers(ts);
         player2.updateTimers(ts);
     } else {
@@ -1072,8 +1073,11 @@ void Game::update(float ts) {
 
 void Game::render(float ts, float a) {
     if (screen) {
-        // if pause or volume screen, render the gameplay underneath
-        if (dynamic_cast<PauseScreen*>(screen.get()) || dynamic_cast<VolumeScreen*>(screen.get())) {
+        // render the gameplay underneath on transparent screens
+        if (dynamic_cast<PauseScreen*>(screen.get()) 
+                || dynamic_cast<VolumeScreen*>(screen.get())
+                || dynamic_cast<ControlsScreen*>(screen.get())
+        ) {
             renderGameplay(ts, a);
         }
         screen->render(renderer);

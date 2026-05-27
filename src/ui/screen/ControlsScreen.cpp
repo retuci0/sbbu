@@ -59,7 +59,7 @@ void ControlsScreen::handle(const SDL_Event& e) {
 }
 
 void ControlsScreen::render(SDL_Renderer* r) {
-    Renderer::fillRect(r, 0, 0, SW, SH, {20, 20, 20, 255});
+    Renderer::fillRect(r, 0, 0, SW, SH, { 20, 20, 20, 200 });
     Renderer::renderText(r, titleFont, "controls", SW/2 - 100, 60, WHITE);
 
     Renderer::renderText(r, font, "player 1", COL1_X, ROW_Y - 50, Color{100, 149, 237, 255});

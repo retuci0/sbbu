@@ -24,7 +24,7 @@ VolumeScreen::VolumeScreen(SDL_Renderer* /*renderer*/, TTF_Font* titleFont, TTF_
 }
 
 void VolumeScreen::render(SDL_Renderer* renderer) {
-    Renderer::fillRect(renderer, 0, 0, SW, SH, {20, 20, 20, 255});
+    Renderer::fillRect(renderer, 0, 0, SW, SH, { 20, 20, 20, 200 });
     Renderer::renderText(renderer, titleFont, "volume settings", 750, 200, WHITE);
     drawWidgets(renderer, font);
 }

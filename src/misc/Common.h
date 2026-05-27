@@ -19,10 +19,14 @@
 // amount of characters
 constexpr int CHARACTER_NUM = 9;
 
+// protocol version of network system
+static constexpr int PROTOCOL_VERSION = 1;
+
 
 // colors
 
 constexpr Color WHITE    = { 255, 255, 255, 255 };
+constexpr Color GRAY     = { 100, 100, 100, 255 };
 constexpr Color BLACK    = {   0,   0,   0, 255 };
 constexpr Color RED      = { 255,   0,   0, 255 };
 constexpr Color GREEN    = {   0, 255,   0, 255 };

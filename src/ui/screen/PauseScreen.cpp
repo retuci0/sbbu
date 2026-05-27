@@ -45,7 +45,7 @@ PauseScreen::PauseScreen(SDL_Renderer* /*renderer*/, int sw, int sh, TTF_Font* t
 
 void PauseScreen::render(SDL_Renderer* renderer) {
     Renderer::fillRect(renderer, 0, 0, SW, SH, {0, 0, 0, 150});
-    Renderer::fillRect(renderer, 200, 150, 1500, 150, BLACK);
+    Renderer::fillRect(renderer, 200, 150, 1500, 150, GRAY);
     Renderer::renderText(renderer, titleFont, "game paused.", 750, 190, WHITE);
     drawWidgets(renderer, font);
 }
