@@ -13,11 +13,11 @@ public:
 
     SDL_Rect rect = {};
     Player* owner;
-    int lifetime = 0;
+    float lifetime = 0.0f;
     float damageScale = 1.0f;
     float kbScale     = 1.0f;
 
-    void update() { if (lifetime > 0) --lifetime; }
+    void update(float ts) { if (lifetime > 0) lifetime -= ts; }
     bool isAlive() const { return lifetime > 0; }
-    void drawHitbox(SDL_Renderer* r);
+    void drawHitbox(SDL_Renderer* r, float a);
 };

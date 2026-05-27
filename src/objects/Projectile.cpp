@@ -2,6 +2,7 @@
 
 #include "../misc/Common.h"
 #include "../misc/Renderer.h"
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 
 
@@ -11,17 +12,18 @@ Projectile::Projectile(SDL_Texture* img, int x, int y, Facing dir, Player* owner
     rect = {x, y, 64, 64};
 }
 
-void Projectile::move() {
-    if (parryFlashTimer > 0) --parryFlashTimer;
+void Projectile::update(float ts) {
+    prevRect = rect;
+    if (parryFlashTimer > 0) parryFlashTimer -= ts;
     if (parryFreezeTimer > 0) {
-        --parryFreezeTimer;
+        parryFreezeTimer -= ts;
         return;
     }
 
     if (direction == Facing::LEFT) { 
-        rect.x -= static_cast<int>(velocity); 
+        rect.x -= static_cast<int>(velocity * ts); 
     } else { 
-        rect.x += static_cast<int>(velocity); 
+        rect.x += static_cast<int>(velocity * ts); 
     }
 }
 
@@ -35,18 +37,20 @@ void Projectile::parry(Player* newOwner) {
     parryFlashTimer = PARRY_FLASH_DURATION;
 }
 
-void Projectile::draw(SDL_Renderer* r) {
+void Projectile::draw(SDL_Renderer* r, float a) {
+    SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
     if (img) { 
-        SDL_RenderCopyEx(r, img, nullptr, &rect, 0, 0, direction == Facing::LEFT 
+        SDL_RenderCopyEx(r, img, nullptr, &drawRect, 0, 0, direction == Facing::LEFT 
                         ? SDL_RendererFlip::SDL_FLIP_HORIZONTAL
                         : SDL_RendererFlip::SDL_FLIP_NONE
         ); 
     }
-    if (parryFlashTimer > 0 && (parryFlashTimer / 2) % 2 == 0) {
-        Renderer::outlineRect(r, rect.x - 4, rect.y - 4, rect.w + 8, rect.h + 8, WHITE, 4);
+    if (parryFlashTimer > 0.0f && (static_cast<int>(parryFlashTimer) / 2) % 2 == 0) {
+        Renderer::outlineRect(r, drawRect.x - 4, drawRect.y - 4, drawRect.w + 8, drawRect.h + 8, WHITE, 4);
     }
 }
 
-void Projectile::drawHitbox(SDL_Renderer* r) const {
-    Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, GREEN, 2);
+void Projectile::drawHitbox(SDL_Renderer* r, float a) const {
+    SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
+    Renderer::outlineRect(r, drawRect.x, drawRect.y, drawRect.w, drawRect.h, GREEN, 2);
 }

@@ -4,6 +4,7 @@
 #include "../../misc/Common.h"
 #include "../../misc/Renderer.h"
 #include "../../Options.h"
+#include "ui/Screen.h"
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_ttf.h>
@@ -53,4 +54,5 @@ void PauseScreen::handle(const SDL_Event& event) {
     if (event.type == SDL_KEYDOWN && event.key.keysym.sym == options.keyPause) {
         finished = true;
     }
+    Screen::handle(event);
 }

@@ -9,10 +9,11 @@
 class Projectile {
 public:
     SDL_Rect rect = {};
+    SDL_Rect prevRect = {};
     Facing direction;
     float velocity = 19.0f;
-    int parryFreezeTimer = 0;
-    int parryFlashTimer = 0;
+    float parryFreezeTimer = 0.0f;
+    float parryFlashTimer = 0.0f;
     Player* owner = nullptr;  // non-owning
 
     SDL_Texture* img = nullptr;  // non-owning
@@ -22,8 +23,8 @@ public:
     static constexpr int PARRY_FREEZE_DURATION = 12;
     static constexpr int PARRY_FLASH_DURATION = 10;
 
-    void move();
+    void update(float ts);
     void parry(Player* newOwner);
-    void draw(SDL_Renderer* r);
-    void drawHitbox(SDL_Renderer* r) const;
+    void draw(SDL_Renderer* r, float a);
+    void drawHitbox(SDL_Renderer* r, float a) const;
 };

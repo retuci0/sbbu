@@ -14,12 +14,12 @@ Platform::Platform(SDL_Texture* bigTex, SDL_Texture* smallTex, int x, int y, int
     }
 }
 
-void Platform::draw(SDL_Renderer* r) const {
+void Platform::draw(SDL_Renderer* r, float /*a*/) const {
     if (image) { 
         SDL_RenderCopy(r, image, nullptr, &rect); 
     }
 }
 
-void Platform::drawHitbox(SDL_Renderer* r) const {
+void Platform::drawHitbox(SDL_Renderer* r, float /*a*/) const {
     Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, BLUE, 2);
 }

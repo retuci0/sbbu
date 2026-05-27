@@ -53,6 +53,8 @@ private:
     bool running = true;
     bool paused  = false;
 
+    Input input = Input();
+
     std::unique_ptr<Screen> screen;
     void setScreen(std::unique_ptr<Screen> screen);
 
@@ -68,6 +70,10 @@ private:
     int frames;
     Uint32 lastFpsUpdate;
 
+    static constexpr int   TICK_RATE    = 20;                   // 20 tps
+    static constexpr float TICK_MS      = 1000.0f / TICK_RATE;  // 50 ms
+    static constexpr float TICK_SCALE   = 60.0f / TICK_RATE;    // 3.0 at 20hz
+
     void loadResources();
     void setupPlayers(const Character* c1, const std::string& n1, const Character* c2, const std::string& n2);
     void playTitleMusic();
@@ -78,16 +84,16 @@ private:
     void applySfxVolume(float multiplier);
     void showEndScreen(const std::string& title, const std::string& details);
     
-    void update();
-    void updateGameplay();
+    void update(float ts);
+    void updateGameplay(float ts);
 
     void processEvents();
     void handleGameplayInput();
 
-    void render();
+    void render(float ts, float a);
     void renderPlayerHud(const Player& player) const;
     void renderMinimap() const;
-    void renderGameplay();
+    void renderGameplay(float ts, float a);
     void handleScreenTransitions();
 
     TTF_Font* findFont(int size);

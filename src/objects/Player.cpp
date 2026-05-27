@@ -6,6 +6,7 @@
 #include "../misc/Renderer.h"
 
 #include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
 
@@ -31,6 +32,7 @@ void Player::init(int x, int y, const Character* ch, const std::string& playerNa
         SDL_QueryTexture(ch->idle, nullptr, nullptr, &w, &h);
     }
     rect = {x, y, w, h};
+    prevRect = rect;
 }
 
 void Player::move(int direction) {
@@ -189,24 +191,26 @@ bool Player::trySpecial(Mix_Chunk** sounds, Direction dir) {
     return true;
 }
 
-void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed) {
+void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed, float ts) {
+    prevRect = rect;
+
     // apply gravity
-    dy = std::min(character->stats.terminalVelocity, dy + character->stats.gravity);
+    dy = std::min(character->stats.terminalVelocity, dy + character->stats.gravity * ts);
 
     // drop-through
     if (downKeyPressed && onGround && droppingTimer == 0) droppingTimer = DROP_DURATION;
-    if (droppingTimer > 0) --droppingTimer;
+    if (droppingTimer > 0) droppingTimer -= ts;
     const bool dropping = (droppingTimer > 0);
 
     // horizontal move
-    rect.x += static_cast<int>(dx);
+    rect.x += static_cast<int>(dx * ts);
 
     // snapshot the player's bottom before the vertical move
     // to know whether it approached from above
     const int prevBottom = rect.y + rect.h;
 
     // vertical move
-    rect.y += static_cast<int>(dy);
+    rect.y += static_cast<int>(dy * ts);
     onGround = false;
 
     // land on top of platforms (only while falling, only from above, only if not dropping)
@@ -236,7 +240,7 @@ void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed)
     }
 
     // decrement timers
-    updateTimers();
+    updateTimers(ts);
 
     // adapt hitbox to current sprite's size
     int w, h;
@@ -260,36 +264,36 @@ void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed)
         else status = Status::IDLE;
     }
 
-    animate();
+    animate(ts);
 }
 
-void Player::updateTimers() {
-    if (shootCooldown > 0) --shootCooldown;
-    if (meleeCooldown > 0) --meleeCooldown;
-    if (specialCooldown > 0) --specialCooldown;
-    if (invulnerableTimer > 0) --invulnerableTimer;
-    if (shootTimer > 0) {
-        --shootTimer;
-        if (shootTimer == 0 && status == Status::SHOOTING) {
+void Player::updateTimers(float ts) {
+    if (shootCooldown > 0.0f) shootCooldown -= ts;
+    if (meleeCooldown > 0.0f) meleeCooldown -= ts;
+    if (specialCooldown > 0.0f) specialCooldown -= ts;
+    if (invulnerableTimer > 0.0f) invulnerableTimer -= ts;
+    if (shootTimer > 0.0f) {
+        shootTimer -= ts;
+        if (shootTimer <= 0.0f && status == Status::SHOOTING) {
             status = Status::IDLE;  // let the sync block take over next frame
         }
     }
-    if (meleeTimer > 0) {
-        --meleeTimer;
-        if (meleeTimer == 0 && status == Status::ATTACKING) {
+    if (meleeTimer > 0.0f) {
+        meleeTimer -= ts;
+        if (meleeTimer <= 0.0f && status == Status::ATTACKING) {
             status = Status::IDLE;  // let the sync block take over next frame
         }
     }
     if (status == Status::DAMAGED) {
-        if (damagedTimer > 0) {
-            --damagedTimer;
+        if (damagedTimer > 0.0f) {
+            damagedTimer -= ts;
         } else {
             status = Status::IDLE;  // let the sync block take over next frame
         }
     }
-    if (specialTimer > 0) {
-        --specialTimer;
-        if (specialTimer == 0 && (status == Status::SPECIAL_STATIC 
+    if (specialTimer > 0.0f) {
+        specialTimer -= ts;
+        if (specialTimer <= 0.0f && (status == Status::SPECIAL_STATIC 
             || status == Status::SPECIAL_SIDE
             || status == Status::SPECIAL_UP
             || status == Status::SPECIAL_DOWN)
@@ -310,27 +314,27 @@ void Player::resetTimers() {
     specialHitboxSpawned = false;
 }
 
-void Player::drawSprite(SDL_Renderer* r, SDL_Texture* tex, bool flipH) {
+void Player::drawSprite(SDL_Renderer* r, SDL_Texture* tex, bool flipH, float a) {
+    SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
     if (!tex) { return; }
     currentTexture = tex;
-    SDL_Rect dst = {rect.x, rect.y, rect.w, rect.h};
     SDL_RendererFlip flip = flipH ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
 
     if (invulnerableTimer > 0) {
         float wave = (1.0f + std::sin(invulnerableTimer * 0.08f)) * 0.5f;
-        Uint8 a = static_cast<Uint8>(120 + wave * 135);
-        SDL_SetTextureAlphaMod(tex, a);
+        Uint8 alpha = static_cast<Uint8>(120 + wave * 135);
+        SDL_SetTextureAlphaMod(tex, alpha);
     } else {
         SDL_SetTextureAlphaMod(tex, 255);
     }
 
-    SDL_RenderCopyEx(r, tex, nullptr, &dst, 0.0, nullptr, flip);
+    SDL_RenderCopyEx(r, tex, nullptr, &drawRect, 0.0, nullptr, flip);
     SDL_SetTextureAlphaMod(tex, 255);
 }
 
-void Player::animate() {
+void Player::animate(float ts) {
     auto advanceFrame = [&](const std::vector<SDL_Texture*>& frames, float speed) {
-        currentSpriteIndex += speed;
+        currentSpriteIndex += speed * ts;
         if (currentSpriteIndex >= static_cast<float>(frames.size())) {
             currentSpriteIndex = 0.0f;
         }
@@ -364,12 +368,12 @@ void Player::animate() {
     }
 }
 
-void Player::draw(SDL_Renderer* r, TTF_Font* font) {
+void Player::draw(SDL_Renderer* r, TTF_Font* font, float a) {
     bool flipH = (facing == Facing::LEFT);
     auto drawAnimatedSprite = [&](const std::vector<SDL_Texture*>& frames) -> void {
         if (frames.empty()) return;
         int i = static_cast<int>(currentSpriteIndex) % static_cast<int>(frames.size());
-        drawSprite(r, frames[i], flipH);
+        drawSprite(r, frames[i], flipH, a);
     };
 
     switch (status) {
@@ -395,31 +399,33 @@ void Player::draw(SDL_Renderer* r, TTF_Font* font) {
             drawAnimatedSprite(character->specialDownFrames);
             break;
         case Status::SHOOTING:
-            drawSprite(r, character->shoot, flipH);
+            drawSprite(r, character->shoot, flipH, a);
             break;
         case Status::DAMAGED:
-            drawSprite(r, character->damage, flipH);
+            drawSprite(r, character->damage, flipH, a);
             break;
         default:
-            drawSprite(r, character->idle, flipH);
+            drawSprite(r, character->idle, flipH, a);
             break;
     }
 
     // nametag
-    drawNametag(r, font);
+    drawNametag(r, font, a);
 }
 
-void Player::drawNametag(SDL_Renderer* r, TTF_Font* font) const {
+void Player::drawNametag(SDL_Renderer* r, TTF_Font* font, float a) const {
     int w, h;
     TTF_SizeText(font, name.c_str(), &w, &h);
-    int x = rect.x + (rect.w - w) / 2;
-    int y = rect.y - 40;
+    SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
+    int x = drawRect.x + (rect.w - w) / 2;
+    int y = drawRect.y - 40;
     Renderer::fillRect(r, x - 2, y - 2, w + 4, h + 4, { 67, 67, 67, 67 });
     Renderer::renderText(r, font, name, x, y, color);
 }
 
-void Player::drawHitbox(SDL_Renderer* r) const {
-    Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, RED, 2);
+void Player::drawHitbox(SDL_Renderer* r, float a) const {
+    SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
+    Renderer::outlineRect(r, drawRect.x, drawRect.y, drawRect.w, drawRect.h, RED, 2);
 }
 
 std::string Player::getStatusName() const {

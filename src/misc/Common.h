@@ -63,6 +63,15 @@ inline bool pointInRect(int px, int py, const SDL_Rect& r) {
     return px >= r.x && px < r.x + r.w && py >= r.y && py < r.y + r.h;
 }
 
+inline SDL_Rect interpolatedRect(SDL_Rect prevRect, SDL_Rect rect, float alpha) {
+    return {
+        static_cast<int>(prevRect.x + (rect.x - prevRect.x) * alpha),
+        static_cast<int>(prevRect.y + (rect.y - prevRect.y) * alpha),
+        rect.w,
+        rect.h
+    };
+}
+
 // open a folder with the user's preferred file manager
 inline void openFolder(const std::string& path) {
 #if defined _WIN32

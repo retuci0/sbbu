@@ -20,7 +20,7 @@ public:
     SDL_KeyCode keyP2Jump       = SDLK_UP;
     SDL_KeyCode keyP2Shoot      = SDLK_LCTRL;
     SDL_KeyCode keyP2Melee      = SDLK_LSHIFT;
-    SDL_KeyCode keyP2Special    = SDLK_KP_ENTER;
+    SDL_KeyCode keyP2Special    = SDLK_RETURN;
 
     SDL_KeyCode keyPause        = SDLK_ESCAPE;
     SDL_KeyCode keyQuit         = SDLK_0;

@@ -1,8 +1,20 @@
 #pragma once
 
 #include <SDL2/SDL.h>
+
 #include <unordered_map>
 
+
+struct Input {
+    bool jumpP1    = false;
+    bool shootP1   = false;
+    bool meleeP1   = false;
+    bool specialP1 = false;
+    bool jumpP2    = false;
+    bool shootP2   = false;
+    bool meleeP2   = false;
+    bool specialP2 = false;
+};
 
 enum class KeyAction {
     PRESS,

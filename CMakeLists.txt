@@ -26,6 +26,7 @@ set(SRC
     src/objects/Player.cpp
     src/objects/Projectile.cpp
     src/objects/Platform.cpp
+    src/objects/Shockwave.cpp
     src/ui/screen/CharacterSelectionScreen.cpp
     src/ui/screen/ControlsScreen.cpp
     src/ui/screen/GameEndScreen.cpp
