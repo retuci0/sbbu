@@ -44,18 +44,18 @@ static SDL_Texture* loadTex(SDL_Renderer* r, const std::string& path) {
 }
 
 void Character::unload() {
-    for (auto* t : walkFrames) {
-        if (t) { SDL_DestroyTexture(t); }
-    }
-    for (auto* t : jumpFrames) {
-        if (t) { SDL_DestroyTexture(t); }
-    }
+    for (auto* t : walkFrames) {          if (t) { SDL_DestroyTexture(t); }}
+    for (auto* t : jumpFrames) {          if (t) { SDL_DestroyTexture(t); }}
+    for (auto* t : attackFrames) {        if (t) { SDL_DestroyTexture(t); }}
+    for (auto* t : specialStaticFrames) { if (t) { SDL_DestroyTexture(t); }}
     if (idle)   { SDL_DestroyTexture(idle); }
-    if (shoot) { SDL_DestroyTexture(shoot); }
+    if (shoot)  { SDL_DestroyTexture(shoot); }
     if (damage) { SDL_DestroyTexture(damage); }
     if (icon)   { SDL_DestroyTexture(icon); }
     walkFrames.clear();
     jumpFrames.clear();
+    attackFrames.clear();
+    specialStaticFrames.clear();
     idle = shoot = damage = icon = nullptr;
     loaded = false;
 }

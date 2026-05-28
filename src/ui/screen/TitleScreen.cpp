@@ -7,7 +7,7 @@
 #include <SDL2/SDL_render.h>
 
 
-TitleScreen::TitleScreen() {
+TitleScreen::TitleScreen() : Screen() {
     bg = Resources::get().getTexture("title_bg");
     addWidget<Button>(SW/2-200, SH/2, 400, 80, "local play",
                       Color{60,60,60}, WHITE, [&]{ result = MultiplayerModeResult::LOCAL; finished=true; });

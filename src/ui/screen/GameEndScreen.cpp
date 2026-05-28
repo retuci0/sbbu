@@ -8,7 +8,7 @@
 
 
 GameEndScreen::GameEndScreen(const std::string& title, const std::string& details)
-    : title(title), details(details)
+    : title(title), details(details), Screen() 
 {
     const int BTN_W = 360, BTN_H = 76;
     const int GAP = 50;

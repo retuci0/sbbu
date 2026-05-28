@@ -5,7 +5,7 @@
 
 
 WaitingScreen::WaitingScreen()
-    : startTime(SDL_GetTicks()) {}
+    : startTime(SDL_GetTicks()), Screen()  {}
 
 void WaitingScreen::update() {
     if ((SDL_GetTicks() - startTime) / 500 > dotCount) {

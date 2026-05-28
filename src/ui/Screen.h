@@ -12,10 +12,12 @@
 
 class Screen {
 public:
-    virtual ~Screen() {
+    Screen() {
         titleFont = Resources::get().titleFont;
         font = Resources::get().font;
     }
+
+    virtual ~Screen() {}
 
     virtual void handle(const SDL_Event& e) {
         for (auto& w : widgets) w->handle(e);

@@ -17,11 +17,11 @@ void openAssetsFolder() {
 }
 
 PauseScreen::PauseScreen(const Options& options)
-    : options(options), selectedIndex(0)
+    : options(options), Screen() 
 {
     const int btnW=400, btnH=80, gap=40, colGap=60;
     int totalWidth = 2*btnW + colGap;
-    int startX = SW / 2;
+    int startX = SW / 2 - btnW;
     int startY = SH / 3 + 100;
 
     addWidget<Button>(startX, startY, btnW, btnH, "resume", WHITE, BLACK, [&]{ result = PauseActionResult::RESUME; finished = true; });

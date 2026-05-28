@@ -13,7 +13,7 @@ static constexpr int ROW_Y = 160, ROW_STEP = 70;
 static constexpr int ROW_W = 600, ROW_H = 55;
 
 ControlsScreen::ControlsScreen(Options& o)
-    : selectedRow(0), selectedColumn(0)
+    : selectedRow(0), selectedColumn(0), Screen() 
 {
     struct Row { const char* name; SDL_KeyCode& key; };
     Row p1[] = {

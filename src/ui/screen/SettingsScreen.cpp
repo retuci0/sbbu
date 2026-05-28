@@ -13,7 +13,7 @@ static constexpr Color BTN_YES_C = Color{ 50, 180, 50, 255 }, BTN_NO_C = Color{ 
 static constexpr int FS_X = SW / 2 - 2 * BTN_W - 20, VS_X = SW / 2 + BTN_W + 20;
 static constexpr int OK_X = (SW - BTN_W) / 2, OK_Y = 750;
 
-SettingsScreen::SettingsScreen(int maxFps, bool vsync, bool fullscreen) {
+SettingsScreen::SettingsScreen(int maxFps, bool vsync, bool fullscreen) : Screen() {
     result = { maxFps, vsync, fullscreen };
 
     fpsCapSlider = addWidget<Slider>(SL_X, SL_Y, SL_W, SL_H, -1, 360, maxFps, "fps cap", false, false);

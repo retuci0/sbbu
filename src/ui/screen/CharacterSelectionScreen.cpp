@@ -26,7 +26,7 @@ CharacterSelectionScreen::CharacterSelectionScreen(
         const std::array<const Character*, CHARACTER_NUM>& chars,
         const std::string& defaultName1, const Character* defaultChar1,
         const std::string& defaultName2, const Character* defaultChar2)
-    : chars(chars), name1(defaultName1), name2(defaultName2)
+    : chars(chars), name1(defaultName1), name2(defaultName2), Screen() 
 {
     selectedChar1 = findIdx(defaultChar1);
     selectedChar2 = findIdx(defaultChar2);

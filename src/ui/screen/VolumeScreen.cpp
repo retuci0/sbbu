@@ -11,7 +11,7 @@ static constexpr int SL_X = 600, SL_W = 700, SL_H = 20;
 static constexpr int SL_SFX_Y = 420, SL_MUSIC_Y = 600;
 static constexpr int OK_X = 860, OK_Y = 750, OK_W = 200, OK_H = 70;
 
-VolumeScreen::VolumeScreen(float currentSfx, float currentMusic) {
+VolumeScreen::VolumeScreen(float currentSfx, float currentMusic) : Screen() {
     sfxSlider   = addWidget<Slider>(SL_X, SL_SFX_Y,   SL_W, SL_H, 0.0f, 2.0f, currentSfx,   "SFX Volume");
     musicSlider = addWidget<Slider>(SL_X, SL_MUSIC_Y, SL_W, SL_H, 0.0f, 2.0f, currentMusic, "music Volume");
 

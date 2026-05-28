@@ -64,7 +64,7 @@ void Resources::load(SDL_Renderer* renderer) {
     registerSound(renderer, "jump2",        "assets/sound/jump2.wav");
     registerSound(renderer, "death",        "assets/sound/death.wav");
     registerSound(renderer, "projectile",   "assets/sound/projectile.wav");
-    registerSound(renderer, "punch",        "assets/sound/punch.wav");
+    registerSound(renderer, "melee",        "assets/sound/punch.wav");
     registerSound(renderer, "parry",        "assets/sound/parry.wav");
     registerSound(renderer, "void_death",   "assets/sound/void_death.wav");
     registerSound(renderer, "damage",       "assets/sound/damage.wav");
