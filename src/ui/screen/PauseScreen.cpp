@@ -37,8 +37,8 @@ void PauseScreen::render(SDL_Renderer* renderer) {
         auto* btn = dynamic_cast<Button*>(widgets[i].get());
         if (btn) {
             btn->draw(renderer, font);
-            if (i == (size_t)selectedIndex) {
-                Renderer::outlineRect(renderer, btn->getX(), btn->getY(), btn->getW(), btn->getH(), WHITE, 3);
+            if (i == (size_t) selectedIndex) {
+                Renderer::outlineRect(renderer, btn->getX(), btn->getY(), btn->getW(), btn->getH(), BLACK, 3);
             }
         }
     }

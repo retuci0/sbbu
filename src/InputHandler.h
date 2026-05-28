@@ -3,7 +3,10 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_gamecontroller.h>
 #include <unordered_map>
+#include <array>
 
+
+static constexpr int MAX_CONTROLLERS = 2;
 
 struct KeyState {
     bool down = false;
@@ -45,11 +48,8 @@ public:
     virtual ~InputHandler() = default;
 
     void init();
-
     void shutdown();
-
     void beginFrame();
-
     void processEvent(const SDL_Event& e);
 
     // keyboard queries
@@ -58,24 +58,32 @@ public:
     bool isReleased(SDL_Keycode key) const;
     bool isRepeated(SDL_Keycode key) const;
 
-    // controller queries
-    bool isDown(SDL_GameControllerButton button) const;
-    bool isPressed(SDL_GameControllerButton button) const;
-    bool isReleased(SDL_GameControllerButton button) const;
-    Sint16 getControllerAxis(SDL_GameControllerAxis axis) const;
-    float getNormalizedAxis(SDL_GameControllerAxis axis, int deadzone = 8000) const;
+    // controller queries (ctrl = 0 for P1, 1 for P2)
+    bool isDown(SDL_GameControllerButton button, int ctrl = 0) const;
+    bool isPressed(SDL_GameControllerButton button, int ctrl = 0) const;
+    bool isReleased(SDL_GameControllerButton button, int ctrl = 0) const;
+    Sint16 getControllerAxis(SDL_GameControllerAxis axis, int ctrl = 0) const;
+    float getNormalizedAxis(SDL_GameControllerAxis axis, int ctrl = 0, int deadzone = 8000) const;
+
+    bool isControllerConnected(int ctrl = 0) const { return controllers[ctrl] != nullptr; }
+    int  numControllers() const;
+
+    // returns which slot {0,1} a joystick instance ID belongs to, or -1 if not found
+    int getControllerSlot(SDL_JoystickID instanceId) const;
 
 protected:
     virtual void onKey(SDL_Keycode key, KeyAction action) {}
-    virtual void onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action) {}
+    virtual void onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action, int ctrl) {}
 
 private:
-    // state
     std::unordered_map<SDL_Keycode, KeyState> keys;
-    SDL_GameController* controller = nullptr;
-    std::unordered_map<SDL_GameControllerButton, ControllerButtonState> controllerButtons;
-    std::unordered_map<SDL_GameControllerAxis, Sint16> axisValues;
 
+    std::array<SDL_GameController*, MAX_CONTROLLERS> controllers = { nullptr, nullptr };
+    std::array<SDL_JoystickID, MAX_CONTROLLERS>      controllerInstanceIds = { -1, -1 };
+    std::array<std::unordered_map<SDL_GameControllerButton, ControllerButtonState>, MAX_CONTROLLERS> controllerButtons;
+    std::array<std::unordered_map<SDL_GameControllerAxis,   Sint16>,                MAX_CONTROLLERS> axisValues;
+
+    int  findFreeSlot() const;
     void openController(int deviceIndex);
-    void closeController();
+    void closeControllerSlot(int slot);
 };

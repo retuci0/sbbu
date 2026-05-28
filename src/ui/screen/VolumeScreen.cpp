@@ -23,8 +23,47 @@ VolumeScreen::VolumeScreen(SDL_Renderer* /*renderer*/, TTF_Font* titleFont, TTF_
     );
 }
 
+void VolumeScreen::handle(const SDL_Event& e) {
+    // Let mouse events reach the sliders as before
+    Screen::handle(e);
+
+    if (e.type != SDL_KEYDOWN) return;
+
+    Slider* active = (selectedSlider == 0) ? sfxSlider : musicSlider;
+
+    switch (e.key.keysym.sym) {
+        case SDLK_UP:
+        case SDLK_DOWN:
+            selectedSlider = 1 - selectedSlider;
+            break;
+        case SDLK_LEFT:
+            active->setValue(active->getValue() - 0.05f);
+            break;
+        case SDLK_RIGHT:
+            active->setValue(active->getValue() + 0.05f);
+            break;
+        case SDLK_RETURN:
+            finished = true;
+            result   = { sfxSlider->getValue(), musicSlider->getValue() };
+            break;
+        case SDLK_ESCAPE:
+            finished = true;
+            result   = { sfxSlider->getValue(), musicSlider->getValue() };
+            break;
+        default: break;
+    }
+}
+
 void VolumeScreen::render(SDL_Renderer* renderer) {
     Renderer::fillRect(renderer, 0, 0, SW, SH, { 20, 20, 20, 200 });
     Renderer::renderText(renderer, titleFont, "volume settings", 750, 200, WHITE);
     drawWidgets(renderer, font);
+
+    Slider* active = (selectedSlider == 0) ? sfxSlider : musicSlider;
+    if (active) {
+        Renderer::outlineRect(renderer,
+            active->getX() - 4, active->getY() - 4,
+            active->getW() + 8, active->getH() + 8,
+            {255, 255, 255, 255}, 2);
+    }
 }

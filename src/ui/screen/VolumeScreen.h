@@ -15,6 +15,7 @@ class VolumeScreen : public Screen {
 public:
     VolumeScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, float currentSfx, float currentMusic);
 
+    void handle(const SDL_Event& e) override;
     void render(SDL_Renderer* renderer) override;
 
     bool isFinished() const { return finished; }
@@ -29,4 +30,5 @@ private:
 
     bool finished = false;
     VolumeResult result{};
+    int selectedSlider = 0;  // 0 = sfx, 1 = music
 };

@@ -169,12 +169,11 @@ void Game::showEndScreen(const std::string& title, const std::string& details) {
 /* --- INPUT HANDLING --- */
 
 void Game::handleGameplayInput() {
-    // player 1 - always local
-    // keyboard or controller for movement
-    float p1Axis = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX);
-    bool p1Left  = isDown(options.keyP1Left) || (p1Axis < -0.2f);
-    bool p1Right = isDown(options.keyP1Right) || (p1Axis > 0.2f);
-    bool p1Shield = isDown(options.keyP1Shield) || isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+    // player 1 - always local (ctrl 0)
+    float p1Axis  = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
+    bool p1Left   = isDown(options.keyP1Left)   || (p1Axis < -0.2f);
+    bool p1Right  = isDown(options.keyP1Right)  || (p1Axis > 0.2f);
+    bool p1Shield = isDown(options.keyP1Shield) || isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, 0);
 
     if (player1.status != Status::DAMAGED) {
         player1.move((p1Left && p1Right) ? 0 : p1Left ? -1 : p1Right ? +1 : 0);
@@ -202,8 +201,8 @@ void Game::handleGameplayInput() {
     }
     if (input.specialP1) {
         Direction dir = Direction::NONE;
-        float axisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX);
-        float axisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY);
+        float axisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
+        float axisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0);
         if (axisX < -0.2f) dir = Direction::LEFT;
         else if (axisX > 0.2f) dir = Direction::RIGHT;
         else if (axisY < -0.2f) dir = Direction::UP;
@@ -240,12 +239,13 @@ void Game::handleGameplayInput() {
         p2MeleePr   = remoteIsPressed(InputBit::MELEE);
         p2SpecialPr = remoteIsPressed(InputBit::SPECIAL);
     } else {
-        // local player 2 (kb only for now)
-        p2Left      = isDown(options.keyP2Left);
-        p2Right     = isDown(options.keyP2Right);
-        p2Down      = isDown(options.keyP2Down);
-        p2Shield    = isDown(options.keyP2Shield);
-        p2JumpDn    = isDown(options.keyP2Jump);
+        // local player 2: keyboard OR controller 1
+        float p2Axis = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 1);
+        p2Left   = isDown(options.keyP2Left)   || (p2Axis < -0.2f);
+        p2Right  = isDown(options.keyP2Right)  || (p2Axis > 0.2f);
+        p2Down   = isDown(options.keyP2Down)   || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 1) > 0.5f;
+        p2Shield = isDown(options.keyP2Shield) || isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, 1);
+        p2JumpDn = isDown(options.keyP2Jump)   || isDown(SDL_CONTROLLER_BUTTON_A, 1);
         p2JumpPr    = input.jumpP2;    input.jumpP2 = false;
         p2ShootPr   = input.shootP2;   input.shootP2 = false;
         p2MeleePr   = input.meleeP2;   input.meleeP2 = false;
@@ -271,12 +271,13 @@ void Game::handleGameplayInput() {
         }
     }
     if (p2SpecialPr) {
-        Direction dir;
-        if      (p2Left)   dir = Direction::LEFT;
-        else if (p2Right)  dir = Direction::RIGHT;
-        else if (p2JumpDn) dir = Direction::UP;
-        else if (p2Down)   dir = Direction::DOWN;
-        else               dir = Direction::NONE;
+        Direction dir = Direction::NONE;
+        float p2AxisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 1);
+        float p2AxisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 1);
+        if      (p2Left  || p2AxisX < -0.2f) dir = Direction::LEFT;
+        else if (p2Right || p2AxisX >  0.2f) dir = Direction::RIGHT;
+        else if (p2JumpDn || p2AxisY < -0.2f) dir = Direction::UP;
+        else if (p2Down  || p2AxisY >  0.2f) dir = Direction::DOWN;
         player2.trySpecial(resources.specialSounds, dir);
     }
 
@@ -483,14 +484,26 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
 
 void Game::netSendClientInputs() {
     uint8_t inputs = 0;
-    if (isDown(options.keyP1Left))   inputs |= InputBit::LEFT;
-    if (isDown(options.keyP1Right))  inputs |= InputBit::RIGHT;
-    if (isDown(options.keyP1Down))   inputs |= InputBit::DOWN;
-    if (isDown(options.keyP1Jump))   inputs |= InputBit::JUMP;
-    if (isDown(options.keyP1Shoot))  inputs |= InputBit::SHOOT;
-    if (isDown(options.keyP1Melee))  inputs |= InputBit::MELEE;
-    if (isDown(options.keyP1Special))inputs |= InputBit::SPECIAL;
-    if (isDown(options.keyP1Shield)) inputs |= InputBit::SHIELD;
+    // keyboard
+    if (isDown(options.keyP1Left))    inputs |= InputBit::LEFT;
+    if (isDown(options.keyP1Right))   inputs |= InputBit::RIGHT;
+    if (isDown(options.keyP1Down))    inputs |= InputBit::DOWN;
+    if (isDown(options.keyP1Jump))    inputs |= InputBit::JUMP;
+    if (isDown(options.keyP1Shoot))   inputs |= InputBit::SHOOT;
+    if (isDown(options.keyP1Melee))   inputs |= InputBit::MELEE;
+    if (isDown(options.keyP1Special)) inputs |= InputBit::SPECIAL;
+    if (isDown(options.keyP1Shield))  inputs |= InputBit::SHIELD;
+    // controller 0
+    float axisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
+    float axisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0);
+    if (axisX < -0.2f)  inputs |= InputBit::LEFT;
+    if (axisX >  0.2f)  inputs |= InputBit::RIGHT;
+    if (axisY >  0.5f)  inputs |= InputBit::DOWN;
+    if (isDown(SDL_CONTROLLER_BUTTON_A,           0)) inputs |= InputBit::JUMP;
+    if (isDown(SDL_CONTROLLER_BUTTON_B,           0)) inputs |= InputBit::SHOOT;
+    if (isDown(SDL_CONTROLLER_BUTTON_X,           0)) inputs |= InputBit::MELEE;
+    if (isDown(SDL_CONTROLLER_BUTTON_Y,           0)) inputs |= InputBit::SPECIAL;
+    if (isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,0)) inputs |= InputBit::SHIELD;
 
     ClientInputPacket cip(netFrame, inputs, lastSentInputs);
     network->send(cip);
@@ -501,10 +514,10 @@ void Game::netSendClientInputs() {
 /* --- LOGIC AND SHI --- */
 
 void Game::updateGameplay(float ts) {
-    player1.update(platforms, isDown(options.keyP1Down), ts);
+    player1.update(platforms, isDown(options.keyP1Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0) > 0.5f, ts);
     bool p2Down = (networkMode == NetworkMode::REMOTE_HOST)
                   ? remoteIsDown(InputBit::DOWN)
-                  : isDown(options.keyP2Down);
+                  : (isDown(options.keyP2Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 1) > 0.5f);
     player2.update(platforms, p2Down, ts);
 
     auto trySpawnSpecialHitbox = [&](Player& attacker) {
@@ -1064,8 +1077,37 @@ void Game::processEvents() {
 
         if (screen) {
             screen->handle(e);
+
+            // inject a synthetic KEYDOWN so controller dpad/buttons navigate menus
+            if (e.type == SDL_CONTROLLERBUTTONDOWN) {
+                SDL_Keycode navKey = SDLK_UNKNOWN;
+                switch (static_cast<SDL_GameControllerButton>(e.cbutton.button)) {
+                    case SDL_CONTROLLER_BUTTON_DPAD_UP:    navKey = SDLK_UP;     break;
+                    case SDL_CONTROLLER_BUTTON_DPAD_DOWN:  navKey = SDLK_DOWN;   break;
+                    case SDL_CONTROLLER_BUTTON_DPAD_LEFT:  navKey = SDLK_LEFT;   break;
+                    case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: navKey = SDLK_RIGHT;  break;
+                    case SDL_CONTROLLER_BUTTON_A:
+                    case SDL_CONTROLLER_BUTTON_START:      navKey = SDLK_RETURN; break;
+                    case SDL_CONTROLLER_BUTTON_B:
+                    case SDL_CONTROLLER_BUTTON_BACK:       navKey = SDLK_ESCAPE; break;
+                    default: break;
+                }
+                if (navKey != SDLK_UNKNOWN) {
+                    SDL_Event fake{};
+                    fake.type            = SDL_KEYDOWN;
+                    fake.key.keysym.sym  = navKey;
+                    fake.key.keysym.scancode = SDL_GetScancodeFromKey(navKey);
+                    screen->handle(fake);
+                }
+            }
         } else {
             if (e.type == SDL_KEYDOWN && e.key.keysym.sym == options.keyPause) {
+                Mix_PauseMusic();
+                setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font, options));
+                continue;
+            }
+            if (e.type == SDL_CONTROLLERBUTTONDOWN &&
+                e.cbutton.button == SDL_CONTROLLER_BUTTON_START) {
                 Mix_PauseMusic();
                 setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font, options));
                 continue;
@@ -1221,26 +1263,27 @@ void Game::onKey(SDL_Keycode key, KeyAction action) {
     if (key == options.keyP2Special) input.specialP2 = true;
 }
 
-void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action) {
+void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action, int ctrl) {
     if (action != ControllerButtonAction::PRESS) return;
 
-    switch (button) {
-        case SDL_CONTROLLER_BUTTON_A:          // A button = jump
-            input.jumpP1 = true;
-            break;
-        case SDL_CONTROLLER_BUTTON_B:          // B button = shoot
-            input.shootP1 = true;
-            break;
-        case SDL_CONTROLLER_BUTTON_X:          // X button = melee
-            input.meleeP1 = true;
-            break;
-        case SDL_CONTROLLER_BUTTON_Y:          // Y button = special
-            input.specialP1 = true;
-            break;
-        case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
-            break;
-        default:
-            break;
+    // ctrl 0 → P1 actions, ctrl 1 → P2 actions (local only)
+    if (ctrl == 0) {
+        switch (button) {
+            case SDL_CONTROLLER_BUTTON_A:     input.jumpP1    = true; break;
+            case SDL_CONTROLLER_BUTTON_B:     input.shootP1   = true; break;
+            case SDL_CONTROLLER_BUTTON_X:     input.meleeP1   = true; break;
+            case SDL_CONTROLLER_BUTTON_Y:     input.specialP1 = true; break;
+            default: break;
+        }
+    } else if (ctrl == 1 && networkMode != NetworkMode::REMOTE_CLIENT) {
+        // P2 is only local when we're not the network client
+        switch (button) {
+            case SDL_CONTROLLER_BUTTON_A:     input.jumpP2    = true; break;
+            case SDL_CONTROLLER_BUTTON_B:     input.shootP2   = true; break;
+            case SDL_CONTROLLER_BUTTON_X:     input.meleeP2   = true; break;
+            case SDL_CONTROLLER_BUTTON_Y:     input.specialP2 = true; break;
+            default: break;
+        }
     }
 }
 

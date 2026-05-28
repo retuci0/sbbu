@@ -11,31 +11,42 @@ GameEndScreen::GameEndScreen(SDL_Renderer* /*renderer*/, TTF_Font* titleFont, TT
                              const std::string& title, const std::string& details)
     : titleFont(titleFont), font(font), title(title), details(details)
 {
-    const int btnW = 360;
-    const int btnH = 76;
-    const int gap = 50;
-    const int totalW = btnW * 2 + gap;
-    const int x = (SW - totalW) / 2;
+    const int BTN_W = 360, BTN_H = 76;
+    const int GAP = 50;
+    const int w = BTN_W * 2 + GAP;
+    const int x = (SW - w) / 2;
     const int y = 700;
 
-    addWidget<Button>(x, y, btnW, btnH, "title screen", WHITE, BLACK, [&] {
+    addWidget<Button>(x, y, BTN_W, BTN_H, "title screen", WHITE, BLACK, [&] {
         result = GameEndActionResult::TITLE;
         finished = true;
     });
-    addWidget<Button>(x + btnW + gap, y, btnW, btnH, "quit", WHITE, BLACK, [&] {
+    addWidget<Button>(x + BTN_W + GAP, y, BTN_W, BTN_H, "quit", WHITE, BLACK, [&] {
         result = GameEndActionResult::QUIT;
         finished = true;
     });
 }
 
 void GameEndScreen::handle(const SDL_Event& e) {
-    Screen::handle(e);
     if (e.type == SDL_KEYDOWN) {
-        if (e.key.keysym.sym == SDLK_RETURN || e.key.keysym.sym == SDLK_ESCAPE) {
-            result = GameEndActionResult::TITLE;
-            finished = true;
+        switch (e.key.keysym.sym) {
+            case SDLK_LEFT:
+            case SDLK_RIGHT:
+                selectedIndex = 1 - selectedIndex;
+                return;
+            case SDLK_RETURN:
+                result   = (selectedIndex == 0) ? GameEndActionResult::TITLE
+                                                : GameEndActionResult::QUIT;
+                finished = true;
+                return;
+            case SDLK_ESCAPE:
+                result   = GameEndActionResult::TITLE;
+                finished = true;
+                return;
+            default: break;
         }
     }
+    Screen::handle(e);
 }
 
 void GameEndScreen::render(SDL_Renderer* renderer) {
@@ -49,4 +60,12 @@ void GameEndScreen::render(SDL_Renderer* renderer) {
     Renderer::renderText(renderer, font, details, (SW - tw) / 2, 390, {220, 220, 220, 255});
 
     drawWidgets(renderer, font);
+
+    if (selectedIndex >= 0 && selectedIndex < (int)widgets.size()) {
+        auto* btn = dynamic_cast<Button*>(widgets[selectedIndex].get());
+        if (btn) {
+            Renderer::outlineRect(renderer, btn->getX(), btn->getY(),
+                    btn->getW(), btn->getH(), {255,255,255,255}, 3);
+        }
+    }
 }

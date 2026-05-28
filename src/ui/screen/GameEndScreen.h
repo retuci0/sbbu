@@ -30,4 +30,5 @@ private:
     std::string details;
     bool finished = false;
     GameEndActionResult result = GameEndActionResult::TITLE;
+    int selectedIndex = 0;
 };

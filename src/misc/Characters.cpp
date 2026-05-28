@@ -23,7 +23,7 @@ const CharacterStats JORDI_STATS = {
 };
 const CharacterStats BARCOS_STATS = {
     "Barcos", "small ahh mf",
-    50, 5, 3, 12.0f, 15.0f, 0.5f, 0.5f, 17.0f, 2.0f
+    50, 5, 3, 12.0f, 11.0f, 0.5f, 0.5f, 17.0f, 2.0f
 };
 const CharacterStats ALSEXITO_STATS = {
     "Alsexito", "your average gay gymbro",
