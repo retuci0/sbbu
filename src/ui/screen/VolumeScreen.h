@@ -19,11 +19,12 @@ public:
     void render(SDL_Renderer* renderer) override;
 
     bool isFinished() const { return finished; }
-    VolumeResult getResult()  const { return result; }
+    bool isTransparent() const override;
+    VolumeResult getResult() const { return result; }
 
 private:
-    TTF_Font* titleFont;
     TTF_Font* font;
+    TTF_Font* titleFont;
 
     Slider* sfxSlider   = nullptr;
     Slider* musicSlider = nullptr;

@@ -20,14 +20,17 @@
 #include <SDL2/SDL_stdinc.h>
 #include <SDL2/SDL_ttf.h>
 
+#include <SDL2/SDL_video.h>
 #include <memory>
 #include <string>
 #include <vector>
 
 
+// forward declare screen classes
 class CharacterSelectionScreen;
 class PauseScreen;
 class VolumeScreen;
+class SettingsScreen;
 class TitleScreen;
 class RemoteSetupScreen;
 class WaitingScreen;
@@ -79,6 +82,7 @@ private:
     void setupPlayers(const Character* c1, const std::string& n1, const Character* c2, const std::string& n2);
     void playTitleMusic();
     void playGameMusic();
+    void setPauseScreen();
 
     void respawn(Player& p, bool voidDeath);
 

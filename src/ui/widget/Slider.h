@@ -14,8 +14,8 @@
 
 class Slider : public Widget {
 public:
-    Slider(int x, int y, int w, int h, float minVal, float maxVal, float initialVal, const std::string& label)
-    :  Widget(x, y, w, h), minVal(minVal), maxVal(maxVal), value(initialVal), label(label) {}
+    Slider(int x, int y, int w, int h, float minVal, float maxVal, float initialVal, const std::string& label, bool percentage = true, bool floats = true)
+    :  Widget(x, y, w, h), minVal(minVal), maxVal(maxVal), value(initialVal), label(label), showPercentage(percentage), floats(floats) {}
 
     void draw(SDL_Renderer* renderer, TTF_Font* font) override {
         // track bg
@@ -33,11 +33,22 @@ public:
             HANDLE_R * 2,  HANDLE_R * 2,
             {200, 200, 200, 255});
     
-        // label with percentage
-        int displayPct = static_cast<int>(std::round(value * 100.0f));
-        Renderer::renderText(renderer, font,
-            label + ": " + std::to_string(displayPct) + "%",
-            rect.x, rect.y - 50, WHITE);
+        // label with percentage, or absolute value
+        if (showPercentage) {
+            int displayPct = static_cast<int>(std::round(value * 100.0f));
+            Renderer::renderText(renderer, font,
+                label + ": " + std::to_string(displayPct) + "%",
+                rect.x, rect.y - 50, WHITE);
+        } else {
+            std::string v;
+            if (floats) {
+                v = std::to_string(value);
+            } else {
+                v = std::to_string(static_cast<int>(value));
+            }
+            Renderer::renderText(renderer, font, v, 
+                rect.x, rect.y - 50, WHITE);
+        }
     }
 
 
@@ -69,6 +80,8 @@ public:
 private:
     float minVal, maxVal;
     float value;
+    bool showPercentage = true;
+    bool floats = true;
     std::string label;
     bool dragging = false;
 

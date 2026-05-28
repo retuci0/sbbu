@@ -33,6 +33,7 @@ set(SRC
     src/ui/screen/TitleScreen.cpp
     src/ui/screen/PauseScreen.cpp
     src/ui/screen/RemoteSetupScreen.cpp
+    src/ui/screen/SettingsScreen.cpp
     src/ui/screen/VolumeScreen.cpp
     src/ui/screen/WaitingScreen.cpp
 
@@ -67,6 +68,7 @@ set(HEADERS
     src/ui/screen/TitleScreen.h
     src/ui/screen/PauseScreen.h
     src/ui/screen/RemoteSetupScreen.h
+    src/ui/screen/SettingsScreen.h
     src/ui/screen/VolumeScreen.h
     src/ui/screen/WaitingScreen.h
 

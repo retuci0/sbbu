@@ -8,6 +8,7 @@
 #include "ui/screen/CharacterSelectionScreen.h"
 #include "ui/screen/ControlsScreen.h"
 #include "ui/screen/GameEndScreen.h"
+#include "ui/screen/SettingsScreen.h"
 #include "ui/screen/TitleScreen.h"
 #include "ui/screen/PauseScreen.h"
 #include "ui/screen/RemoteSetupScreen.h"
@@ -22,6 +23,7 @@
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_ttf.h>
 
+#include <SDL2/SDL_video.h>
 #include <algorithm>
 #include <memory>
 #include <stdexcept>
@@ -75,21 +77,26 @@ void Game::init() {
         throw std::runtime_error(std::string("SDLNet_Init: ") + SDLNet_GetError());
     }
 
+    // load config
+    options.loadFromFile();
+
     window = SDL_CreateWindow(
         "super bert bros ultimate",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
         SW, SH, SDL_WINDOW_SHOWN);
     if (!window) throw std::runtime_error(std::string("SDL_CreateWindow: ") + SDL_GetError());
+    Uint32 flags = SDL_GetWindowFlags(window);
+    SDL_SetWindowFullscreen(window, flags | (options.fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
 
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (options.vsync) SDL_RenderSetVSync(renderer, 1);
+    
     if (!renderer) throw std::runtime_error(std::string("SDL_CreateRenderer: ") + SDL_GetError());
     SDL_RenderSetLogicalSize(renderer, SW, SH);
 
     lastFpsUpdate = SDL_GetTicks();
     resources.load(renderer);
-    
-    // load config
-    options.loadFromFile();
+
     resources.applySfxVolume(options.sfxVolume);
     Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
     InputHandler::init();
@@ -127,6 +134,12 @@ void Game::setupPlayers(const Character* c1, const std::string& n1,
     pendingPingSequence = 0;
     lastPingSentTicks = 0;
     ping = -1;
+}
+
+void Game::setPauseScreen() {
+    setScreen(std::make_unique<PauseScreen>(
+        renderer, SW, SH, resources.titleFont, resources.font, options, resources.settingsImage
+    ));
 }
 
 void Game::respawn(Player& p, bool voidDeath) {
@@ -1032,11 +1045,15 @@ void Game::handleScreenTransitions() {
                 setScreen(std::make_unique<ControlsScreen>(
                     renderer, resources.titleFont, resources.font, options));
                 break;
+            case PauseActionResult::SETTINGS:
+                setScreen(std::make_unique<SettingsScreen>(
+                    renderer, resources.font, resources.titleFont, options.fpsCap, options.vsync, options.fullscreen));
+                break;
         }
         return;
     }
 
-    //volume screen
+    // volume screen
     if (auto* vs = dynamic_cast<VolumeScreen*>(screen.get())) {
         if (!vs->isFinished()) return;
         auto vols = vs->getResult();
@@ -1044,15 +1061,32 @@ void Game::handleScreenTransitions() {
         options.musVolume = vols.music;
         resources.applySfxVolume(options.sfxVolume);
         Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
-        setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font, options));
+        setPauseScreen();
         return;
     }
 
     if (auto* cs = dynamic_cast<ControlsScreen*>(screen.get())) {
         if (!cs->isFinished()) return;
         options.saveToFile();
-        setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font, options));
+        setPauseScreen();
         return;
+    }
+
+    if (auto* ss = dynamic_cast<SettingsScreen*>(screen.get())) {
+        if (!ss->isFinished()) return;
+        auto settings = ss->getResult();
+        options.fpsCap = settings.fpsCap;
+        if (options.fullscreen != settings.fullscreen) {
+            Uint32 flags = SDL_GetWindowFlags(window);
+            SDL_SetWindowFullscreen(window,
+                (settings.fullscreen) ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
+        }
+        if (options.vsync != settings.vsync) {
+            SDL_RenderSetVSync(renderer, settings.vsync);
+        }
+        options.vsync = settings.vsync;
+        options.fullscreen = settings.fullscreen;
+        setPauseScreen();
     }
 
     if (auto* ge = dynamic_cast<GameEndScreen*>(screen.get())) {
@@ -1103,13 +1137,13 @@ void Game::processEvents() {
         } else {
             if (e.type == SDL_KEYDOWN && e.key.keysym.sym == options.keyPause) {
                 Mix_PauseMusic();
-                setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font, options));
+                setPauseScreen();
                 continue;
             }
             if (e.type == SDL_CONTROLLERBUTTONDOWN &&
                 e.cbutton.button == SDL_CONTROLLER_BUTTON_START) {
                 Mix_PauseMusic();
-                setScreen(std::make_unique<PauseScreen>(renderer, SW, SH, resources.titleFont, resources.font, options));
+                setPauseScreen();
                 continue;
             }
             processEvent(e);
@@ -1183,10 +1217,7 @@ void Game::update(float ts) {
 void Game::render(float ts, float a) {
     if (screen) {
         // render the gameplay underneath on transparent screens
-        if (dynamic_cast<PauseScreen*>(screen.get()) 
-                || dynamic_cast<VolumeScreen*>(screen.get())
-                || dynamic_cast<ControlsScreen*>(screen.get())
-        ) {
+        if (screen->isTransparent()) {
             renderGameplay(ts, a);
         }
         screen->render(renderer);
@@ -1231,6 +1262,9 @@ void Game::run() {
 
         float alpha = accumulator / TICK_MS;  // [0, 1)
         render(TICK_SCALE, alpha);
+        if (options.fpsCap != -1) {
+            SDL_Delay(1000 / options.fpsCap);
+        }
     }
 }
 

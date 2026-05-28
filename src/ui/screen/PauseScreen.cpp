@@ -5,6 +5,7 @@
 #include "../../Options.h"
 #include "ui/Screen.h"
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
 #include <filesystem>
 
@@ -12,21 +13,21 @@ void openAssetsFolder() {
     openFolder(std::filesystem::current_path().string() + "/assets/");
 }
 
-PauseScreen::PauseScreen(SDL_Renderer* /*renderer*/, int sw, int sh, TTF_Font* titleFont, TTF_Font* font, Options options)
+PauseScreen::PauseScreen(SDL_Renderer* /*renderer*/, int sw, int sh, TTF_Font* titleFont, TTF_Font* font, Options options, SDL_Texture* settingsImage)
     : titleFont(titleFont), font(font), options(options), selectedIndex(0)
 {
-    const Color bg = {255,255,255,255};
     const int btnW=400, btnH=80, gap=40, colGap=60;
     int totalWidth = 2*btnW + colGap;
     int startX = (sw - totalWidth)/2;
     int startY = sh/3 + 100;
 
-    addWidget<Button>(startX,                     startY, btnW, btnH, "resume",        bg, BLACK, [&]{ result = PauseActionResult::RESUME;          finished = true; });
-    addWidget<Button>(startX+btnW+colGap,         startY, btnW, btnH, "quit",          bg, BLACK, [&]{ result = PauseActionResult::QUIT;            finished = true; });
-    addWidget<Button>(startX,                     startY+btnH+gap, btnW, btnH, "restart",       bg, BLACK, [&]{ result = PauseActionResult::RESTART;         finished = true; });
-    addWidget<Button>(startX+btnW+colGap,         startY+btnH+gap, btnW, btnH, "change volume", bg, BLACK, [&]{ result = PauseActionResult::CHANGE_VOLUME;   finished = true; });
-    addWidget<Button>(startX,                     startY+2*(btnH+gap), btnW, btnH, "controls",      bg, BLACK, [&]{ result = PauseActionResult::CHANGE_CONTROLS; finished = true; });
-    addWidget<Button>(startX+btnW+colGap,         startY+2*(btnH+gap), btnW, btnH, "assets folder", bg, BLACK,  openAssetsFolder);
+    addWidget<Button>(startX, startY, btnW, btnH, "resume", WHITE, BLACK, [&]{ result = PauseActionResult::RESUME; finished = true; });
+    addWidget<Button>(startX+btnW+colGap, startY, btnW, btnH, "quit", WHITE, BLACK, [&]{ result = PauseActionResult::QUIT; finished = true; });
+    addWidget<Button>(startX, startY+btnH+gap, btnW, btnH, "restart", WHITE, BLACK, [&]{ result = PauseActionResult::RESTART; finished = true; });
+    addWidget<Button>(startX+btnW+colGap, startY+btnH+gap, btnW, btnH, "change volume", WHITE, BLACK, [&]{ result = PauseActionResult::CHANGE_VOLUME; finished = true; });
+    addWidget<Button>(startX, startY+2*(btnH+gap), btnW, btnH, "controls", WHITE, BLACK, [&]{ result = PauseActionResult::CHANGE_CONTROLS; finished = true; });
+    addWidget<Button>(startX+btnW+colGap, startY+2*(btnH+gap), btnW, btnH, "assets folder", WHITE, BLACK,  openAssetsFolder);
+    addWidget<Button>(sw - 64 - 12, sh - 64 - 12, 64, 64, "", WHITE, BLACK, [&]{ result = PauseActionResult::SETTINGS; finished = true; }, settingsImage);
 }
 
 void PauseScreen::render(SDL_Renderer* renderer) {
@@ -70,4 +71,8 @@ void PauseScreen::handle(const SDL_Event& event) {
         }
     }
     Screen::handle(event);
+}
+
+bool PauseScreen::isTransparent() const {
+    return true;
 }

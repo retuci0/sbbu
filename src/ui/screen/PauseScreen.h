@@ -4,6 +4,7 @@
 
 #include "Options.h"
 
+#include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
 
 
@@ -12,15 +13,17 @@ enum class PauseActionResult {
     QUIT, 
     RESTART, 
     CHANGE_VOLUME, 
-    CHANGE_CONTROLS
+    CHANGE_CONTROLS,
+    SETTINGS
 };
 
 class PauseScreen : public Screen {
 public:
-    PauseScreen(SDL_Renderer* renderer, int sw, int sh, TTF_Font* titleFont, TTF_Font* font, Options options);
+    PauseScreen(SDL_Renderer* renderer, int sw, int sh, TTF_Font* titleFont, TTF_Font* font, Options options, SDL_Texture* settingsImage);
     void render(SDL_Renderer* renderer) override;
     void handle(const SDL_Event& event) override;
     bool isFinished() const { return finished; }
+    bool isTransparent() const override;
     PauseActionResult getResult() const { return result; }
 
 private:

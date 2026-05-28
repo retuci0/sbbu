@@ -78,3 +78,7 @@ void ControlsScreen::render(SDL_Renderer* r) {
         }
     }
 }
+
+bool ControlsScreen::isTransparent() const {
+    return true;
+}

@@ -19,6 +19,10 @@ public:
 
     virtual void update() {}
     virtual void render(SDL_Renderer* r) = 0;
+    
+    virtual bool isTransparent() const {
+        return false;
+    }
 
 protected:
     std::vector<std::unique_ptr<Widget>> widgets;

@@ -13,6 +13,7 @@ public:
     void handle(const SDL_Event& e) override;
     void render(SDL_Renderer* renderer) override;
     bool isFinished() const { return finished; }
+    bool isTransparent() const override;
     
 private:
     TTF_Font* titleFont;

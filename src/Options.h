@@ -26,11 +26,16 @@ public:
 
     SDL_KeyCode keyPause        = SDLK_ESCAPE;
     SDL_KeyCode keyQuit         = SDLK_0;
-    SDL_KeyCode keyDebug        = SDLK_b;
+    SDL_KeyCode keyDebug        = SDLK_F3;
     SDL_KeyCode keyFullscreen   = SDLK_F11;
 
     float sfxVolume             = 1.0f;
     float musVolume             = 1.0f;
+
+    bool vsync                  = false;
+    bool fullscreen             = true;
+
+    int fpsCap                  = -1;  // -1 = unlimited
 
     bool debug                  = false;
 

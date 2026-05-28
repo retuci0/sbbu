@@ -37,6 +37,9 @@ void Options::saveToFile(const std::string& filename) const {
     file << "sfxVolume="   << sfxVolume   << "\n";
     file << "musVolume="   << musVolume   << "\n";
     file << "debug="       << (debug ? 1 : 0) << "\n";
+    file << "fpsCap="      << fpsCap      << "\n";
+    file << "vsync="       << vsync       << "\n";
+    file << "fullscreen="  << fullscreen  << "\n";
 
     file.close();
 }
@@ -85,5 +88,9 @@ void Options::loadFromFile(const std::string& filename) {
         if (key == "sfxVolume")   sfxVolume   = std::stof(val);
         if (key == "musVolume")   musVolume   = std::stof(val);
         if (key == "debug")       debug       = (std::stoi(val) != 0);
+
+        if (key == "fpsCap")      fpsCap      = std::stoi(val);
+        if (key == "vsync")       vsync       = (std::stoi(val) != 0);
+        if (key == "fullscreen")  fullscreen  = (std::stoi(val) != 0);
     }
 }

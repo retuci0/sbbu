@@ -24,7 +24,6 @@ VolumeScreen::VolumeScreen(SDL_Renderer* /*renderer*/, TTF_Font* titleFont, TTF_
 }
 
 void VolumeScreen::handle(const SDL_Event& e) {
-    // Let mouse events reach the sliders as before
     Screen::handle(e);
 
     if (e.type != SDL_KEYDOWN) return;
@@ -66,4 +65,8 @@ void VolumeScreen::render(SDL_Renderer* renderer) {
             active->getW() + 8, active->getH() + 8,
             {255, 255, 255, 255}, 2);
     }
+}
+
+bool VolumeScreen::isTransparent() const {
+    return true;
 }

@@ -28,6 +28,7 @@ void Resources::load(SDL_Renderer* renderer) {
     heartImage         = loadTex("assets/images/ui/heart.png");
     bgImage            = loadTex("assets/images/ui/background.png");
     titleBgImage       = loadTex("assets/images/ui/titlescreen.png");
+    settingsImage      = loadTex("assets/images/ui/settings.png");
 
     // load fonts
     titleFont = findFont(50);
@@ -110,6 +111,7 @@ void Resources::destroy() {
     dTex(heartImage);
     dTex(bgImage);
     dTex(titleBgImage);
+    dTex(settingsImage);
 
     if (titleFont) { TTF_CloseFont(titleFont); titleFont = nullptr; }
     if (font)      { TTF_CloseFont(font);           font      = nullptr; }

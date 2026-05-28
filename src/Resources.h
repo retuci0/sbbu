@@ -19,6 +19,7 @@ struct Resources {
     SDL_Texture* heartImage         = nullptr;
     SDL_Texture* bgImage            = nullptr;
     SDL_Texture* titleBgImage       = nullptr;
+    SDL_Texture* settingsImage      = nullptr;
 
     // fonts
     TTF_Font* titleFont             = nullptr;

@@ -14,6 +14,7 @@ super bert bros is a local (and now remote too) multiplayer brawler game, heavil
 
 ## controls
 
+
 ### player 1 (the one on the left side)
 
 | action       | key          |
@@ -99,6 +100,14 @@ on arch:
 
 `./run.sh` will do.
 
-## contributions
+
+### credits
+
+- **music:** *bounce* by фрози and joyful (not made for me)
+- **sprites:** melee and special done by [IVZA](https://www.youtube.com/@IVZA-d6h), some other sprite might have been done by [Tafeef](https://youtube.com/@Tafeef), everything else done by myself
+- **code:** all done by myself, with a tad bit of Claude's help for the networking
+
+
+### contributions
 
 yes please :P
