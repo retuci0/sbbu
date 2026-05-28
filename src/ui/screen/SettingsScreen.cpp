@@ -10,11 +10,13 @@
 static constexpr int SL_W = 700, SL_H = 20, SL_X = (SW - SL_W) / 2, SL_Y = 420;
 static constexpr int BTN_W = 250, BTN_H = 70, BTN_Y = 520;
 static constexpr Color BTN_YES_C = Color{ 50, 180, 50, 255 }, BTN_NO_C = Color{ 255, 50, 50, 255 };
-static constexpr int FS_X = SW / 2 - 2 * BTN_W - 20, VS_X = SW / 2 + BTN_W + 20;
+static constexpr int FS_X = (SW - BTN_W) / 2;
+static constexpr int VS_X = FS_X - BTN_W - 20;
+static constexpr int DB_X = FS_X + BTN_W + 20;
 static constexpr int OK_X = (SW - BTN_W) / 2, OK_Y = 750;
 
-SettingsScreen::SettingsScreen(int maxFps, bool vsync, bool fullscreen) : Screen() {
-    result = { maxFps, vsync, fullscreen };
+SettingsScreen::SettingsScreen(int maxFps, bool vsync, bool fullscreen, bool debug) : Screen() {
+    result = { maxFps, vsync, fullscreen, debug };
 
     fpsCapSlider = addWidget<Slider>(SL_X, SL_Y, SL_W, SL_H, -1, 360, maxFps, "fps cap", false, false);
 
@@ -26,6 +28,11 @@ SettingsScreen::SettingsScreen(int maxFps, bool vsync, bool fullscreen) : Screen
     vsyncButton = addWidget<Button>(VS_X, BTN_Y, BTN_W, BTN_H, "vsync", 
         result.vsync ? BTN_YES_C : BTN_NO_C, WHITE,
         [&]{ result.vsync = !result.vsync; vsyncButton->setColors(result.vsync ? BTN_YES_C : BTN_NO_C, WHITE); }
+    );
+
+    debugButton = addWidget<Button>(DB_X, BTN_Y, BTN_W, BTN_H, "debug",
+        result.debug ? BTN_YES_C : BTN_NO_C, WHITE,
+        [&]{ result.debug = !result.debug; debugButton->setColors(result.debug ? BTN_YES_C : BTN_NO_C, WHITE); }
     );
 
     okButton = addWidget<Button>(OK_X, OK_Y, BTN_W, BTN_H, "ok.",

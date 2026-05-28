@@ -919,10 +919,13 @@ void Game::handleScreenTransitions() {
                 setScreen(std::make_unique<CharacterSelectionScreen>(
                     Resources::get().characterList(),
                     "player 1", &Resources::get().BERT, "player 2", &Resources::get().BERT));
+                    break;
             case TitleScreenResult::ONLINE:
                 setScreen(std::make_unique<RemoteSetupScreen>());
+                break;
             case TitleScreenResult::QUIT:
                 running = false;
+                break;
         }
         return;
     }
@@ -1047,7 +1050,7 @@ void Game::handleScreenTransitions() {
                 break;
             case PauseActionResult::SETTINGS:
                 setScreen(std::make_unique<SettingsScreen>(
-                    options.fpsCap, options.vsync, options.fullscreen));
+                    options.fpsCap, options.vsync, options.fullscreen, options.debug));
                 break;
         }
         return;
@@ -1084,6 +1087,7 @@ void Game::handleScreenTransitions() {
         if (options.vsync != settings.vsync) {
             SDL_RenderSetVSync(renderer, settings.vsync);
         }
+        options.debug = settings.debug;
         options.vsync = settings.vsync;
         options.fullscreen = settings.fullscreen;
         setScreen(std::make_unique<PauseScreen>(options));
@@ -1300,7 +1304,7 @@ void Game::onKey(SDL_Keycode key, KeyAction action) {
 void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action, int ctrl) {
     if (action != ControllerButtonAction::PRESS) return;
 
-    // ctrl 0 → P1 actions, ctrl 1 → P2 actions (local only)
+    // ctrl 0: P1 actions; ctrl 1: P2 actions (local only)
     if (ctrl == 0) {
         switch (button) {
             case SDL_CONTROLLER_BUTTON_A:     input.jumpP1    = true; break;

@@ -14,11 +14,12 @@ struct OptionsResult {
     int fpsCap;
     bool vsync;
     bool fullscreen;
+    bool debug;
 };
 
 class SettingsScreen : public Screen {
 public:
-    SettingsScreen(int maxFps, bool vsync, bool fullscreen);
+    SettingsScreen(int maxFps, bool vsync, bool fullscreen, bool debug);
 
     void handle(const SDL_Event& event) override;
     void render(SDL_Renderer* renderer) override;
@@ -31,6 +32,7 @@ private:
     Slider* fpsCapSlider     = nullptr;
     Button* fullscreenButton = nullptr;
     Button* vsyncButton      = nullptr;
+    Button* debugButton      = nullptr;
     Button* okButton         = nullptr;
     bool finished = false;
 

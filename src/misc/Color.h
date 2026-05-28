@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL_pixels.h>
+#include <algorithm>
 
 
 struct Color {
@@ -47,5 +48,35 @@ struct Color {
             static_cast<Uint8>(b),
             static_cast<Uint8>(a)
         };
+    }
+
+    constexpr bool operator==(const Color& other) const {
+        return other.r == r
+            && other.g == g
+            && other.b == b
+            && other.a == a;
+    }
+    
+    constexpr Color brighter() const {
+        if (r == 0 && g == 0 && b == 0)
+            return Color(3, 3, 3, a);
+        int nr = r ? std::max(3, r) : 0;
+        int ng = g ? std::max(3, g) : 0;
+        int nb = b ? std::max(3, b) : 0;
+        return Color(
+            std::min((nr * 10 + 6) / 7, 255),
+            std::min((ng * 10 + 6) / 7, 255),
+            std::min((nb * 10 + 6) / 7, 255),
+            a
+        );
+    }
+
+    Color darker() const {
+        return Color(
+            std::max(static_cast<int>(static_cast<float>(r) * 0.7), 0), 
+            std::max(static_cast<int>(static_cast<float>(g) * 0.7), 0), 
+            std::max(static_cast<int>(static_cast<float>(b) * 0.7), 0), 
+            a
+        );
     }
 };
