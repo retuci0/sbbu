@@ -910,16 +910,19 @@ void Game::renderGameplay(float ts, float a) {
 /* --- SCREEN STUFF --- */
 
 void Game::handleScreenTransitions() {
-    // multiplayer mode screen (initial screen)
-    if (auto* mm = dynamic_cast<TitleScreen*>(screen.get())) {
-        if (!mm->isFinished()) return;
-        if (mm->getResult() == MultiplayerModeResult::LOCAL) {
-            networkMode = NetworkMode::LOCAL;
-            setScreen(std::make_unique<CharacterSelectionScreen>(
-                Resources::get().characterList(),
-                "player 1", &Resources::get().BERT, "player 2", &Resources::get().BERT));
-        } else {
-            setScreen(std::make_unique<RemoteSetupScreen>());
+    // title screen
+    if (auto* ts = dynamic_cast<TitleScreen*>(screen.get())) {
+        if (!ts->isFinished()) return;
+        switch (ts->getResult()) {
+            case TitleScreenResult::LOCAL:
+                networkMode = NetworkMode::LOCAL;
+                setScreen(std::make_unique<CharacterSelectionScreen>(
+                    Resources::get().characterList(),
+                    "player 1", &Resources::get().BERT, "player 2", &Resources::get().BERT));
+            case TitleScreenResult::ONLINE:
+                setScreen(std::make_unique<RemoteSetupScreen>());
+            case TitleScreenResult::QUIT:
+                running = false;
         }
         return;
     }

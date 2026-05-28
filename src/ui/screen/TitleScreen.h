@@ -4,9 +4,10 @@
 #include <SDL2/SDL_render.h>
 
 
-enum class MultiplayerModeResult { 
+enum class TitleScreenResult { 
     LOCAL, 
-    ONLINE 
+    ONLINE,
+    QUIT
 };
 
 class TitleScreen : public Screen {
@@ -15,11 +16,11 @@ public:
     void handle(const SDL_Event& e) override;
     void render(SDL_Renderer* r) override;
     bool isFinished() const { return finished; }
-    MultiplayerModeResult getResult() const { return result; }
+    TitleScreenResult getResult() const { return result; }
     
 private:
     SDL_Texture* bg;
     bool finished = false;
-    MultiplayerModeResult result = MultiplayerModeResult::LOCAL;
+    TitleScreenResult result = TitleScreenResult::QUIT;
     int selectedIndex = 0;
 };

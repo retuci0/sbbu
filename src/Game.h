@@ -2,7 +2,6 @@
 
 #include "InputHandler.h"
 #include "Options.h"
-#include "Resources.h"
 
 #include "objects/CollisionRect.h"
 #include "objects/Platform.h"

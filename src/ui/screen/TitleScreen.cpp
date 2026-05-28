@@ -10,9 +10,11 @@
 TitleScreen::TitleScreen() : Screen() {
     bg = Resources::get().getTexture("title_bg");
     addWidget<Button>(SW/2-200, SH/2, 400, 80, "local play",
-                      Color{60,60,60}, WHITE, [&]{ result = MultiplayerModeResult::LOCAL; finished=true; });
+                      Color{60,60,60}, WHITE, [&]{ result = TitleScreenResult::LOCAL;  finished=true; });
     addWidget<Button>(SW/2-200, SH/2+120, 400, 80, "online play",
-                      Color{60,60,60}, WHITE, [&]{ result = MultiplayerModeResult::ONLINE; finished=true; });
+                      Color{60,60,60}, WHITE, [&]{ result = TitleScreenResult::ONLINE; finished=true; });
+    addWidget<Button>(SW/2-200, SH/2+240, 400, 80, "quit",
+                      Color{60,60,60}, WHITE, [&]{ result = TitleScreenResult::QUIT;   finished=true; });
 }
 
 void TitleScreen::handle(const SDL_Event& e) {
@@ -23,16 +25,18 @@ void TitleScreen::handle(const SDL_Event& e) {
                 finished = true;
                 break;
             case SDLK_UP:
-                selectedIndex = (selectedIndex + 1) % 2;  // wrap around
+                selectedIndex = (selectedIndex + 2) % 3;
                 break;
             case SDLK_DOWN:
-                selectedIndex = (selectedIndex + 1) % 2;
+                selectedIndex = (selectedIndex + 1) % 3;
                 break;
             case SDLK_RETURN:
                 if (selectedIndex == 0)
-                    result = MultiplayerModeResult::LOCAL;
+                    result = TitleScreenResult::LOCAL;
+                else if (selectedIndex == 1)
+                    result = TitleScreenResult::ONLINE;
                 else
-                    result = MultiplayerModeResult::ONLINE;
+                    result = TitleScreenResult::QUIT;
                 finished = true;
                 break;
         }
