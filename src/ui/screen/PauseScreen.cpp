@@ -1,25 +1,28 @@
 #include "PauseScreen.h"
+
 #include "../widget/Button.h"
 #include "../../misc/Common.h"
 #include "../../misc/Renderer.h"
 #include "../../Options.h"
-#include "ui/Screen.h"
+
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
+
 #include <filesystem>
+
 
 void openAssetsFolder() {
     openFolder(std::filesystem::current_path().string() + "/assets/");
 }
 
-PauseScreen::PauseScreen(SDL_Renderer* /*renderer*/, int sw, int sh, TTF_Font* titleFont, TTF_Font* font, Options options, SDL_Texture* settingsImage)
-    : titleFont(titleFont), font(font), options(options), selectedIndex(0)
+PauseScreen::PauseScreen(const Options& options)
+    : options(options), selectedIndex(0)
 {
     const int btnW=400, btnH=80, gap=40, colGap=60;
     int totalWidth = 2*btnW + colGap;
-    int startX = (sw - totalWidth)/2;
-    int startY = sh/3 + 100;
+    int startX = SW / 2;
+    int startY = SH / 3 + 100;
 
     addWidget<Button>(startX, startY, btnW, btnH, "resume", WHITE, BLACK, [&]{ result = PauseActionResult::RESUME; finished = true; });
     addWidget<Button>(startX+btnW+colGap, startY, btnW, btnH, "quit", WHITE, BLACK, [&]{ result = PauseActionResult::QUIT; finished = true; });
@@ -27,7 +30,7 @@ PauseScreen::PauseScreen(SDL_Renderer* /*renderer*/, int sw, int sh, TTF_Font* t
     addWidget<Button>(startX+btnW+colGap, startY+btnH+gap, btnW, btnH, "change volume", WHITE, BLACK, [&]{ result = PauseActionResult::CHANGE_VOLUME; finished = true; });
     addWidget<Button>(startX, startY+2*(btnH+gap), btnW, btnH, "controls", WHITE, BLACK, [&]{ result = PauseActionResult::CHANGE_CONTROLS; finished = true; });
     addWidget<Button>(startX+btnW+colGap, startY+2*(btnH+gap), btnW, btnH, "assets folder", WHITE, BLACK,  openAssetsFolder);
-    addWidget<Button>(sw - 64 - 12, sh - 64 - 12, 64, 64, "", WHITE, BLACK, [&]{ result = PauseActionResult::SETTINGS; finished = true; }, settingsImage);
+    addWidget<Button>(SW - 64 - 12, SH - 64 - 12, 64, 64, "", WHITE, BLACK, [&]{ result = PauseActionResult::SETTINGS; finished = true; }, Resources::get().getTexture("settings"));
 }
 
 void PauseScreen::render(SDL_Renderer* renderer) {

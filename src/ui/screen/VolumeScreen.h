@@ -13,7 +13,7 @@ struct VolumeResult {
 
 class VolumeScreen : public Screen {
 public:
-    VolumeScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, float currentSfx, float currentMusic);
+    VolumeScreen(float currentSfx, float currentMusic);
 
     void handle(const SDL_Event& e) override;
     void render(SDL_Renderer* renderer) override;
@@ -23,9 +23,6 @@ public:
     VolumeResult getResult() const { return result; }
 
 private:
-    TTF_Font* font;
-    TTF_Font* titleFont;
-
     Slider* sfxSlider   = nullptr;
     Slider* musicSlider = nullptr;
 

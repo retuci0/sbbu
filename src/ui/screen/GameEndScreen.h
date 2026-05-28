@@ -14,8 +14,7 @@ enum class GameEndActionResult {
 
 class GameEndScreen : public Screen {
 public:
-    GameEndScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font,
-                  const std::string& title, const std::string& details);
+    GameEndScreen(const std::string& title, const std::string& details);
 
     void handle(const SDL_Event& e) override;
     void render(SDL_Renderer* renderer) override;
@@ -24,8 +23,6 @@ public:
     GameEndActionResult getResult() const { return result; }
 
 private:
-    TTF_Font* titleFont;
-    TTF_Font* font;
     std::string title;
     std::string details;
     bool finished = false;

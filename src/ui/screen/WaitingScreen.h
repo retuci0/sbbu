@@ -5,13 +5,11 @@
 
 class WaitingScreen : public Screen {
 public:
-    WaitingScreen(SDL_Renderer* r, TTF_Font* titleFont, TTF_Font* font);
+    WaitingScreen();
     void render(SDL_Renderer* r) override;
     void update() override;
 
 private:
-    SDL_Renderer* renderer;
-    TTF_Font *titleFont, *font;
     Uint32 startTime;
     int dotCount = 0;
 };

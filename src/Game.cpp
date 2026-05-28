@@ -1,6 +1,7 @@
 #include "Game.h"
 #include "InputHandler.h"
 
+#include "Resources.h"
 #include "misc/Common.h"
 #include "misc/Characters.h"
 #include "misc/Renderer.h"
@@ -43,16 +44,16 @@ static constexpr Uint32 REMOTE_TIMEOUT_MS = 5000;
 /* --- MUSIC --- */
 
 void Game::playTitleMusic() {
-    if (resources.titleScreenMusic) {
+    if (Resources::get().titleScreenMusic) {
         Mix_HaltMusic();
-        Mix_PlayMusic(resources.titleScreenMusic, -1);
+        Mix_PlayMusic(Resources::get().titleScreenMusic, -1);
     }
 }
 
 void Game::playGameMusic() {
-    if (resources.music) {
+    if (Resources::get().music) {
         Mix_HaltMusic();
-        Mix_PlayMusic(resources.music, -1);
+        Mix_PlayMusic(Resources::get().music, -1);
     }
 }
 
@@ -95,9 +96,9 @@ void Game::init() {
     SDL_RenderSetLogicalSize(renderer, SW, SH);
 
     lastFpsUpdate = SDL_GetTicks();
-    resources.load(renderer);
+    Resources::get().load(renderer);
 
-    resources.applySfxVolume(options.sfxVolume);
+    Resources::get().applySfxVolume(options.sfxVolume);
     Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
     InputHandler::init();
 }
@@ -106,17 +107,14 @@ void Game::setupPlayers(const Character* c1, const std::string& n1,
                         const Character* c2, const std::string& n2)
 {
     platforms.clear();
-    platforms.emplace_back(resources.platformImage, resources.smallPlatformImage,
-                           360, 500, 1200, 300, PlatformSize::BIG);
-    platforms.emplace_back(resources.platformImage, resources.smallPlatformImage,
-                           640, 250, 200, 30, PlatformSize::SMALL);
-    platforms.emplace_back(resources.platformImage, resources.smallPlatformImage,
-                           1080, 250, 200, 30, PlatformSize::SMALL);
+    platforms.emplace_back(360, 500, 1200, 300, PlatformSize::BIG);
+    platforms.emplace_back(640, 250, 200, 30, PlatformSize::SMALL);
+    platforms.emplace_back(1080, 250, 200, 30, PlatformSize::SMALL);
 
-    player1.init(640, 0, c1, n1, resources.damageSound);
+    player1.init(640, 0, c1, n1);
     player1.id = 0;
 
-    player2.init(1080, 0, c2, n2, resources.damageSound);
+    player2.init(1080, 0, c2, n2);
     player2.id = 1;
 
     player1.color = {100, 149, 237, 230};
@@ -136,21 +134,18 @@ void Game::setupPlayers(const Character* c1, const std::string& n1,
     ping = -1;
 }
 
-void Game::setPauseScreen() {
-    setScreen(std::make_unique<PauseScreen>(
-        renderer, SW, SH, resources.titleFont, resources.font, options, resources.settingsImage
-    ));
-}
-
 void Game::respawn(Player& p, bool voidDeath) {
     static std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> pick(0, 1);
     int spawnX = pick(rng) ? 640 : 1080;
 
-    if (voidDeath && resources.voidDeathSound)
-        Mix_PlayChannel(-1, resources.voidDeathSound, 0);
-    else if (resources.deathSound)
-        Mix_PlayChannel(-1, resources.deathSound, 0);
+    Mix_Chunk* voidDeathSound = Resources::get().getSound("void_death");
+    Mix_Chunk* deathSound = Resources::get().getSound("death");
+
+    if (voidDeath && voidDeathSound)
+        Mix_PlayChannel(-1, voidDeathSound, 0);
+    else if (deathSound)
+        Mix_PlayChannel(-1, deathSound, 0);
 
     p.hp                 = p.character->stats.health;
     p.rect.x             = spawnX;
@@ -174,8 +169,7 @@ void Game::showEndScreen(const std::string& title, const std::string& details) {
         network.reset();
     }
     networkMode = NetworkMode::NONE;
-    setScreen(std::make_unique<GameEndScreen>(
-        renderer, resources.titleFont, resources.font, title, details));
+    setScreen(std::make_unique<GameEndScreen>(title, details));
 }
 
 
@@ -197,14 +191,14 @@ void Game::handleGameplayInput() {
         input.jumpP1 = false;
     }
     if (input.shootP1) {
-        if (player1.tryShoot(resources.projectileSound)) {
+        if (player1.tryShoot()) {
             int px = (player1.facing == Facing::LEFT) ? player1.rect.x - 20 : player1.rect.x + 20;
-            projectiles.emplace_back(resources.projectileImage, px, player1.rect.y, player1.facing, &player1);
+            projectiles.emplace_back(px, player1.rect.y, player1.facing, &player1);
         }
         input.shootP1 = false;
     }
     if (input.meleeP1) {
-        if (player1.tryMelee(resources.meleeSound)) {
+        if (player1.tryMelee()) {
             const int hw = 86, hh = 76;
             int hx = (player1.facing == Facing::RIGHT) ? player1.rect.x + player1.rect.w - 36 : player1.rect.x - hw + 36;
             int hy = player1.rect.y + (player1.rect.h - hh) / 2;
@@ -224,7 +218,7 @@ void Game::handleGameplayInput() {
         else if (isDown(options.keyP1Right)) dir = Direction::RIGHT;
         else if (isDown(options.keyP1Jump)) dir = Direction::UP;
         else if (isDown(options.keyP1Down)) dir = Direction::DOWN;
-        player1.trySpecial(resources.specialSounds, dir);
+        player1.trySpecial(dir);
         input.specialP1 = false;
     }
 
@@ -270,13 +264,13 @@ void Game::handleGameplayInput() {
 
     if (p2JumpPr) player2.jump();
     if (p2ShootPr) {
-        if (player2.tryShoot(resources.projectileSound)) {
+        if (player2.tryShoot()) {
             int px = (player2.facing == Facing::LEFT) ? player2.rect.x - 20 : player2.rect.x + 20;
-            projectiles.emplace_back(resources.projectileImage, px, player2.rect.y, player2.facing, &player2);
+            projectiles.emplace_back(px, player2.rect.y, player2.facing, &player2);
         }
     }
     if (p2MeleePr) {
-        if (player2.tryMelee(resources.meleeSound)) {
+        if (player2.tryMelee()) {
             const int hw = 86, hh = 76;
             int hx = (player2.facing == Facing::RIGHT) ? player2.rect.x + player2.rect.w - 36 : player2.rect.x - hw + 36;
             int hy = player2.rect.y + (player2.rect.h - hh) / 2;
@@ -291,7 +285,7 @@ void Game::handleGameplayInput() {
         else if (p2Right || p2AxisX >  0.2f) dir = Direction::RIGHT;
         else if (p2JumpDn || p2AxisY < -0.2f) dir = Direction::UP;
         else if (p2Down  || p2AxisY >  0.2f) dir = Direction::DOWN;
-        player2.trySpecial(resources.specialSounds, dir);
+        player2.trySpecial(dir);
     }
 
     player2.setShieldHeld(p2Shield);
@@ -468,15 +462,12 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
         // rebuild if count changed
         for (const auto& ps : sup.projectiles) {
             Player* owner = (ps.ownerId == 1) ? &player2 : &player1;
-            projectiles.emplace_back(resources.projectileImage,
-                                     static_cast<int>(ps.x),
-                                     static_cast<int>(ps.y),
-                                     static_cast<Facing>(ps.facing),
-                                     owner);
+            projectiles.emplace_back( static_cast<int>(ps.x), static_cast<int>(ps.y),
+                                     static_cast<Facing>(ps.facing), owner);
             projectiles.back().velocity = ps.velocity;
             projectiles.back().parryFreezeTimer = ps.parryFreezeTimer;
             projectiles.back().parryFlashTimer = ps.parryFlashTimer;
-            projectiles.back().prevRect = projectiles.back().rect; // init prev
+            projectiles.back().prevRect = projectiles.back().rect;  // init prev
         }
     } else {
         // update existing
@@ -571,7 +562,7 @@ void Game::updateGameplay(float ts) {
                 hy = attacker.rect.y + attacker.rect.h - 20;
                 dmgScale = 4.0f; kbScale = 7.0f;
                 if (attacker.onGround)
-                    shockwaves.emplace_back(resources.shockwaveImage, attacker.rect.x + attacker.rect.w / 2,
+                    shockwaves.emplace_back(attacker.rect.x + attacker.rect.w / 2,
                                            attacker.rect.y + attacker.rect.h - 32, &attacker);
                 break;
             default: 
@@ -592,7 +583,8 @@ void Game::updateGameplay(float ts) {
 
             projectile.parry(hitbox.owner);
             hitbox.owner->charge = std::min(hitbox.owner->charge + 0.2f, Player::MAX_CHARGE);
-            if (resources.parrySound) Mix_PlayChannel(-1, resources.parrySound, 0);
+            Mix_Chunk* parrySound = Resources::get().getSound("parry");
+            if (parrySound) Mix_PlayChannel(-1, parrySound, 0);
             return true;
         };
 
@@ -613,7 +605,7 @@ void Game::updateGameplay(float ts) {
         if (it->owner != &player1 && SDL_HasIntersection(&it->rect, &player1.rect)) {
             if (player1.invulnerableTimer > 0) { ++it; continue; }
             if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
-                player1.blockHit(it->owner->character->stats.projectileDamage, 1.0f, resources.blockSound);
+                player1.blockHit(it->owner->character->stats.projectileDamage, 1.0f);
                 it = projectiles.erase(it);
                 continue;
             } else {
@@ -626,7 +618,7 @@ void Game::updateGameplay(float ts) {
         if (it->owner != &player2 && SDL_HasIntersection(&it->rect, &player2.rect)) {
             if (player2.invulnerableTimer > 0) { ++it; continue; }
             if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
-                player2.blockHit(it->owner->character->stats.projectileDamage, 1.0f, resources.blockSound);
+                player2.blockHit(it->owner->character->stats.projectileDamage, 1.0f);
                 it = projectiles.erase(it);
                 continue;
             } else {
@@ -648,7 +640,7 @@ void Game::updateGameplay(float ts) {
             int dmg = it->owner->character->stats.damage;
             float kb = it->kbScale;
             if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
-                player2.blockHit(dmg, kb, resources.blockSound);
+                player2.blockHit(dmg, kb);
             } else {
                 player2.getHit(player1.facing, dmg, kb);
                 player1.charge = std::min(player1.charge + 0.1f, Player::MAX_CHARGE);
@@ -660,7 +652,7 @@ void Game::updateGameplay(float ts) {
             int dmg = it->owner->character->stats.damage;
             float kb = it->kbScale;
             if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
-                player1.blockHit(dmg, kb, resources.blockSound);
+                player1.blockHit(dmg, kb);
             } else {
                 player1.getHit(player2.facing, dmg, kb);
                 player2.charge = std::min(player2.charge + 0.1f, Player::MAX_CHARGE);
@@ -682,7 +674,7 @@ void Game::updateGameplay(float ts) {
             int dmg = static_cast<int>(it->getOwner()->character->stats.damage * 1.5f);
             float kb = 1.5f;
             if (target.status == Status::SHIELDED && target.shieldTimer > 0 && !target.shieldBroken) {
-                target.blockHit(dmg, kb, resources.blockSound);
+                target.blockHit(dmg, kb);
             } else {
                 target.getHit(*dir, dmg, kb);
             }
@@ -700,7 +692,7 @@ void Game::updateGameplay(float ts) {
                 int dmg = static_cast<int>(player1.character->stats.damage * it->damageScale);
                 float kb = it->kbScale;
                 if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
-                    player2.blockHit(dmg, kb, resources.blockSound);
+                    player2.blockHit(dmg, kb);
                 } else {
                     player2.getHit(player1.facing, dmg, kb);
                 }
@@ -712,7 +704,7 @@ void Game::updateGameplay(float ts) {
                 int dmg = static_cast<int>(player2.character->stats.damage * it->damageScale);
                 float kb = it->kbScale;
                 if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
-                    player1.blockHit(dmg, kb, resources.blockSound);
+                    player1.blockHit(dmg, kb);
                 } else {
                     player1.getHit(player2.facing, dmg, kb);
                 }
@@ -731,7 +723,8 @@ void Game::updateGameplay(float ts) {
         if (p.lives > 0) {
             respawn(p, voidDeath);
         } else if (p.lives == 0) {
-            if (resources.gameEndSound) Mix_PlayChannel(-1, resources.gameEndSound, 0);
+            Mix_Chunk* gameEndSound = Resources::get().getSound("game_end");
+            if (gameEndSound) Mix_PlayChannel(-1, gameEndSound, 0);
             p.lives = -1;
         }
     };
@@ -756,19 +749,20 @@ void Game::renderPlayerHud(const Player& player) const {
     }
 
     Renderer::fillRect(renderer, x, 950, 150, 45, WHITE);
-    Renderer::renderText(renderer, resources.font, player.name, x + 10, 955, BLACK);
+    Renderer::renderText(renderer, Resources::get().font, player.name, x + 10, 955, BLACK);
 
     if (player.lives >= 0) {
-        Renderer::renderText(renderer, resources.titleFont,
+        Renderer::renderText(renderer, Resources::get().titleFont,
             std::to_string(player.hp) + " hp", x, 900, WHITE);
         for (int i = 0; i < player.lives; ++i) {
-            if (resources.heartImage) {
+            SDL_Texture* heartImage = Resources::get().getTexture("heart");
+            if (heartImage) {
                 SDL_Rect heart = { x + i * 35, 997, 30, 30 };
-                SDL_RenderCopy(renderer, resources.heartImage, nullptr, &heart);
+                SDL_RenderCopy(renderer, heartImage, nullptr, &heart);
             }
         }
     } else {
-        Renderer::renderText(renderer, resources.titleFont, "DEAD", x, 900, DARK_RED);
+        Renderer::renderText(renderer, Resources::get().titleFont, "DEAD", x, 900, DARK_RED);
     }
 
     Renderer::fillRect(renderer, x - 10, 840, 5, 57, BLACK);
@@ -782,7 +776,7 @@ void Game::renderPlayerHud(const Player& player) const {
         bool isRemotePlayer = (networkMode == NetworkMode::REMOTE_HOST && player == player2)
                            || (networkMode == NetworkMode::REMOTE_CLIENT && player == player1);
         if (isRemotePlayer) {
-            Renderer::renderText(renderer, resources.smallFont, "[net]", x, 870, { 130, 200, 255, 255 });
+            Renderer::renderText(renderer, Resources::get().smallFont, "[net]", x, 870, { 130, 200, 255, 255 });
         }
     }
 }
@@ -854,8 +848,13 @@ void Game::renderMinimap() const {
 }
 
 void Game::renderGameplay(float ts, float a) {
-    if (resources.bgImage) {
-        SDL_RenderCopy(renderer, resources.bgImage, nullptr, nullptr);
+    TTF_Font* font = Resources::get().font;
+    TTF_Font* smallFont = Resources::get().smallFont;
+    TTF_Font* titleFont = Resources::get().titleFont;
+
+    SDL_Texture* bgImage = Resources::get().getTexture("bg");
+    if (bgImage) {
+        SDL_RenderCopy(renderer, bgImage, nullptr, nullptr);
     } else {
         Renderer::fillRect(renderer, 0, 0, SW, SH, {20, 20, 60, 255});
     }
@@ -864,8 +863,8 @@ void Game::renderGameplay(float ts, float a) {
         p.draw(renderer, a);
     }
 
-    player1.draw(renderer, resources.smallFont, a);
-    player2.draw(renderer, resources.smallFont, a);
+    player1.draw(renderer, smallFont, a);
+    player2.draw(renderer, smallFont, a);
     for (auto& pr : projectiles) pr.draw(renderer, a);
     for (auto& sw : shockwaves)   sw.draw(renderer, a);
 
@@ -879,21 +878,21 @@ void Game::renderGameplay(float ts, float a) {
         for (auto& cr : specialHitboxes)    cr.drawHitbox(renderer, a);
         for (auto& sw : shockwaves)             sw.drawHitboxes(renderer, a);
 
-        Renderer::renderText(renderer, resources.font,
+        Renderer::renderText(renderer, font,
             player1.name + ": " + player1.getStatusName(), 2, 2, BLACK);
-        Renderer::renderText(renderer, resources.font,
+        Renderer::renderText(renderer, font,
             player2.name + ": " + player2.getStatusName(), 2, 32, BLACK);
 
         std::string fpsStr = "fps: " + std::to_string(static_cast<int>(fps));
         int tw, th;
-        TTF_SizeText(resources.font, fpsStr.c_str(), &tw, &th);
-        Renderer::renderText(renderer, resources.font, fpsStr, SW - tw - 2, 2, BLACK);
+        TTF_SizeText(font, fpsStr.c_str(), &tw, &th);
+        Renderer::renderText(renderer, font, fpsStr, SW - tw - 2, 2, BLACK);
 
         if (networkMode == NetworkMode::REMOTE_HOST || networkMode == NetworkMode::REMOTE_CLIENT) {
             std::string pingStr = "ping: ";
             pingStr += (ping >= 0) ? std::to_string(ping) + " ms" : "? ms";
-            TTF_SizeText(resources.font, pingStr.c_str(), &tw, &th);
-            Renderer::renderText(renderer, resources.font, pingStr, SW - tw - 2, 34, BLACK);
+            TTF_SizeText(font, pingStr.c_str(), &tw, &th);
+            Renderer::renderText(renderer, font, pingStr, SW - tw - 2, 34, BLACK);
         }
     }
 
@@ -917,10 +916,10 @@ void Game::handleScreenTransitions() {
         if (mm->getResult() == MultiplayerModeResult::LOCAL) {
             networkMode = NetworkMode::LOCAL;
             setScreen(std::make_unique<CharacterSelectionScreen>(
-                renderer, resources.titleFont, resources.font, resources.characterList(),
-                "player 1", &resources.BERT, "player 2", &resources.BERT));
+                Resources::get().characterList(),
+                "player 1", &Resources::get().BERT, "player 2", &Resources::get().BERT));
         } else {
-            setScreen(std::make_unique<RemoteSetupScreen>(renderer, resources.titleFont, resources.font));
+            setScreen(std::make_unique<RemoteSetupScreen>());
         }
         return;
     }
@@ -929,7 +928,7 @@ void Game::handleScreenTransitions() {
     if (auto* rs = dynamic_cast<RemoteSetupScreen*>(screen.get())) {
         if (!rs->isFinished()) return;
         if (rs->shouldGoBack()) {
-            setScreen(std::make_unique<TitleScreen>(renderer, resources.titleBgImage, resources.font));
+            setScreen(std::make_unique<TitleScreen>());
             return;
         }
         auto setupResult = rs->takeResult();
@@ -938,12 +937,11 @@ void Game::handleScreenTransitions() {
         if (setupResult.role == RemoteSetupRole::HOST) {
             networkMode = NetworkMode::REMOTE_HOST;
             setScreen(std::make_unique<CharacterSelectionScreen>(
-                renderer, resources.titleFont, resources.font, resources.characterList(),
-                "player 1", &resources.BERT, "player 2", &resources.BERT));
+                Resources::get().characterList(),
+                "player 1", &Resources::get().BERT, "player 2", &Resources::get().BERT));
         } else {
             networkMode = NetworkMode::REMOTE_CLIENT;
-            setScreen(std::make_unique<WaitingScreen>(
-                renderer, resources.titleFont, resources.font));
+            setScreen(std::make_unique<WaitingScreen>());
         }
         return;
     }
@@ -952,7 +950,7 @@ void Game::handleScreenTransitions() {
     if (auto* ws = dynamic_cast<WaitingScreen*>(screen.get())) {
         if (hasPendingSetup && networkMode == NetworkMode::REMOTE_CLIENT) {
             hasPendingSetup = false;
-            auto charList = resources.characterList();
+            auto charList = Resources::get().characterList();
             uint8_t i1 = pendingSetup.char1Idx;
             uint8_t i2 = pendingSetup.char2Idx;
             if (!charList[i1] || !charList[i2] || !charList[i1]->loaded || !charList[i2]->loaded) {
@@ -963,7 +961,7 @@ void Game::handleScreenTransitions() {
             player2.color = { pendingSetup.r2, pendingSetup.g2, pendingSetup.b2, 230 };
             player1.resetTimers(); player2.resetTimers();
             projectiles.clear(); meleeHitboxes.clear(); specialHitboxes.clear();
-            if (resources.music) playGameMusic();
+            if (Resources::get().music) playGameMusic();
             setScreen(nullptr);
             return;
         }
@@ -993,7 +991,7 @@ void Game::handleScreenTransitions() {
         specialHitboxes.clear();
 
         if (networkMode == NetworkMode::REMOTE_HOST && network && network->isConnected()) {
-            auto charList = resources.characterList();
+            auto charList = Resources::get().characterList();
             uint8_t i1 = 0, i2 = 0;
             for (int i = 0; i < CHARACTER_NUM; ++i) {
                 if (charList[i] == csResult.char1) i1 = static_cast<uint8_t>(i);
@@ -1005,7 +1003,7 @@ void Game::handleScreenTransitions() {
             network->send(gsp);
         }
 
-        if (resources.music) { playGameMusic(); }
+        if (Resources::get().music) { playGameMusic(); }
         setScreen(nullptr);
         return;
     }
@@ -1028,26 +1026,25 @@ void Game::handleScreenTransitions() {
                     if (network) network->disconnect();
                     network.reset();
                     networkMode = NetworkMode::NONE;
-                    setScreen(std::make_unique<TitleScreen>(
-                        renderer, resources.titleBgImage, resources.font));
+                    setScreen(std::make_unique<TitleScreen>());
                 } else {
                     setScreen(std::make_unique<CharacterSelectionScreen>(
-                        renderer, resources.titleFont, resources.font, resources.characterList(),
+                        Resources::get().characterList(),
                         player1.name, player1.character,
                         player2.name, player2.character));
                 }
                 break;
             case PauseActionResult::CHANGE_VOLUME:
                 setScreen(std::make_unique<VolumeScreen>(
-                    renderer, resources.titleFont, resources.font, options.sfxVolume, options.musVolume));
+                    options.sfxVolume, options.musVolume));
                 break;
             case PauseActionResult::CHANGE_CONTROLS:
                 setScreen(std::make_unique<ControlsScreen>(
-                    renderer, resources.titleFont, resources.font, options));
+                    options));
                 break;
             case PauseActionResult::SETTINGS:
                 setScreen(std::make_unique<SettingsScreen>(
-                    renderer, resources.font, resources.titleFont, options.fpsCap, options.vsync, options.fullscreen));
+                    options.fpsCap, options.vsync, options.fullscreen));
                 break;
         }
         return;
@@ -1059,16 +1056,16 @@ void Game::handleScreenTransitions() {
         auto vols = vs->getResult();
         options.sfxVolume   = vols.sfx;
         options.musVolume = vols.music;
-        resources.applySfxVolume(options.sfxVolume);
+        Resources::get().applySfxVolume(options.sfxVolume);
         Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
-        setPauseScreen();
+        setScreen(std::make_unique<PauseScreen>(options));
         return;
     }
 
     if (auto* cs = dynamic_cast<ControlsScreen*>(screen.get())) {
         if (!cs->isFinished()) return;
         options.saveToFile();
-        setPauseScreen();
+        setScreen(std::make_unique<PauseScreen>(options));
         return;
     }
 
@@ -1086,7 +1083,7 @@ void Game::handleScreenTransitions() {
         }
         options.vsync = settings.vsync;
         options.fullscreen = settings.fullscreen;
-        setPauseScreen();
+        setScreen(std::make_unique<PauseScreen>(options));
     }
 
     if (auto* ge = dynamic_cast<GameEndScreen*>(screen.get())) {
@@ -1096,7 +1093,7 @@ void Game::handleScreenTransitions() {
             return;
         }
         playTitleMusic();
-        setScreen(std::make_unique<TitleScreen>(renderer, resources.titleBgImage, resources.font));
+        setScreen(std::make_unique<TitleScreen>());
         return;
     }
 }
@@ -1137,13 +1134,13 @@ void Game::processEvents() {
         } else {
             if (e.type == SDL_KEYDOWN && e.key.keysym.sym == options.keyPause) {
                 Mix_PauseMusic();
-                setPauseScreen();
+                setScreen(std::make_unique<PauseScreen>(options));
                 continue;
             }
             if (e.type == SDL_CONTROLLERBUTTONDOWN &&
                 e.cbutton.button == SDL_CONTROLLER_BUTTON_START) {
                 Mix_PauseMusic();
-                setPauseScreen();
+                setScreen(std::make_unique<PauseScreen>(options));
                 continue;
             }
             processEvent(e);
@@ -1238,7 +1235,7 @@ void Game::render(float ts, float a) {
 void Game::run() {
     // start on title screen
     playTitleMusic();
-    setScreen(std::make_unique<TitleScreen>(renderer, resources.titleBgImage, resources.font));
+    setScreen(std::make_unique<TitleScreen>());
 
     Uint32 prevTicks  = SDL_GetTicks();
     float accumulator = 0.0f;
@@ -1327,7 +1324,7 @@ void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonA
 void Game::cleanup() {
     options.saveToFile();
     if (network) { network->disconnect(); network.reset(); }
-    resources.destroy();
+    Resources::get().destroy();
     if (renderer) { SDL_DestroyRenderer(renderer); renderer = nullptr; }
     if (window)   { SDL_DestroyWindow(window);     window   = nullptr; }
     InputHandler::shutdown();

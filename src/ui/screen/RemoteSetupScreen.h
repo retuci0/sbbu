@@ -17,7 +17,7 @@ struct RemoteSetupResult {
 
 class RemoteSetupScreen : public Screen {
 public:
-    RemoteSetupScreen(SDL_Renderer* r, TTF_Font* titleFont, TTF_Font* font);
+    RemoteSetupScreen();
     void handle(const SDL_Event& e) override;
     void render(SDL_Renderer* r) override;
     bool isFinished() const { return finished; }
@@ -25,8 +25,6 @@ public:
     RemoteSetupResult takeResult() { return std::move(result); }
     
 private:
-    SDL_Renderer* renderer;
-    TTF_Font *titleFont, *font;
     bool finished = false;
     RemoteSetupResult result;
     std::string ipInput = "127.0.0.1";

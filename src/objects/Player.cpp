@@ -1,8 +1,8 @@
 #include "Player.h"
 
 #include "Platform.h"
+#include "../Resources.h"
 #include "../misc/Common.h"
-
 #include "../misc/Renderer.h"
 
 #include <SDL2/SDL_mixer.h>
@@ -19,10 +19,9 @@
 /*             INIT             */
 //////////////////////////////////
 
-void Player::init(int x, int y, const Character* ch, const std::string& playerName, Mix_Chunk* dmgSound) {
+void Player::init(int x, int y, const Character* ch, const std::string& playerName) {
     character           = ch;
     name                = playerName;
-    damageSound         = dmgSound;
     hp                  = ch->stats.health;
     lives               = 2;
     dx = dy             = 0.0f;
@@ -100,8 +99,9 @@ void Player::jump() {
 void Player::getHit(Facing side, int damage, float kbScale) {
     if (invulnerableTimer > 0) return;
 
-    if (damageSound) { 
-        Mix_PlayChannel(-1, damageSound, 0); 
+    Mix_Chunk* dmgSound = Resources::get().getSound("damage");
+    if (dmgSound) { 
+        Mix_PlayChannel(-1, dmgSound, 0); 
     }
 
     if (status != Status::STUNNED) status = Status::DAMAGED;
@@ -158,7 +158,7 @@ void Player::breakShield() {
     releaseShield();
 }
 
-void Player::blockHit(int damage, float kbScale, Mix_Chunk* blockSound) {
+void Player::blockHit(int damage, float kbScale) {
     if (shieldBroken) return;
     if (shieldStunTimer > 0) return;
 
@@ -171,6 +171,7 @@ void Player::blockHit(int damage, float kbScale, Mix_Chunk* blockSound) {
 
     shieldStunTimer = SHIELD_STUN_DURATION;
 
+    Mix_Chunk* blockSound = Resources::get().getSound("block");
     if (blockSound) {
         Mix_PlayChannel(-1, blockSound, 0);
     }
@@ -187,7 +188,7 @@ float Player::getShieldScale() const {
 /*             ATTACK             */
 ////////////////////////////////////
 
-bool Player::tryShoot(Mix_Chunk* projSound) {
+bool Player::tryShoot() {
     if (shootCooldown > 0) return false;
     if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE 
         || status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN 
@@ -196,6 +197,7 @@ bool Player::tryShoot(Mix_Chunk* projSound) {
     ) {
         return false;
     }
+    Mix_Chunk* projSound = Resources::get().getSound("projectile");
     if (projSound) Mix_PlayChannel(-1, projSound, 0);
     shootCooldown = SHOOT_COOLDOWN;
     shootTimer = SHOOT_DURATION;
@@ -203,7 +205,7 @@ bool Player::tryShoot(Mix_Chunk* projSound) {
     return true;
 }
 
-bool Player::tryMelee(Mix_Chunk* meleeSound) {
+bool Player::tryMelee() {
     if (meleeCooldown > 0) return false;
     if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE 
         || status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN 
@@ -216,11 +218,12 @@ bool Player::tryMelee(Mix_Chunk* meleeSound) {
     meleeTimer = MELEE_DURATION;  // hitbox active for 8 frames
     meleeCooldown = MELEE_COOLDOWN;
     currentSpriteIndex = 0.0f;
+    Mix_Chunk* meleeSound = Resources::get().getSound("melee");
     if (meleeSound) Mix_PlayChannel(-1, meleeSound, 0);
     return true;
 }
 
-bool Player::trySpecial(Mix_Chunk** sounds, Direction dir) {
+bool Player::trySpecial(Direction dir) {
     if (specialCooldown > 0) return false;
     if (charge < MAX_CHARGE) return false;
     if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE 
@@ -230,12 +233,14 @@ bool Player::trySpecial(Mix_Chunk** sounds, Direction dir) {
         return false;
     }
 
+    const char* snd;
     switch (dir) {
         case Direction::NONE:  
             // static special - stronger punch
             dx = 0.0f;
             dy = 0.0f;
             status = Status::SPECIAL_STATIC;
+            snd = "special_static";
             break;
         case Direction::LEFT:
             // fallthrough
@@ -244,18 +249,21 @@ bool Player::trySpecial(Mix_Chunk** sounds, Direction dir) {
             dx = (facing == Facing::RIGHT ? 12.0f : -12.0f);
             dy = 0.0f;
             status = Status::SPECIAL_SIDE;
+            snd = "special_side";
             break;
         case Direction::UP:
             // up special - rise quickly
             dx = 0.0f;
             dy = -14.0f;
             status = Status::SPECIAL_UP;
+            snd = "special_up";
             break;
         case Direction::DOWN:
             // down special - slam downward
             dx = 0.0f;
             dy = 16.0f;
             status = Status::SPECIAL_DOWN;
+            snd = "special_down";
             break;
     }
 
@@ -265,12 +273,8 @@ bool Player::trySpecial(Mix_Chunk** sounds, Direction dir) {
     currentSpriteIndex   = 0.0f;
 
     // play sound
-    if (sounds) {
-        int soundIndex = (dir == Direction::NONE) ? 0 :
-                         (dir == Direction::LEFT || dir == Direction::RIGHT) ? 1 :
-                         (dir == Direction::UP) ? 2 : 3;
-        if (sounds[soundIndex]) Mix_PlayChannel(-1, sounds[soundIndex], 0);
-    }
+    Mix_Chunk* specialSound = Resources::get().getSound(snd);
+    if (specialSound) Mix_PlayChannel(-1, specialSound, 0);
 
     charge = 0.0f;
     return true;

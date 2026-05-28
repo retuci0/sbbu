@@ -11,15 +11,13 @@ enum class MultiplayerModeResult {
 
 class TitleScreen : public Screen {
 public:
-    TitleScreen(SDL_Renderer* r, SDL_Texture* bg, TTF_Font* font);
+    TitleScreen();
     void handle(const SDL_Event& e) override;
     void render(SDL_Renderer* r) override;
     bool isFinished() const { return finished; }
     MultiplayerModeResult getResult() const { return result; }
     
 private:
-    SDL_Renderer* renderer;
-    TTF_Font* font;
     SDL_Texture* bg;
     bool finished = false;
     MultiplayerModeResult result = MultiplayerModeResult::LOCAL;

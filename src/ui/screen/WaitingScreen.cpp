@@ -4,8 +4,8 @@
 #include "../../misc/Common.h"
 
 
-WaitingScreen::WaitingScreen(SDL_Renderer* r, TTF_Font* tf, TTF_Font* f)
-    : renderer(r), titleFont(tf), font(f), startTime(SDL_GetTicks()) {}
+WaitingScreen::WaitingScreen()
+    : startTime(SDL_GetTicks()) {}
 
 void WaitingScreen::update() {
     if ((SDL_GetTicks() - startTime) / 500 > dotCount) {

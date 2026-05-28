@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Widget.h"
+#include "../Resources.h"
 
 #include <SDL2/SDL.h>
 
@@ -11,7 +12,10 @@
 
 class Screen {
 public:
-    virtual ~Screen() = default;
+    virtual ~Screen() {
+        titleFont = Resources::get().titleFont;
+        font = Resources::get().font;
+    }
 
     virtual void handle(const SDL_Event& e) {
         for (auto& w : widgets) w->handle(e);
@@ -25,6 +29,9 @@ public:
     }
 
 protected:
+    TTF_Font* titleFont;
+    TTF_Font* font;
+
     std::vector<std::unique_ptr<Widget>> widgets;
 
     template<typename T, typename... Args>

@@ -7,9 +7,8 @@
 #include <SDL2/SDL_ttf.h>
 
 
-GameEndScreen::GameEndScreen(SDL_Renderer* /*renderer*/, TTF_Font* titleFont, TTF_Font* font,
-                             const std::string& title, const std::string& details)
-    : titleFont(titleFont), font(font), title(title), details(details)
+GameEndScreen::GameEndScreen(const std::string& title, const std::string& details)
+    : title(title), details(details)
 {
     const int BTN_W = 360, BTN_H = 76;
     const int GAP = 50;

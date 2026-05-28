@@ -1,8 +1,8 @@
 #include "SettingsScreen.h"
 
-#include "misc/Color.h"
-#include "ui/widget/Button.h"
-#include "ui/widget/Slider.h"
+#include "../../misc/Color.h"
+#include "../widget/Button.h"
+#include "../widget/Slider.h"
 
 #include <SDL2/SDL_render.h>
 
@@ -13,9 +13,7 @@ static constexpr Color BTN_YES_C = Color{ 50, 180, 50, 255 }, BTN_NO_C = Color{ 
 static constexpr int FS_X = SW / 2 - 2 * BTN_W - 20, VS_X = SW / 2 + BTN_W + 20;
 static constexpr int OK_X = (SW - BTN_W) / 2, OK_Y = 750;
 
-SettingsScreen::SettingsScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, int maxFps, bool vsync, bool fullscreen) 
-    : font(font), titleFont(titleFont)
-{
+SettingsScreen::SettingsScreen(int maxFps, bool vsync, bool fullscreen) {
     result = { maxFps, vsync, fullscreen };
 
     fpsCapSlider = addWidget<Slider>(SL_X, SL_Y, SL_W, SL_H, -1, 360, maxFps, "fps cap", false, false);

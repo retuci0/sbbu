@@ -1,151 +1,145 @@
 #include "Resources.h"
-
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_mixer.h>
-#include <SDL2/SDL_render.h>
-
 #include <algorithm>
 #include <stdexcept>
 
+Resources& Resources::get() {
+    static Resources instance;
+    return instance;
+}
+
+bool Resources::registerTexture(SDL_Renderer* renderer, const std::string& name, const std::string& path) {
+    SDL_Texture* tex = IMG_LoadTexture(renderer, path.c_str());
+    if (!tex) {
+        SDL_Log("failed to load texture \"%s\": %s", path.c_str(), IMG_GetError());
+        return false;
+    }
+    textures[name] = tex;
+    return true;
+}
+
+bool Resources::registerSound(SDL_Renderer* /*renderer*/, const std::string& name, const std::string& path) {
+    Mix_Chunk* chunk = Mix_LoadWAV(path.c_str());
+    if (!chunk) {
+        SDL_Log("failed to load sound \"%s\": %s", path.c_str(), Mix_GetError());
+        return false;
+    }
+    sounds[name] = chunk;
+    return true;
+}
+
+SDL_Texture* Resources::getTexture(const std::string& name) const {
+    auto it = textures.find(name);
+    if (it == textures.end()) {
+        SDL_Log("texture not found: %s", name.c_str());
+        return nullptr;
+    }
+    return it->second;
+}
+
+Mix_Chunk* Resources::getSound(const std::string& name) const {
+    auto it = sounds.find(name);
+    if (it == sounds.end()) {
+        SDL_Log("sound not found: %s", name.c_str());
+        return nullptr;
+    }
+    return it->second;
+}
 
 void Resources::load(SDL_Renderer* renderer) {
-    auto loadTex = [&](const char* path) -> SDL_Texture* {
-        SDL_Texture* t = IMG_LoadTexture(renderer, path);
-        if (!t) SDL_Log("missing texture: %s (%s)", path, IMG_GetError());
-        return t;
-    };
-    auto loadChunk = [&](const char* path) -> Mix_Chunk* {
-        Mix_Chunk* c = Mix_LoadWAV(path);
-        if (!c) SDL_Log("missing sound: %s (%s)", path, Mix_GetError());
-        return c;
-    };
+    // sprites
+    registerTexture(renderer, "platform_big",   "assets/images/platform/platform_big.png");
+    registerTexture(renderer, "platform_small", "assets/images/platform/platform_small.png");
+    registerTexture(renderer, "projectile",     "assets/images/projectile/projectile.png");
+    registerTexture(renderer, "shockwave",      "assets/images/projectile/shockwave.png");
+    registerTexture(renderer, "heart",          "assets/images/ui/heart.png");
+    registerTexture(renderer, "bg",             "assets/images/ui/background.png");
+    registerTexture(renderer, "title_bg",       "assets/images/ui/titlescreen.png");
+    registerTexture(renderer, "settings",       "assets/images/ui/settings.png");
 
-    // load sprites
-    platformImage      = loadTex("assets/images/platform/platform_big.png");
-    smallPlatformImage = loadTex("assets/images/platform/platform_small.png");
-    projectileImage    = loadTex("assets/images/projectile/projectile.png");
-    shockwaveImage     = loadTex("assets/images/projectile/shockwave.png");
-    heartImage         = loadTex("assets/images/ui/heart.png");
-    bgImage            = loadTex("assets/images/ui/background.png");
-    titleBgImage       = loadTex("assets/images/ui/titlescreen.png");
-    settingsImage      = loadTex("assets/images/ui/settings.png");
+    // sounds effects
+    registerSound(renderer, "click",        "assets/sound/click.wav");
+    registerSound(renderer, "jump",         "assets/sound/jump.wav");
+    registerSound(renderer, "jump2",        "assets/sound/jump2.wav");
+    registerSound(renderer, "death",        "assets/sound/death.wav");
+    registerSound(renderer, "projectile",   "assets/sound/projectile.wav");
+    registerSound(renderer, "punch",        "assets/sound/punch.wav");
+    registerSound(renderer, "parry",        "assets/sound/parry.wav");
+    registerSound(renderer, "void_death",   "assets/sound/void_death.wav");
+    registerSound(renderer, "damage",       "assets/sound/damage.wav");
+    registerSound(renderer, "block",        "assets/sound/block.wav");
+    registerSound(renderer, "game_end",     "assets/sound/game_end.wav");
+    registerSound(renderer, "special_static","assets/sound/special_static.wav");
+    registerSound(renderer, "special_side", "assets/sound/special_side.wav");
+    registerSound(renderer, "special_up",   "assets/sound/special_up.wav");
+    registerSound(renderer, "special_down", "assets/sound/special_down.wav");
 
-    // load fonts
+    // music
+    music            = Mix_LoadMUS("assets/sound/music.mp3");
+    titleScreenMusic = Mix_LoadMUS("assets/sound/titlescreenmusic.mp3");
+
+    // fonts
     titleFont = findFont(50);
     font      = findFont(30);
     smallFont = findFont(21);
 
-    // load sfxs
-    jumpSound         = loadChunk("assets/sound/jump.wav");
-    jumpSound2        = loadChunk("assets/sound/jump2.wav");
-    deathSound        = loadChunk("assets/sound/death.wav");
-    projectileSound   = loadChunk("assets/sound/projectile.wav");
-    meleeSound        = loadChunk("assets/sound/punch.wav");
-    parrySound        = loadChunk("assets/sound/parry.wav");
-    voidDeathSound    = loadChunk("assets/sound/void_death.wav");
-    damageSound       = loadChunk("assets/sound/damage.wav");
-    blockSound        = loadChunk("assets/sound/block.wav");
-    gameEndSound      = loadChunk("assets/sound/game_end.wav");
-    specialSounds = new Mix_Chunk*[4] {
-        loadChunk("assets/sound/special_static.wav"),
-        loadChunk("assets/sound/special_side.wav"),
-        loadChunk("assets/sound/special_up.wav"),
-        loadChunk("assets/sound/special_down.wav")
-    };
+    // default volumes (will be overridden by applySfxVolume() later)
+    applySfxVolume(1.0f);
 
-    // load music
-    music             = Mix_LoadMUS("assets/sound/music.mp3");
-    titleScreenMusic  = Mix_LoadMUS("assets/sound/titlescreenmusic.mp3");
-
-    // adjust volume
-    if (jumpSound)        Mix_VolumeChunk(jumpSound,        64);
-    if (jumpSound2)       Mix_VolumeChunk(jumpSound2,       26);
-    if (deathSound)       Mix_VolumeChunk(deathSound,      115);
-    if (projectileSound)  Mix_VolumeChunk(projectileSound,  26);
-    if (meleeSound)       Mix_VolumeChunk(meleeSound,       17);
-    if (parrySound)       Mix_VolumeChunk(parrySound,       21);
-    if (voidDeathSound)   Mix_VolumeChunk(voidDeathSound,    9);
-    if (damageSound)      Mix_VolumeChunk(damageSound,       6);
-    if (blockSound)       Mix_VolumeChunk(blockSound,       72);
-    if (gameEndSound)     Mix_VolumeChunk(gameEndSound,     13);
-    if (music)            Mix_VolumeMusic(9);
-    if (titleScreenMusic) Mix_VolumeMusic(9);
-
-    // load characters
+    // characters
     BERT     = loadCharacter(renderer, BERT_STATS,     "assets/images/characters/bert");
     BERROTA  = loadCharacter(renderer, BERROTA_STATS,  "assets/images/characters/berrota");
     JORDI    = loadCharacter(renderer, JORDI_STATS,    "assets/images/characters/jordi");
     LORC     = loadCharacter(renderer, LORC_STATS,     "assets/images/characters/lorc");
     BARCOS   = loadCharacter(renderer, BARCOS_STATS,   "assets/images/characters/barcos");
     ALSEXITO = loadCharacter(renderer, ALSEXITO_STATS, "assets/images/characters/alsexito");
-    // SHASHA, OSCAR, SASU, FLAN not yet available
 }
 
 void Resources::applySfxVolume(float multiplier) {
-    auto set = [&](Mix_Chunk* c, int base) {
-        if (c) Mix_VolumeChunk(c, std::clamp(static_cast<int>(base * multiplier), 0, 128));
+    auto setVol = [&](const std::string& name, int baseVol) {
+        auto it = sounds.find(name);
+        if (it != sounds.end())
+            Mix_VolumeChunk(it->second, std::clamp(static_cast<int>(baseVol * multiplier), 0, 128));
     };
-    set(deathSound,      115);
-    set(projectileSound,  26);
-    set(meleeSound,       17);
-    set(parrySound,       21);
-    set(voidDeathSound,    9);
-    set(damageSound,     102);
-    set(blockSound,       72);
-    set(gameEndSound,     13);
-    if (specialSounds) {
-        for (int i = 0; i < 4; ++i) {
-            set(specialSounds[i], 64);
-        }
-    }
+    
+    setVol("death",        115);
+    setVol("projectile",    26);
+    setVol("punch",         17);
+    setVol("parry",         21);
+    setVol("void_death",     9);
+    setVol("damage",       102);
+    setVol("block",         72);
+    setVol("game_end",      13);
+    setVol("special_static",64);
+    setVol("special_side",  64);
+    setVol("special_up",    64);
+    setVol("special_down",  64);
+
+    if (music)            Mix_VolumeMusic(static_cast<int>(9 * multiplier));
+    if (titleScreenMusic) Mix_VolumeMusic(static_cast<int>(9 * multiplier));
 }
 
 void Resources::destroy() {
-    auto dTex   = [](SDL_Texture*& t) { if (t) { SDL_DestroyTexture(t); t = nullptr; } };
-    auto dChunk = [](Mix_Chunk*&   c) { if (c) { Mix_FreeChunk(c);      c = nullptr; } };
-
-    dTex(platformImage);
-    dTex(smallPlatformImage);
-    dTex(projectileImage);
-    dTex(shockwaveImage);
-    dTex(heartImage);
-    dTex(bgImage);
-    dTex(titleBgImage);
-    dTex(settingsImage);
-
-    if (titleFont) { TTF_CloseFont(titleFont); titleFont = nullptr; }
-    if (font)      { TTF_CloseFont(font);           font      = nullptr; }
-    if (smallFont) { TTF_CloseFont(smallFont); smallFont = nullptr; }
-
-    dChunk(jumpSound);
-    dChunk(jumpSound2);
-    dChunk(deathSound);
-    dChunk(projectileSound);
-    dChunk(meleeSound);
-    dChunk(parrySound);
-    dChunk(voidDeathSound);
-    dChunk(damageSound);
-    dChunk(blockSound);
-    dChunk(gameEndSound);
-
-    if (specialSounds) {
-        for (int i = 0; i < 4; ++i) dChunk(specialSounds[i]);
-        delete[] specialSounds;
-        specialSounds = nullptr;
+    for (auto& pair : textures) {
+        if (pair.second) SDL_DestroyTexture(pair.second);
     }
+    textures.clear();
 
-    if (music) { Mix_FreeMusic(music); music = nullptr; }
-    if (titleScreenMusic) { Mix_FreeMusic(titleScreenMusic); titleScreenMusic = nullptr; }
+    for (auto& pair : sounds) {
+        if (pair.second) Mix_FreeChunk(pair.second);
+    }
+    sounds.clear();
 
-    BERT.unload();
-    BERROTA.unload();
-    JORDI.unload();
-    LORC.unload();
-    BARCOS.unload();
-    ALSEXITO.unload();
-    SHASHA.unload();
-    OSCAR.unload();
-    FLAN.unload();
+    if (titleFont) TTF_CloseFont(titleFont);
+    if (font)      TTF_CloseFont(font);
+    if (smallFont) TTF_CloseFont(smallFont);
+    if (music)     Mix_FreeMusic(music);
+    if (titleScreenMusic) Mix_FreeMusic(titleScreenMusic);
+
+    BERT.unload();     BERROTA.unload(); LORC.unload();
+    JORDI.unload();    BARCOS.unload();  ALSEXITO.unload();
+    SHASHA.unload();   OSCAR.unload();   FLAN.unload();
 }
 
 TTF_Font* Resources::findFont(int size) {
@@ -162,4 +156,8 @@ TTF_Font* Resources::findFont(int size) {
         if (f) return f;
     }
     throw std::runtime_error("no TTF font found: place a font.ttf in the working directory.");
+}
+
+std::array<const Character*, CHARACTER_NUM> Resources::characterList() const {
+    return { &BERT, &BERROTA, &LORC, &JORDI, &BARCOS, &ALSEXITO, &SHASHA, &OSCAR, &FLAN };
 }

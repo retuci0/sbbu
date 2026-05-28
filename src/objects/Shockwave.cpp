@@ -1,5 +1,6 @@
 #include "Shockwave.h"
 
+#include "../Resources.h"
 #include "../misc/Renderer.h"
 
 #include <SDL2/SDL_render.h>
@@ -14,11 +15,12 @@ void ShockwaveRect::update(float ts)  {
     if (rect.x + rect.w < 0 || rect.x > SW) active = false;
 }
 
-Shockwave::Shockwave(SDL_Texture* img, int spawnX, int spawnY, Player* owner)
-    : img(img), owner(owner),
+Shockwave::Shockwave(int spawnX, int spawnY, Player* owner)
+    : owner(owner),
     rects(ShockwaveRect(spawnX, spawnY, 32, 32, owner),
           ShockwaveRect(spawnX, spawnY, 32, 32, owner)
 ) {
+    img = Resources::get().getTexture("shockwave");
     rects.first.dx  = -7.0f;   // travels left
     rects.second.dx =  7.0f;   // travels right
 }

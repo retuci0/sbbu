@@ -14,7 +14,7 @@ public:
     SDL_Rect rect = {};
     PlatformSize size;
 
-    Platform(SDL_Texture* bigTex, SDL_Texture* smallTex, int x, int y, int w, int h, PlatformSize size);
+    Platform(int x, int y, int w, int h, PlatformSize size);
 
     void draw(SDL_Renderer* r, float a) const;
     void drawHitbox(SDL_Renderer* r, float a) const;

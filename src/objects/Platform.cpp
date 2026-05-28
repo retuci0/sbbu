@@ -1,15 +1,16 @@
 #include "Platform.h"
 
+#include "../Resources.h"
 #include "../misc/Common.h"
 #include "../misc/Renderer.h"
 
 
-Platform::Platform(SDL_Texture* bigTex, SDL_Texture* smallTex, int x, int y, int w, int h, PlatformSize size) : size(size) {
+Platform::Platform(int x, int y, int w, int h, PlatformSize size) : size(size) {
     if (size == PlatformSize::BIG) {
-        image = bigTex;
+        image = Resources::get().getTexture("platform_big");
         rect  = {x, y, w, h / 4};
     } else {
-        image = smallTex;
+        image = Resources::get().getTexture("platform_small");
         rect  = {x, y, w, h};
     }
 }

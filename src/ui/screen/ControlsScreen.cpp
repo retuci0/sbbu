@@ -5,13 +5,15 @@
 #include "../../misc/Common.h"
 #include "../../misc/Renderer.h"
 
+#include <SDL2/SDL_ttf.h>
+
 
 static constexpr int COL1_X = 250, COL2_X = 1050;
 static constexpr int ROW_Y = 160, ROW_STEP = 70;
 static constexpr int ROW_W = 600, ROW_H = 55;
 
-ControlsScreen::ControlsScreen(SDL_Renderer* r, TTF_Font* titleFont, TTF_Font* font, Options& o)
-    : titleFont(titleFont), font(font), selectedRow(0), selectedColumn(0)
+ControlsScreen::ControlsScreen(Options& o)
+    : selectedRow(0), selectedColumn(0)
 {
     struct Row { const char* name; SDL_KeyCode& key; };
     Row p1[] = {

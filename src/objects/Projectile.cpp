@@ -1,14 +1,17 @@
 #include "Projectile.h"
 
+#include "../Resources.h"
 #include "../misc/Common.h"
 #include "../misc/Renderer.h"
+
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 
 
-Projectile::Projectile(SDL_Texture* img, int x, int y, Facing dir, Player* owner)
-    : direction(dir), img(img), owner(owner)
+Projectile::Projectile(int x, int y, Facing dir, Player* owner)
+    : direction(dir), owner(owner)
 {
+    img = Resources::get().getTexture("projectile");
     rect = {x, y, 64, 64};
 }
 

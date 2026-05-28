@@ -8,58 +8,45 @@
 #include <SDL2/SDL_ttf.h>
 
 #include <array>
+#include <string>
+#include <unordered_map>
 
 
-struct Resources {
-    // images
-    SDL_Texture* platformImage      = nullptr;
-    SDL_Texture* smallPlatformImage = nullptr;
-    SDL_Texture* projectileImage    = nullptr;
-    SDL_Texture* shockwaveImage     = nullptr;
-    SDL_Texture* heartImage         = nullptr;
-    SDL_Texture* bgImage            = nullptr;
-    SDL_Texture* titleBgImage       = nullptr;
-    SDL_Texture* settingsImage      = nullptr;
+class Resources {
+public:
+    static Resources& get();
 
-    // fonts
-    TTF_Font* titleFont             = nullptr;
-    TTF_Font* font                  = nullptr;
-    TTF_Font* smallFont             = nullptr;
-
-    // sound effects
-    Mix_Chunk* jumpSound            = nullptr;
-    Mix_Chunk* jumpSound2           = nullptr;
-    Mix_Chunk* deathSound           = nullptr;
-    Mix_Chunk* projectileSound      = nullptr;
-    Mix_Chunk* meleeSound           = nullptr;
-    Mix_Chunk* parrySound           = nullptr;
-    Mix_Chunk* voidDeathSound       = nullptr;
-    Mix_Chunk* damageSound          = nullptr;
-    Mix_Chunk* blockSound           = nullptr;
-    Mix_Chunk* gameEndSound         = nullptr;
-    Mix_Chunk** specialSounds       = nullptr;
-
-    // music
-    Mix_Music* music                = nullptr;
-    Mix_Music* titleScreenMusic     = nullptr;
-
-    // characters
-    Character BERT;
-    Character BERROTA;
-    Character LORC;
-    Character JORDI;
-    Character BARCOS;
-    Character ALSEXITO;
-    Character SHASHA;
-    Character OSCAR;
-    Character FLAN;
+    Resources(const Resources&) = delete;
+    Resources& operator=(const Resources&) = delete;
 
     void load(SDL_Renderer* renderer);
     void destroy();
-    TTF_Font* findFont(int size);
+
+    // access by name
+    SDL_Texture* getTexture(const std::string& name) const;
+    Mix_Chunk*   getSound(const std::string& name) const;
+
+    // convenience
+    TTF_Font* titleFont     = nullptr;
+    TTF_Font* font          = nullptr;
+    TTF_Font* smallFont     = nullptr;
+    Mix_Music* music        = nullptr;
+    Mix_Music* titleScreenMusic = nullptr;
+
+    Character BERT, BERROTA, LORC, JORDI, BARCOS, ALSEXITO, SHASHA, OSCAR, FLAN;
+    std::array<const Character*, CHARACTER_NUM> characterList() const;
+
     void applySfxVolume(float mult);
 
-    std::array<const Character*, CHARACTER_NUM> characterList() const {
-        return { &BERT, &BERROTA, &LORC, &JORDI, &BARCOS, &ALSEXITO, &SHASHA, &OSCAR, &FLAN };
-    }
+private:
+    Resources() = default;
+    ~Resources() = default;
+
+    bool registerTexture(SDL_Renderer* renderer, const std::string& name, const std::string& path);
+    bool registerSound(SDL_Renderer* renderer, const std::string& name, const std::string& path);
+    
+    TTF_Font* findFont(int size);
+
+    std::unordered_map<std::string, SDL_Texture*> textures;
+    std::unordered_map<std::string, Mix_Chunk*>   sounds;
 };

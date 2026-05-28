@@ -81,7 +81,7 @@ public:
     bool tryShield();
     void releaseShield();
     void breakShield();
-    void blockHit(int damage, float kbScale, Mix_Chunk* blockSound);
+    void blockHit(int damage, float kbScale);
     float getShieldScale() const;
 
     static constexpr int   SHIELD_HP_MAX        = 80;
@@ -112,22 +112,19 @@ public:
     // player color indicator (drawn above head)
     Color color = { 255, 255, 255, 255 };
 
-    // non-owning
-    Mix_Chunk* damageSound = nullptr;
-
     // sprite in use
     SDL_Texture* currentTexture = nullptr;
 
     Player() = default;
-    void init(int x, int y, const Character* ch, const std::string& playerName, Mix_Chunk* dmgSound);
+    void init(int x, int y, const Character* ch, const std::string& playerName);
 
     void move(int direction);  // -1 left, 0 stop, +1 right
     void jump();
 
     void getHit(Facing side, int damage, float kbScale = 1.0f);
-    bool tryShoot(Mix_Chunk* projSound);
-    bool tryMelee(Mix_Chunk* meleeSound);
-    bool trySpecial(Mix_Chunk** specialSounds, Direction dir);
+    bool tryShoot();
+    bool tryMelee();
+    bool trySpecial(Direction dir);
 
     void update(const std::vector<Platform>& platforms, bool downKeyPressed, float ts);
     void updateTimers(float ts);

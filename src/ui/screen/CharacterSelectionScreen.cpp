@@ -1,7 +1,6 @@
 #include "CharacterSelectionScreen.h"
 
 #include "../widget/Button.h"
-
 #include "../../misc/Common.h"
 #include "../../misc/Renderer.h"
 
@@ -24,12 +23,10 @@ static constexpr int COLOR_BTN_W = 160, COLOR_BTN_H = 50;
 static constexpr int COLOR_BTN_Y = NAME_BOX_Y + 80;
 
 CharacterSelectionScreen::CharacterSelectionScreen(
-        SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font,
         const std::array<const Character*, CHARACTER_NUM>& chars,
         const std::string& defaultName1, const Character* defaultChar1,
         const std::string& defaultName2, const Character* defaultChar2)
-    : renderer(renderer), titleFont(titleFont), font(font), chars(chars),
-      name1(defaultName1), name2(defaultName2)
+    : chars(chars), name1(defaultName1), name2(defaultName2)
 {
     selectedChar1 = findIdx(defaultChar1);
     selectedChar2 = findIdx(defaultChar2);

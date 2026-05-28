@@ -1,9 +1,9 @@
 #pragma once
 
-#include "ui/Screen.h"
+#include "../Screen.h"
 
-#include "ui/widget/Button.h"
-#include "ui/widget/Slider.h"
+#include "../widget/Button.h"
+#include "../widget/Slider.h"
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_render.h>
@@ -18,7 +18,7 @@ struct OptionsResult {
 
 class SettingsScreen : public Screen {
 public:
-    SettingsScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font, int maxFps, bool vsync, bool fullscreen);
+    SettingsScreen(int maxFps, bool vsync, bool fullscreen);
 
     void handle(const SDL_Event& event) override;
     void render(SDL_Renderer* renderer) override;
@@ -28,9 +28,6 @@ public:
     OptionsResult getResult() const { return result; }
 
 private:
-    TTF_Font* font;
-    TTF_Font* titleFont;
-
     Slider* fpsCapSlider     = nullptr;
     Button* fullscreenButton = nullptr;
     Button* vsyncButton      = nullptr;

@@ -27,7 +27,7 @@ public:
 
 class Shockwave {
 public:
-    Shockwave(SDL_Texture* img, int spawnX, int spawnY, Player* owner);
+    Shockwave(int spawnX, int spawnY, Player* owner);
 
     void update(float ts);
     void draw(SDL_Renderer* r, float a);

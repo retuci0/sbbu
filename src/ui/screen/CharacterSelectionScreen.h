@@ -23,8 +23,7 @@ struct CharacterSelectionResult {
 
 class CharacterSelectionScreen : public Screen {
 public:
-    CharacterSelectionScreen(SDL_Renderer* renderer, TTF_Font* titleFont, TTF_Font* font,
-                             const std::array<const Character*, CHARACTER_NUM>&,
+    CharacterSelectionScreen(const std::array<const Character*, CHARACTER_NUM>&,
                              const std::string& defaultName1, const Character* defaultChar1,
                              const std::string& defaultName2, const Character* defaultChar2);
 
@@ -35,9 +34,6 @@ public:
     CharacterSelectionResult getResult() const { return result; }
 
 private:
-    SDL_Renderer* renderer;
-    TTF_Font* titleFont;
-    TTF_Font* font;
     std::array<const Character*, CHARACTER_NUM> chars;
 
     int selectedChar1 = 0, selectedChar2 = 0;

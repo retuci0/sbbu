@@ -18,7 +18,7 @@ public:
 
     SDL_Texture* img = nullptr;  // non-owning
 
-    Projectile(SDL_Texture* img, int x, int y, Facing dir, Player* owner);
+    Projectile(int x, int y, Facing dir, Player* owner);
 
     static constexpr int PARRY_FREEZE_DURATION = 12;
     static constexpr int PARRY_FLASH_DURATION = 10;

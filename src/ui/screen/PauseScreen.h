@@ -2,7 +2,7 @@
 
 #include "../Screen.h"
 
-#include "Options.h"
+#include "../../Options.h"
 
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
@@ -19,7 +19,7 @@ enum class PauseActionResult {
 
 class PauseScreen : public Screen {
 public:
-    PauseScreen(SDL_Renderer* renderer, int sw, int sh, TTF_Font* titleFont, TTF_Font* font, Options options, SDL_Texture* settingsImage);
+    PauseScreen(const Options& options);
     void render(SDL_Renderer* renderer) override;
     void handle(const SDL_Event& event) override;
     bool isFinished() const { return finished; }
@@ -27,8 +27,6 @@ public:
     PauseActionResult getResult() const { return result; }
 
 private:
-    TTF_Font* titleFont;
-    TTF_Font* font;
     Options options;
     bool finished = false;
     PauseActionResult result = PauseActionResult::RESUME;
