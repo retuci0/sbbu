@@ -31,7 +31,9 @@
 #include <random>
 
 
-/* --- CONSTANTS --- */
+///////////////////////////////////////////
+/*               CONSTANTS               */
+///////////////////////////////////////////
 
 static constexpr int PADDING = 2;
 static constexpr int MM_W = 200;
@@ -41,7 +43,9 @@ static constexpr int MM_Y = SH - MM_H - PADDING;
 static constexpr Uint32 REMOTE_TIMEOUT_MS = 5000;
 
 
-/* --- MUSIC --- */
+///////////////////////////////////////
+/*               MUSIC               */
+///////////////////////////////////////
 
 void Game::playTitleMusic() {
     if (Resources::get().titleScreenMusic) {
@@ -58,7 +62,9 @@ void Game::playGameMusic() {
 }
 
 
-/* --- SETUP --- */
+///////////////////////////////////////
+/*               SETUP               */
+///////////////////////////////////////
 
 void Game::init() {
     // init sdl
@@ -134,6 +140,11 @@ void Game::setupPlayers(const Character* c1, const std::string& n1,
     ping = -1;
 }
 
+
+//////////////////////////////////////
+/*               GAME               */
+//////////////////////////////////////
+
 void Game::respawn(Player& p, bool voidDeath) {
     static std::mt19937 rng(std::random_device{}());
     std::uniform_int_distribution<int> pick(0, 1);
@@ -171,351 +182,6 @@ void Game::showEndScreen(const std::string& title, const std::string& details) {
     networkMode = NetworkMode::NONE;
     setScreen(std::make_unique<GameEndScreen>(title, details));
 }
-
-
-/* --- INPUT HANDLING --- */
-
-void Game::handleGameplayInput() {
-    // player 1 - always local (ctrl 0)
-    float p1Axis  = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
-    bool p1Left   = isDown(options.keyP1Left)   || (p1Axis < -0.2f);
-    bool p1Right  = isDown(options.keyP1Right)  || (p1Axis > 0.2f);
-    bool p1Shield = isDown(options.keyP1Shield) || isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, 0);
-
-    if (player1.status != Status::DAMAGED) {
-        player1.move((p1Left && p1Right) ? 0 : p1Left ? -1 : p1Right ? +1 : 0);
-    }
-
-    if (input.jumpP1) {
-        player1.jump();
-        input.jumpP1 = false;
-    }
-    if (input.shootP1) {
-        if (player1.tryShoot()) {
-            int px = (player1.facing == Facing::LEFT) ? player1.rect.x - 20 : player1.rect.x + 20;
-            projectiles.emplace_back(px, player1.rect.y, player1.facing, &player1);
-        }
-        input.shootP1 = false;
-    }
-    if (input.meleeP1) {
-        if (player1.tryMelee()) {
-            const int hw = 86, hh = 76;
-            int hx = (player1.facing == Facing::RIGHT) ? player1.rect.x + player1.rect.w - 36 : player1.rect.x - hw + 36;
-            int hy = player1.rect.y + (player1.rect.h - hh) / 2;
-            meleeHitboxes.emplace_back(hx, hy, hw, hh, &player1, 6);
-        }
-        input.meleeP1 = false;
-    }
-    if (input.specialP1) {
-        Direction dir = Direction::NONE;
-        float axisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
-        float axisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0);
-        if (axisX < -0.2f) dir = Direction::LEFT;
-        else if (axisX > 0.2f) dir = Direction::RIGHT;
-        else if (axisY < -0.2f) dir = Direction::UP;
-        else if (axisY > 0.2f) dir = Direction::DOWN;
-        if (isDown(options.keyP1Left)) dir = Direction::LEFT;
-        else if (isDown(options.keyP1Right)) dir = Direction::RIGHT;
-        else if (isDown(options.keyP1Jump)) dir = Direction::UP;
-        else if (isDown(options.keyP1Down)) dir = Direction::DOWN;
-        player1.trySpecial(dir);
-        input.specialP1 = false;
-    }
-
-    player1.setShieldHeld(p1Shield);
-    if (p1Shield) {
-        player1.tryShield();
-    } else if (!p1Shield && !player1.shieldHeld) {
-        player1.releaseShield();
-    }
-
-    // player2 - local or remote
-    bool p2Left, p2Right, p2Down, p2Shield;
-    bool p2JumpPr, p2ShootPr, p2MeleePr, p2SpecialPr;
-    bool p2JumpDn;
-
-    if (networkMode == NetworkMode::REMOTE_HOST) {
-        // remote player: read from network bits
-        p2Left      = remoteIsDown(InputBit::LEFT);
-        p2Right     = remoteIsDown(InputBit::RIGHT);
-        p2Down      = remoteIsDown(InputBit::DOWN);
-        p2Shield    = remoteIsDown(InputBit::SHIELD);
-        p2JumpDn    = remoteIsDown(InputBit::JUMP);
-        p2JumpPr    = remoteIsPressed(InputBit::JUMP);
-        p2ShootPr   = remoteIsPressed(InputBit::SHOOT);
-        p2MeleePr   = remoteIsPressed(InputBit::MELEE);
-        p2SpecialPr = remoteIsPressed(InputBit::SPECIAL);
-    } else {
-        // local player 2: keyboard OR controller 1
-        float p2Axis = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 1);
-        p2Left   = isDown(options.keyP2Left)   || (p2Axis < -0.2f);
-        p2Right  = isDown(options.keyP2Right)  || (p2Axis > 0.2f);
-        p2Down   = isDown(options.keyP2Down)   || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 1) > 0.5f;
-        p2Shield = isDown(options.keyP2Shield) || isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, 1);
-        p2JumpDn = isDown(options.keyP2Jump)   || isDown(SDL_CONTROLLER_BUTTON_A, 1);
-        p2JumpPr    = input.jumpP2;    input.jumpP2 = false;
-        p2ShootPr   = input.shootP2;   input.shootP2 = false;
-        p2MeleePr   = input.meleeP2;   input.meleeP2 = false;
-        p2SpecialPr = input.specialP2; input.specialP2 = false;
-    }
-
-    if (player2.status != Status::DAMAGED)
-        player2.move((p2Left && p2Right) ? 0 : p2Left ? -1 : p2Right ? 1 : 0);
-
-    if (p2JumpPr) player2.jump();
-    if (p2ShootPr) {
-        if (player2.tryShoot()) {
-            int px = (player2.facing == Facing::LEFT) ? player2.rect.x - 20 : player2.rect.x + 20;
-            projectiles.emplace_back(px, player2.rect.y, player2.facing, &player2);
-        }
-    }
-    if (p2MeleePr) {
-        if (player2.tryMelee()) {
-            const int hw = 86, hh = 76;
-            int hx = (player2.facing == Facing::RIGHT) ? player2.rect.x + player2.rect.w - 36 : player2.rect.x - hw + 36;
-            int hy = player2.rect.y + (player2.rect.h - hh) / 2;
-            meleeHitboxes.emplace_back(hx, hy, hw, hh, &player2, 6);
-        }
-    }
-    if (p2SpecialPr) {
-        Direction dir = Direction::NONE;
-        float p2AxisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 1);
-        float p2AxisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 1);
-        if      (p2Left  || p2AxisX < -0.2f) dir = Direction::LEFT;
-        else if (p2Right || p2AxisX >  0.2f) dir = Direction::RIGHT;
-        else if (p2JumpDn || p2AxisY < -0.2f) dir = Direction::UP;
-        else if (p2Down  || p2AxisY >  0.2f) dir = Direction::DOWN;
-        player2.trySpecial(dir);
-    }
-
-    player2.setShieldHeld(p2Shield);
-    if (p2Shield) {
-        player2.tryShield();
-    } else if (!p2Shield && !player2.shieldHeld) {
-        player2.releaseShield();
-    }
-}
-
-
-/* --- NETWORK STUFF --- */
-
-void Game::processNetworkPackets() {
-    if (!network) return;
-    std::unique_ptr<Packet> pkt;
-    while (network->recv(pkt)) {
-        switch (pkt->getType()) {
-            case PacketType::CLIENT_INPUT: {
-                auto* cip = dynamic_cast<ClientInputPacket*>(pkt.get());
-                if (cip) {
-                    prevRemoteInputBits = cip->lastInputs;
-                    remoteInputBits = cip->inputs;
-                }
-                break;
-            }
-            case PacketType::STATE_UPDATE: {
-                if (networkMode == NetworkMode::REMOTE_CLIENT && !screen) {
-                    auto* sup = dynamic_cast<StateUpdatePacket*>(pkt.get());
-                    if (sup) netApplyStateUpdate(*sup);
-                }
-                break;
-            }
-            case PacketType::GAME_SETUP: {
-                if (networkMode == NetworkMode::REMOTE_CLIENT) {
-                    auto* gsp = dynamic_cast<GameSetupPacket*>(pkt.get());
-                    if (gsp) {
-                        // only apply setup if in the waiting screen
-                        if (dynamic_cast<WaitingScreen*>(screen.get())) {
-                            if (gsp->char1Idx >= CHARACTER_NUM || gsp->char2Idx >= CHARACTER_NUM)
-                                break;
-                            pendingSetup.char1Idx = gsp->char1Idx;
-                            pendingSetup.char2Idx = gsp->char2Idx;
-                            pendingSetup.name1 = gsp->name1;
-                            pendingSetup.name2 = gsp->name2;
-                            pendingSetup.r1 = gsp->r1; pendingSetup.g1 = gsp->g1; pendingSetup.b1 = gsp->b1;
-                            pendingSetup.r2 = gsp->r2; pendingSetup.g2 = gsp->g2; pendingSetup.b2 = gsp->b2;
-                            hasPendingSetup = true;
-                        }
-                    }
-                }
-                break;
-            }
-            case PacketType::DISCONNECT:
-                if (network) network->disconnect(false);
-                if (!screen && player1.lives >= 0 && player2.lives >= 0) {
-                    if (networkMode == NetworkMode::REMOTE_HOST) {
-                        player2.lives = -1;
-                    } else if (networkMode == NetworkMode::REMOTE_CLIENT) {
-                        player1.lives = -1;
-                    }
-                }
-                break;
-            case PacketType::PING: {
-                auto* ping = dynamic_cast<PingPacket*>(pkt.get());
-                if (ping && network && network->isConnected()) {
-                    PongPacket pong(ping->sequence, ping->sentTicks);
-                    network->send(pong);
-                }
-                break;
-            }
-            case PacketType::PONG: {
-                auto* pong = dynamic_cast<PongPacket*>(pkt.get());
-                if (pong && pong->sequence == pendingPingSequence) {
-                    ping = static_cast<int>(SDL_GetTicks() - pong->sentTicks);
-                    pendingPingSequence = 0;
-                }
-                break;
-            }
-            default:
-                break;
-        }
-    }
-}
-
-void Game::netUpdatePing() {
-    if (!network || !network->isConnected()) return;
-
-    Uint32 now = SDL_GetTicks();
-    if (now - lastPingSentTicks < 1000) return;
-
-    lastPingSentTicks = now;
-    pendingPingSequence = ++pingSequence;
-    PingPacket ping(pendingPingSequence, now);
-    network->send(ping);
-}
-
-void Game::netSendStateUpdate() {
-    StateUpdatePacket sup;
-    sup.frame = netFrame;
-
-    auto fillState = [](const Player& p) -> PlayerState {
-        PlayerState ps;
-        ps.x = static_cast<float>(p.rect.x);
-        ps.y = static_cast<float>(p.rect.y);
-        ps.dx = p.dx;
-        ps.dy = p.dy;
-        ps.hp = static_cast<int16_t>(p.hp);
-        ps.lives = (p.lives < 0) ? 255 : static_cast<uint8_t>(p.lives);
-        ps.status = static_cast<uint8_t>(p.status);
-        ps.facing = static_cast<uint8_t>(p.facing);
-        ps.charge = p.charge;
-        ps.invulnerable = (p.invulnerableTimer > 0) ? 1 : 0;
-        ps.onGround = p.onGround ? 1 : 0;
-        return ps;
-    };
-    sup.p1 = fillState(player1);
-    sup.p2 = fillState(player2);
-    sup.projectiles.reserve(projectiles.size());
-    for (const auto& projectile : projectiles) {
-        ProjectileState ps;
-        ps.x = static_cast<float>(projectile.rect.x);
-        ps.y = static_cast<float>(projectile.rect.y);
-        ps.velocity = projectile.velocity;
-        ps.facing = static_cast<uint8_t>(projectile.direction);
-        ps.ownerId = projectile.owner ? static_cast<uint8_t>(projectile.owner->id) : 0;
-        ps.parryFreezeTimer = static_cast<uint8_t>(std::clamp(projectile.parryFreezeTimer, 0.0f, 255.0f));
-        ps.parryFlashTimer = static_cast<uint8_t>(std::clamp(projectile.parryFlashTimer, 0.0f, 255.0f));
-        sup.projectiles.push_back(ps);
-    }
-
-    network->send(sup);
-}
-
-void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
-    if (hasAppliedStateFrame && sup.frame <= lastAppliedStateFrame) return;
-    lastAppliedStateFrame = sup.frame;
-    hasAppliedStateFrame = true;
-
-    // for interpolation
-    player1.prevRect = player1.rect;
-    player2.prevRect = player2.rect;
-
-    // auth state for player1
-    player1.rect.x = static_cast<int>(sup.p1.x);
-    player1.rect.y = static_cast<int>(sup.p1.y);
-    player1.dx = sup.p1.dx;
-    player1.dy = sup.p1.dy;
-    player1.hp = sup.p1.hp;
-    player1.lives = (sup.p1.lives == 255) ? -1 : static_cast<int>(sup.p1.lives);
-    player1.status = static_cast<Status>(sup.p1.status);
-    player1.facing = static_cast<Facing>(sup.p1.facing);
-    player1.charge = sup.p1.charge;
-    player1.invulnerableTimer = sup.p1.invulnerable ? Player::INV_DURATION : 0;
-    player1.onGround = sup.p1.onGround != 0;
-
-    // auth state for player2
-    player2.rect.x = static_cast<int>(sup.p2.x);
-    player2.rect.y = static_cast<int>(sup.p2.y);
-    player2.dx = sup.p2.dx;
-    player2.dy = sup.p2.dy;
-    player2.hp = sup.p2.hp;
-    player2.lives = (sup.p2.lives == 255) ? -1 : static_cast<int>(sup.p2.lives);
-    player2.status = static_cast<Status>(sup.p2.status);
-    player2.facing = static_cast<Facing>(sup.p2.facing);
-    player2.charge = sup.p2.charge;
-    player2.invulnerableTimer = sup.p2.invulnerable ? Player::INV_DURATION : 0;
-    player2.onGround = sup.p2.onGround != 0;
-
-    // handle projs
-    if (projectiles.size() != sup.projectiles.size()) {
-        projectiles.clear();
-        projectiles.reserve(sup.projectiles.size());
-        // rebuild if count changed
-        for (const auto& ps : sup.projectiles) {
-            Player* owner = (ps.ownerId == 1) ? &player2 : &player1;
-            projectiles.emplace_back( static_cast<int>(ps.x), static_cast<int>(ps.y),
-                                     static_cast<Facing>(ps.facing), owner);
-            projectiles.back().velocity = ps.velocity;
-            projectiles.back().parryFreezeTimer = ps.parryFreezeTimer;
-            projectiles.back().parryFlashTimer = ps.parryFlashTimer;
-            projectiles.back().prevRect = projectiles.back().rect;  // init prev
-        }
-    } else {
-        // update existing
-        for (size_t i = 0; i < projectiles.size(); ++i) {
-            projectiles[i].prevRect = projectiles[i].rect;
-            projectiles[i].rect.x = static_cast<int>(sup.projectiles[i].x);
-            projectiles[i].rect.y = static_cast<int>(sup.projectiles[i].y);
-            projectiles[i].velocity = sup.projectiles[i].velocity;
-            projectiles[i].direction = static_cast<Facing>(sup.projectiles[i].facing);
-            projectiles[i].owner = (sup.projectiles[i].ownerId == 1) ? &player2 : &player1;
-            projectiles[i].parryFreezeTimer = sup.projectiles[i].parryFreezeTimer;
-            projectiles[i].parryFlashTimer = sup.projectiles[i].parryFlashTimer;
-        }
-    }
-
-    hasTargetState = true;
-}
-
-void Game::netSendClientInputs() {
-    uint8_t inputs = 0;
-    // keyboard
-    if (isDown(options.keyP1Left))    inputs |= InputBit::LEFT;
-    if (isDown(options.keyP1Right))   inputs |= InputBit::RIGHT;
-    if (isDown(options.keyP1Down))    inputs |= InputBit::DOWN;
-    if (isDown(options.keyP1Jump))    inputs |= InputBit::JUMP;
-    if (isDown(options.keyP1Shoot))   inputs |= InputBit::SHOOT;
-    if (isDown(options.keyP1Melee))   inputs |= InputBit::MELEE;
-    if (isDown(options.keyP1Special)) inputs |= InputBit::SPECIAL;
-    if (isDown(options.keyP1Shield))  inputs |= InputBit::SHIELD;
-    // controller 0
-    float axisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
-    float axisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0);
-    if (axisX < -0.2f)  inputs |= InputBit::LEFT;
-    if (axisX >  0.2f)  inputs |= InputBit::RIGHT;
-    if (axisY >  0.5f)  inputs |= InputBit::DOWN;
-    if (isDown(SDL_CONTROLLER_BUTTON_A,           0)) inputs |= InputBit::JUMP;
-    if (isDown(SDL_CONTROLLER_BUTTON_B,           0)) inputs |= InputBit::SHOOT;
-    if (isDown(SDL_CONTROLLER_BUTTON_X,           0)) inputs |= InputBit::MELEE;
-    if (isDown(SDL_CONTROLLER_BUTTON_Y,           0)) inputs |= InputBit::SPECIAL;
-    if (isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,0)) inputs |= InputBit::SHIELD;
-
-    ClientInputPacket cip(netFrame, inputs, lastSentInputs);
-    network->send(cip);
-    lastSentInputs = inputs;
-}
-
-
-/* --- LOGIC AND SHI --- */
 
 void Game::updateGameplay(float ts) {
     player1.update(platforms, isDown(options.keyP1Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0) > 0.5f, ts);
@@ -733,7 +399,377 @@ void Game::updateGameplay(float ts) {
 }
 
 
-/* --- RENDERING --- */
+
+///////////////////////////////////////
+/*               INPUT               */
+///////////////////////////////////////
+
+void Game::handleGameplayInput() {
+    // player 1 - always local (ctrl 0)
+    float p1Axis  = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
+    bool p1Left   = isDown(options.keyP1Left)   || (p1Axis < -0.2f);
+    bool p1Right  = isDown(options.keyP1Right)  || (p1Axis > 0.2f);
+    bool p1Shield = isDown(options.keyP1Shield) || isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, 0);
+
+    if (player1.status != Status::DAMAGED) {
+        player1.move((p1Left && p1Right) ? 0 : p1Left ? -1 : p1Right ? +1 : 0);
+    }
+
+    if (input.jumpP1) {
+        player1.jump();
+        input.jumpP1 = false;
+    }
+    if (input.shootP1) {
+        if (player1.tryShoot()) {
+            int px = (player1.facing == Facing::LEFT) ? player1.rect.x - 20 : player1.rect.x + 20;
+            projectiles.emplace_back(px, player1.rect.y, player1.facing, &player1);
+        }
+        input.shootP1 = false;
+    }
+    if (input.meleeP1) {
+        if (player1.tryMelee()) {
+            const int hw = 86, hh = 76;
+            int hx = (player1.facing == Facing::RIGHT) ? player1.rect.x + player1.rect.w - 36 : player1.rect.x - hw + 36;
+            int hy = player1.rect.y + (player1.rect.h - hh) / 2;
+            meleeHitboxes.emplace_back(hx, hy, hw, hh, &player1, 6);
+        }
+        input.meleeP1 = false;
+    }
+    if (input.specialP1) {
+        Direction dir = Direction::NONE;
+        float axisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
+        float axisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0);
+        if (axisX < -0.2f) dir = Direction::LEFT;
+        else if (axisX > 0.2f) dir = Direction::RIGHT;
+        else if (axisY < -0.2f) dir = Direction::UP;
+        else if (axisY > 0.2f) dir = Direction::DOWN;
+        if (isDown(options.keyP1Left)) dir = Direction::LEFT;
+        else if (isDown(options.keyP1Right)) dir = Direction::RIGHT;
+        else if (isDown(options.keyP1Jump)) dir = Direction::UP;
+        else if (isDown(options.keyP1Down)) dir = Direction::DOWN;
+        player1.trySpecial(dir);
+        input.specialP1 = false;
+    }
+
+    player1.setShieldHeld(p1Shield);
+    if (p1Shield) {
+        player1.tryShield();
+    } else if (!p1Shield && !player1.shieldHeld) {
+        player1.releaseShield();
+    }
+
+    // player2 - local or remote
+    bool p2Left, p2Right, p2Down, p2Shield;
+    bool p2JumpPr, p2ShootPr, p2MeleePr, p2SpecialPr;
+    bool p2JumpDn;
+
+    if (networkMode == NetworkMode::REMOTE_HOST) {
+        // remote player: read from network bits
+        p2Left      = remoteIsDown(InputBit::LEFT);
+        p2Right     = remoteIsDown(InputBit::RIGHT);
+        p2Down      = remoteIsDown(InputBit::DOWN);
+        p2Shield    = remoteIsDown(InputBit::SHIELD);
+        p2JumpDn    = remoteIsDown(InputBit::JUMP);
+        p2JumpPr    = remoteIsPressed(InputBit::JUMP);
+        p2ShootPr   = remoteIsPressed(InputBit::SHOOT);
+        p2MeleePr   = remoteIsPressed(InputBit::MELEE);
+        p2SpecialPr = remoteIsPressed(InputBit::SPECIAL);
+    } else {
+        // local player 2: keyboard OR controller 1
+        float p2Axis = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 1);
+        p2Left   = isDown(options.keyP2Left)   || (p2Axis < -0.2f);
+        p2Right  = isDown(options.keyP2Right)  || (p2Axis > 0.2f);
+        p2Down   = isDown(options.keyP2Down)   || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 1) > 0.5f;
+        p2Shield = isDown(options.keyP2Shield) || isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, 1);
+        p2JumpDn = isDown(options.keyP2Jump)   || isDown(SDL_CONTROLLER_BUTTON_A, 1);
+        p2JumpPr    = input.jumpP2;    input.jumpP2 = false;
+        p2ShootPr   = input.shootP2;   input.shootP2 = false;
+        p2MeleePr   = input.meleeP2;   input.meleeP2 = false;
+        p2SpecialPr = input.specialP2; input.specialP2 = false;
+    }
+
+    if (player2.status != Status::DAMAGED)
+        player2.move((p2Left && p2Right) ? 0 : p2Left ? -1 : p2Right ? 1 : 0);
+
+    if (p2JumpPr) player2.jump();
+    if (p2ShootPr) {
+        if (player2.tryShoot()) {
+            int px = (player2.facing == Facing::LEFT) ? player2.rect.x - 20 : player2.rect.x + 20;
+            projectiles.emplace_back(px, player2.rect.y, player2.facing, &player2);
+        }
+    }
+    if (p2MeleePr) {
+        if (player2.tryMelee()) {
+            const int hw = 86, hh = 76;
+            int hx = (player2.facing == Facing::RIGHT) ? player2.rect.x + player2.rect.w - 36 : player2.rect.x - hw + 36;
+            int hy = player2.rect.y + (player2.rect.h - hh) / 2;
+            meleeHitboxes.emplace_back(hx, hy, hw, hh, &player2, 6);
+        }
+    }
+    if (p2SpecialPr) {
+        Direction dir = Direction::NONE;
+        float p2AxisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 1);
+        float p2AxisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 1);
+        if      (p2Left  || p2AxisX < -0.2f) dir = Direction::LEFT;
+        else if (p2Right || p2AxisX >  0.2f) dir = Direction::RIGHT;
+        else if (p2JumpDn || p2AxisY < -0.2f) dir = Direction::UP;
+        else if (p2Down  || p2AxisY >  0.2f) dir = Direction::DOWN;
+        player2.trySpecial(dir);
+    }
+
+    player2.setShieldHeld(p2Shield);
+    if (p2Shield) {
+        player2.tryShield();
+    } else if (!p2Shield && !player2.shieldHeld) {
+        player2.releaseShield();
+    }
+}
+
+
+/////////////////////////////////////////
+/*               NETWORK               */
+/////////////////////////////////////////
+
+void Game::processNetworkPackets() {
+    if (!network) return;
+    std::unique_ptr<Packet> pkt;
+    while (network->recv(pkt)) {
+        switch (pkt->getType()) {
+            case PacketType::CLIENT_INPUT: {
+                auto* cip = dynamic_cast<ClientInputPacket*>(pkt.get());
+                if (cip) {
+                    prevRemoteInputBits = cip->lastInputs;
+                    remoteInputBits = cip->inputs;
+                }
+                break;
+            }
+            case PacketType::STATE_UPDATE: {
+                if (networkMode == NetworkMode::REMOTE_CLIENT && !screen) {
+                    auto* sup = dynamic_cast<StateUpdatePacket*>(pkt.get());
+                    if (sup) netApplyStateUpdate(*sup);
+                }
+                break;
+            }
+            case PacketType::GAME_SETUP: {
+                if (networkMode == NetworkMode::REMOTE_CLIENT) {
+                    auto* gsp = dynamic_cast<GameSetupPacket*>(pkt.get());
+                    if (gsp) {
+                        // only apply setup if in the waiting screen
+                        if (dynamic_cast<WaitingScreen*>(screen.get())) {
+                            if (gsp->char1Idx >= CHARACTER_NUM || gsp->char2Idx >= CHARACTER_NUM)
+                                break;
+                            pendingSetup.char1Idx = gsp->char1Idx;
+                            pendingSetup.char2Idx = gsp->char2Idx;
+                            pendingSetup.name1 = gsp->name1;
+                            pendingSetup.name2 = gsp->name2;
+                            pendingSetup.r1 = gsp->r1; pendingSetup.g1 = gsp->g1; pendingSetup.b1 = gsp->b1;
+                            pendingSetup.r2 = gsp->r2; pendingSetup.g2 = gsp->g2; pendingSetup.b2 = gsp->b2;
+                            hasPendingSetup = true;
+                        }
+                    }
+                }
+                break;
+            }
+            case PacketType::DISCONNECT:
+                if (network) network->disconnect(false);
+                if (!screen && player1.lives >= 0 && player2.lives >= 0) {
+                    if (networkMode == NetworkMode::REMOTE_HOST) {
+                        player2.lives = -1;
+                    } else if (networkMode == NetworkMode::REMOTE_CLIENT) {
+                        player1.lives = -1;
+                    }
+                }
+                break;
+            case PacketType::PING: {
+                auto* ping = dynamic_cast<PingPacket*>(pkt.get());
+                if (ping && network && network->isConnected()) {
+                    PongPacket pong(ping->sequence, ping->sentTicks);
+                    network->send(pong);
+                }
+                break;
+            }
+            case PacketType::PONG: {
+                auto* pong = dynamic_cast<PongPacket*>(pkt.get());
+                if (pong && pong->sequence == pendingPingSequence) {
+                    ping = static_cast<int>(SDL_GetTicks() - pong->sentTicks);
+                    pendingPingSequence = 0;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+}
+
+void Game::netUpdatePing() {
+    if (!network || !network->isConnected()) return;
+
+    Uint32 now = SDL_GetTicks();
+    if (now - lastPingSentTicks < 1000) return;
+
+    lastPingSentTicks = now;
+    pendingPingSequence = ++pingSequence;
+    PingPacket ping(pendingPingSequence, now);
+    network->send(ping);
+}
+
+void Game::netSendStateUpdate() {
+    StateUpdatePacket sup;
+    sup.frame = netFrame;
+
+    auto fillState = [](const Player& p) -> PlayerState {
+        PlayerState ps;
+        ps.x = static_cast<float>(p.rect.x);
+        ps.y = static_cast<float>(p.rect.y);
+        ps.dx = p.dx;
+        ps.dy = p.dy;
+        ps.hp = static_cast<int16_t>(p.hp);
+        ps.lives = (p.lives < 0) ? 255 : static_cast<uint8_t>(p.lives);
+        ps.status = static_cast<uint8_t>(p.status);
+        ps.facing = static_cast<uint8_t>(p.facing);
+        ps.charge = p.charge;
+        ps.invulnerable = (p.invulnerableTimer > 0) ? 1 : 0;
+        ps.onGround = p.onGround ? 1 : 0;
+        return ps;
+    };
+    sup.p1 = fillState(player1);
+    sup.p2 = fillState(player2);
+    sup.projectiles.reserve(projectiles.size());
+    for (const auto& projectile : projectiles) {
+        ProjectileState ps;
+        ps.x = static_cast<float>(projectile.rect.x);
+        ps.y = static_cast<float>(projectile.rect.y);
+        ps.velocity = projectile.velocity;
+        ps.facing = static_cast<uint8_t>(projectile.direction);
+        ps.ownerId = projectile.owner ? static_cast<uint8_t>(projectile.owner->id) : 0;
+        ps.parryFreezeTimer = static_cast<uint8_t>(std::clamp(projectile.parryFreezeTimer, 0.0f, 255.0f));
+        ps.parryFlashTimer = static_cast<uint8_t>(std::clamp(projectile.parryFlashTimer, 0.0f, 255.0f));
+        sup.projectiles.push_back(ps);
+    }
+
+    network->send(sup);
+}
+
+void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
+    if (hasAppliedStateFrame && sup.frame <= lastAppliedStateFrame) return;
+    lastAppliedStateFrame = sup.frame;
+    hasAppliedStateFrame = true;
+
+    // for interpolation
+    player1.prevRect = player1.rect;
+    player2.prevRect = player2.rect;
+
+    // authorative state for player1
+    player1.rect.x = static_cast<int>(sup.p1.x);
+    player1.rect.y = static_cast<int>(sup.p1.y);
+    player1.dx = sup.p1.dx;
+    player1.dy = sup.p1.dy;
+    player1.hp = sup.p1.hp;
+    player1.lives = (sup.p1.lives == 255) ? -1 : static_cast<int>(sup.p1.lives);
+    player1.status = static_cast<Status>(sup.p1.status);
+    player1.facing = static_cast<Facing>(sup.p1.facing);
+    player1.charge = sup.p1.charge;
+    player1.invulnerableTimer = sup.p1.invulnerable ? Player::INV_DURATION : 0;
+    player1.onGround = sup.p1.onGround != 0;
+
+    // authorative state for player2
+    player2.rect.x = static_cast<int>(sup.p2.x);
+    player2.rect.y = static_cast<int>(sup.p2.y);
+    player2.dx = sup.p2.dx;
+    player2.dy = sup.p2.dy;
+    player2.hp = sup.p2.hp;
+    player2.lives = (sup.p2.lives == 255) ? -1 : static_cast<int>(sup.p2.lives);
+    player2.status = static_cast<Status>(sup.p2.status);
+    player2.facing = static_cast<Facing>(sup.p2.facing);
+    player2.charge = sup.p2.charge;
+    player2.invulnerableTimer = sup.p2.invulnerable ? Player::INV_DURATION : 0;
+    player2.onGround = sup.p2.onGround != 0;
+
+    // handle projs
+    if (projectiles.size() != sup.projectiles.size()) {
+        projectiles.clear();
+        projectiles.reserve(sup.projectiles.size());
+        // rebuild if count changed
+        for (const auto& ps : sup.projectiles) {
+            Player* owner = (ps.ownerId == 1) ? &player2 : &player1;
+            projectiles.emplace_back( static_cast<int>(ps.x), static_cast<int>(ps.y),
+                                     static_cast<Facing>(ps.facing), owner);
+            projectiles.back().velocity = ps.velocity;
+            projectiles.back().parryFreezeTimer = ps.parryFreezeTimer;
+            projectiles.back().parryFlashTimer = ps.parryFlashTimer;
+            projectiles.back().prevRect = projectiles.back().rect;  // init prev
+        }
+    } else {
+        // update existing
+        for (size_t i = 0; i < projectiles.size(); ++i) {
+            projectiles[i].prevRect = projectiles[i].rect;
+            projectiles[i].rect.x = static_cast<int>(sup.projectiles[i].x);
+            projectiles[i].rect.y = static_cast<int>(sup.projectiles[i].y);
+            projectiles[i].velocity = sup.projectiles[i].velocity;
+            projectiles[i].direction = static_cast<Facing>(sup.projectiles[i].facing);
+            projectiles[i].owner = (sup.projectiles[i].ownerId == 1) ? &player2 : &player1;
+            projectiles[i].parryFreezeTimer = sup.projectiles[i].parryFreezeTimer;
+            projectiles[i].parryFlashTimer = sup.projectiles[i].parryFlashTimer;
+        }
+    }
+
+    hasTargetState = true;
+}
+
+void Game::netSendClientInputs() {
+    uint8_t inputs = 0;
+    // keyboard
+    if (isDown(options.keyP1Left))    inputs |= InputBit::LEFT;
+    if (isDown(options.keyP1Right))   inputs |= InputBit::RIGHT;
+    if (isDown(options.keyP1Down))    inputs |= InputBit::DOWN;
+    if (isDown(options.keyP1Jump))    inputs |= InputBit::JUMP;
+    if (isDown(options.keyP1Shoot))   inputs |= InputBit::SHOOT;
+    if (isDown(options.keyP1Melee))   inputs |= InputBit::MELEE;
+    if (isDown(options.keyP1Special)) inputs |= InputBit::SPECIAL;
+    if (isDown(options.keyP1Shield))  inputs |= InputBit::SHIELD;
+    // controller 0
+    float axisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
+    float axisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0);
+    if (axisX < -0.2f)  inputs |= InputBit::LEFT;
+    if (axisX >  0.2f)  inputs |= InputBit::RIGHT;
+    if (axisY >  0.5f)  inputs |= InputBit::DOWN;
+    if (isDown(SDL_CONTROLLER_BUTTON_A,           0)) inputs |= InputBit::JUMP;
+    if (isDown(SDL_CONTROLLER_BUTTON_B,           0)) inputs |= InputBit::SHOOT;
+    if (isDown(SDL_CONTROLLER_BUTTON_X,           0)) inputs |= InputBit::MELEE;
+    if (isDown(SDL_CONTROLLER_BUTTON_Y,           0)) inputs |= InputBit::SPECIAL;
+    if (isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,0)) inputs |= InputBit::SHIELD;
+
+    ClientInputPacket cip(netFrame, inputs, lastSentInputs);
+    network->send(cip);
+    lastSentInputs = inputs;
+}
+
+
+///////////////////////////////////////////
+/*               RENDERING               */
+///////////////////////////////////////////
+
+void Game::render(float ts, float a) {
+    if (screen) {
+        // render the gameplay underneath on transparent screens
+        if (screen->isTransparent()) {
+            renderGameplay(ts, a);
+        }
+        screen->render(renderer);
+    } else {
+        renderGameplay(ts, a);
+    }
+    SDL_RenderPresent(renderer);
+
+    ++frames;
+    Uint32 now = SDL_GetTicks();
+    if (now - lastFpsUpdate >= 1000) {
+        fps           = frames * 1000.0f / static_cast<float>(now - lastFpsUpdate);
+        frames        = 0;
+        lastFpsUpdate = now;
+    }
+}
 
 void Game::renderPlayerHud(const Player& player) const {
     int x = (player == player1) ? 480 : 1315;
@@ -907,7 +943,9 @@ void Game::renderGameplay(float ts, float a) {
 }
 
 
-/* --- SCREEN STUFF --- */
+/////////////////////////////////////////
+/*               SCREENS               */
+/////////////////////////////////////////
 
 void Game::handleScreenTransitions() {
     // title screen
@@ -1105,8 +1143,47 @@ void Game::handleScreenTransitions() {
     }
 }
 
+void Game::setScreen(std::unique_ptr<Screen> newScreen) {
+    screen = std::move(newScreen);
+}
 
-/* --- MAIN LOOP --- */
+///////////////////////////////////////////
+/*               MAIN LOOP               */
+///////////////////////////////////////////
+
+void Game::run() {
+    // start on title screen
+    playTitleMusic();
+    setScreen(std::make_unique<TitleScreen>());
+
+    Uint32 prevTicks  = SDL_GetTicks();
+    float accumulator = 0.0f;
+
+    while (running) {
+        beginFrame();
+
+        Uint32 now = SDL_GetTicks();
+        float elapsed = static_cast<float>(now - prevTicks);
+        prevTicks = now;
+
+        // cap to avoid "spiral of death" on lag spikes
+        accumulator += std::min(elapsed, 200.0f);
+
+        processEvents();
+
+        while (accumulator >= TICK_MS) {
+            update(TICK_SCALE);
+            accumulator -= TICK_MS;
+        }
+
+        float alpha = accumulator / TICK_MS;  // [0, 1)
+        render(TICK_SCALE, alpha);
+        if (options.fpsCap != -1) {
+            SDL_Delay(1000 / options.fpsCap);
+        }
+    }
+}
+
 
 void Game::processEvents() {
     SDL_Event e;
@@ -1218,123 +1295,32 @@ void Game::update(float ts) {
     }
 }
 
-void Game::render(float ts, float a) {
-    if (screen) {
-        // render the gameplay underneath on transparent screens
-        if (screen->isTransparent()) {
-            renderGameplay(ts, a);
-        }
-        screen->render(renderer);
-    } else {
-        renderGameplay(ts, a);
-    }
-    SDL_RenderPresent(renderer);
 
-    ++frames;
-    Uint32 now = SDL_GetTicks();
-    if (now - lastFpsUpdate >= 1000) {
-        fps           = frames * 1000.0f / static_cast<float>(now - lastFpsUpdate);
-        frames        = 0;
-        lastFpsUpdate = now;
-    }
-}
-
-void Game::run() {
-    // start on title screen
-    playTitleMusic();
-    setScreen(std::make_unique<TitleScreen>());
-
-    Uint32 prevTicks  = SDL_GetTicks();
-    float accumulator = 0.0f;
-
-    while (running) {
-        beginFrame();
-
-        Uint32 now = SDL_GetTicks();
-        float elapsed = static_cast<float>(now - prevTicks);
-        prevTicks = now;
-
-        // cap to avoid "spiral of death" on lag spikes
-        accumulator += std::min(elapsed, 200.0f);
-
-        processEvents();
-
-        while (accumulator >= TICK_MS) {
-            update(TICK_SCALE);
-            accumulator -= TICK_MS;
-        }
-
-        float alpha = accumulator / TICK_MS;  // [0, 1)
-        render(TICK_SCALE, alpha);
-        if (options.fpsCap != -1) {
-            SDL_Delay(1000 / options.fpsCap);
-        }
-    }
-}
-
-void Game::setScreen(std::unique_ptr<Screen> newScreen) {
-    screen = std::move(newScreen);
-}
-
-void Game::onKey(SDL_Keycode key, KeyAction action) {
-    if (action != KeyAction::PRESS) return;
-    if (key == options.keyQuit)       { running = false; return; }
-    if (key == options.keyDebug)      { options.debug = !options.debug;  return; }
-    if (key == options.keyFullscreen) {
-        Uint32 flags = SDL_GetWindowFlags(window);
-        SDL_SetWindowFullscreen(window,
-            (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP);
-        return;
-    }
-
-
-    // handle play inputs
-
-    if (key == options.keyP1Jump)    input.jumpP1    = true;
-    if (key == options.keyP1Shoot)   input.shootP1   = true;
-    if (key == options.keyP1Melee)   input.meleeP1   = true;
-    if (key == options.keyP1Special) input.specialP1 = true;
-
-    if (key == options.keyP2Jump)    input.jumpP2    = true;
-    if (key == options.keyP2Shoot)   input.shootP2   = true;
-    if (key == options.keyP2Melee)   input.meleeP2   = true;
-    if (key == options.keyP2Special) input.specialP2 = true;
-}
-
-void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action, int ctrl) {
-    if (action != ControllerButtonAction::PRESS) return;
-
-    // ctrl 0: P1 actions; ctrl 1: P2 actions (local only)
-    if (ctrl == 0) {
-        switch (button) {
-            case SDL_CONTROLLER_BUTTON_A:     input.jumpP1    = true; break;
-            case SDL_CONTROLLER_BUTTON_B:     input.shootP1   = true; break;
-            case SDL_CONTROLLER_BUTTON_X:     input.meleeP1   = true; break;
-            case SDL_CONTROLLER_BUTTON_Y:     input.specialP1 = true; break;
-            default: break;
-        }
-    } else if (ctrl == 1 && networkMode != NetworkMode::REMOTE_CLIENT) {
-        // P2 is only local when we're not the network client
-        switch (button) {
-            case SDL_CONTROLLER_BUTTON_A:     input.jumpP2    = true; break;
-            case SDL_CONTROLLER_BUTTON_B:     input.shootP2   = true; break;
-            case SDL_CONTROLLER_BUTTON_X:     input.meleeP2   = true; break;
-            case SDL_CONTROLLER_BUTTON_Y:     input.specialP2 = true; break;
-            default: break;
-        }
-    }
-}
-
-
-/* --- CLEANUP --- */
+/////////////////////////////////////////
+/*               CLEANUP               */
+/////////////////////////////////////////
 
 void Game::cleanup() {
+    // save to config file
     options.saveToFile();
-    if (network) { network->disconnect(); network.reset(); }
+
+    // disconnect
+    if (network) { 
+        network->disconnect(); 
+        network.reset(); 
+    }
+
+    // destroy textures
     Resources::get().destroy();
+
+    // destroy renderer and window
     if (renderer) { SDL_DestroyRenderer(renderer); renderer = nullptr; }
     if (window)   { SDL_DestroyWindow(window);     window   = nullptr; }
+
+    // shutdown input handler
     InputHandler::shutdown();
+
+    // quit SDL subsystems
     Mix_CloseAudio();
     TTF_Quit();
     IMG_Quit();

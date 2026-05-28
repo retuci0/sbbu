@@ -288,58 +288,57 @@ bool Player::trySpecial(Direction dir) {
 void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed, float ts) {
     prevRect = rect;
 
-    // prevent moving while shielded
     if (status == Status::SHIELDED) { dx = 0.0f; }
 
-    // apply gravity
+    // gravity
     dy = std::min(character->stats.terminalVelocity, dy + character->stats.gravity * ts);
 
-    // drop-through
-    if (downKeyPressed && onGround && droppingTimer == 0) droppingTimer = DROP_DURATION;
-    if (droppingTimer > 0) droppingTimer -= ts;
-    const bool dropping = (droppingTimer > 0);
-
+    
     // horizontal move
     rect.x += static_cast<int>(dx * ts);
-
-    // snapshot the player's bottom before the vertical move
-    // to know whether it approached from above
+    
+    // snapshot bottom before vertical move
     const int prevBottom = rect.y + rect.h;
-
+    
     // vertical move
     rect.y += static_cast<int>(dy * ts);
     onGround = false;
-
-    // land on top of platforms (only while falling, only from above, only if not dropping)
+    
+    // drop-through
+    bool standingOnBig = false;
+    bool dropping = (droppingTimer > 0);
     if (!dropping && dy >= 0) {
         for (const auto& p : platforms) {
-            // prevents sticking from underneath when jumping up
             if (prevBottom > p.rect.y) continue;
-
             if (!SDL_HasIntersection(&rect, &p.rect)) continue;
-
-            rect.y         = p.rect.y - rect.h;
-            dy             = 0.0f;
-            onGround       = true;
-            hasAirJumped   = false;
+            rect.y = p.rect.y - rect.h;
+            dy = 0.0f;
+            onGround = true;
+            hasAirJumped = false;
+            if (p.size == PlatformSize::BIG)
+                standingOnBig = true;
         }
     }
-
-    // when stationary on a platform
+    // stationary probe (only when not dropping)
     if (!onGround && !dropping) {
         SDL_Rect probe = { rect.x, rect.y + rect.h, rect.w, 3 };
         for (const auto& p : platforms) {
             if (SDL_HasIntersection(&probe, &p.rect)) {
                 onGround = true;
+                if (p.size == PlatformSize::BIG)
+                    standingOnBig = true;
                 break;
             }
         }
     }
+    if (downKeyPressed && onGround && droppingTimer == 0 && !standingOnBig) {
+        droppingTimer = DROP_DURATION;
+    }
+    if (droppingTimer > 0) droppingTimer -= ts;
 
-    // decrement timers
+    
     updateTimers(ts);
 
-    // adapt hitbox to current sprite's size
     int w, h;
     SDL_QueryTexture(currentTexture, nullptr, nullptr, &w, &h);
     if (facing == Facing::LEFT && w != rect.w) {
@@ -348,13 +347,11 @@ void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed,
     rect.w = w;
     rect.h = h;
 
-    // clamp charge to [0, 1]
     charge = std::clamp(charge, 0.0f, 1.0f);
 
-    // sync status
-    if (status != Status::DAMAGED && status != Status::ATTACKING 
+    if (status != Status::DAMAGED && status != Status::ATTACKING
         && status != Status::SHIELDED && status != Status::SHOOTING
-        && status != Status::SPECIAL_STATIC && status != Status::SPECIAL_SIDE 
+        && status != Status::SPECIAL_STATIC && status != Status::SPECIAL_SIDE
         && status != Status::SPECIAL_UP && status != Status::SPECIAL_DOWN
         && status != Status::STUNNED) {
         if (!onGround) status = Status::JUMPING;
