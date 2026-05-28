@@ -23,8 +23,8 @@
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_timer.h>
 #include <SDL2/SDL_ttf.h>
-
 #include <SDL2/SDL_video.h>
+
 #include <algorithm>
 #include <memory>
 #include <stdexcept>
@@ -522,6 +522,56 @@ void Game::handleGameplayInput() {
         player2.tryShield();
     } else if (!p2Shield && !player2.shieldHeld) {
         player2.releaseShield();
+    }
+}
+
+void Game::onKey(SDL_Keycode key, KeyAction action) {
+    if (action != KeyAction::PRESS) return;
+    if (key == options.keyQuit)       { running = false; return; }
+    if (key == options.keyDebug)      { options.debug = !options.debug;  return; }
+    if (key == options.keyFullscreen) {
+        Uint32 flags = SDL_GetWindowFlags(window);
+        SDL_SetWindowFullscreen(window,
+            (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP);
+        return;
+    }
+
+    
+    // handle play inputs
+
+    if (key == options.keyP1Jump)    input.jumpP1    = true;
+    if (key == options.keyP1Shoot)   input.shootP1   = true;
+    if (key == options.keyP1Melee)   input.meleeP1   = true;
+    if (key == options.keyP1Special) input.specialP1 = true;
+
+    if (key == options.keyP2Jump)    input.jumpP2    = true;
+    if (key == options.keyP2Shoot)   input.shootP2   = true;
+    if (key == options.keyP2Melee)   input.meleeP2   = true;
+    if (key == options.keyP2Special) input.specialP2 = true;
+}
+
+void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action, int ctrl) {
+    if (action != ControllerButtonAction::PRESS) return;
+
+    // ctrl 0 → P1 actions, ctrl 1 → P2 actions (local only)
+    // ctrl 0: P1 actions; ctrl 1: P2 actions (local only)
+    if (ctrl == 0) {
+        switch (button) {
+            case SDL_CONTROLLER_BUTTON_A:     input.jumpP1    = true; break;
+            case SDL_CONTROLLER_BUTTON_B:     input.shootP1   = true; break;
+            case SDL_CONTROLLER_BUTTON_X:     input.meleeP1   = true; break;
+            case SDL_CONTROLLER_BUTTON_Y:     input.specialP1 = true; break;
+            default: break;
+        }
+    } else if (ctrl == 1 && networkMode != NetworkMode::REMOTE_CLIENT) {
+        // P2 is only local when we're not the network client
+        switch (button) {
+            case SDL_CONTROLLER_BUTTON_A:     input.jumpP2    = true; break;
+            case SDL_CONTROLLER_BUTTON_B:     input.shootP2   = true; break;
+            case SDL_CONTROLLER_BUTTON_X:     input.meleeP2   = true; break;
+            case SDL_CONTROLLER_BUTTON_Y:     input.specialP2 = true; break;
+            default: break;
+        }
     }
 }
 
