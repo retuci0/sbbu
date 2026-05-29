@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../Screen.h"
-#include "../../net/Network.h"
+#include "ui/Screen.h"
+#include "net/Network.h"
+
 #include <memory>
 
 

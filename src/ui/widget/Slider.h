@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../Widget.h"
+#include "ui/Widget.h"
 
-#include "../../misc/Common.h"
-#include "../../misc/Renderer.h"
+#include "misc/Common.h"
+#include "misc/Renderer.h"
 
 #include <SDL2/SDL_ttf.h>
 

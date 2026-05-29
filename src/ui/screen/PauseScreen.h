@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../Screen.h"
+#include "ui/Screen.h"
 
-#include "../../Options.h"
+#include "core/Options.h"
 
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>

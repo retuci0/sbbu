@@ -1,8 +1,8 @@
 #include "RemoteSetupScreen.h"
 
-#include "../widget/Button.h"
-#include "../../misc/Renderer.h"
-#include "../../misc/Common.h"
+#include "ui/widget/Button.h"
+#include "misc/Renderer.h"
+#include "misc/Common.h"
 
 #include <SDL2/SDL_net.h>
 
@@ -11,9 +11,9 @@
 
 
 RemoteSetupScreen::RemoteSetupScreen() : Screen() {
-    addWidget<Button>(4, 4, 64, 64, "<", Color{60,100,60}, WHITE, [&]{ goBack = true; finished = true; });
-    addWidget<Button>(SW/2-300, SH-150, 250, 70, "HOST", Color{60,100,60}, WHITE, [&]{ isHost = true; tryConnect(); });
-    addWidget<Button>(SW/2+50,  SH-150, 250, 70, "CLIENT", Color{60,60,100}, WHITE, [&]{ isHost = false; tryConnect(); });
+    addWidget<Button>(4, 4, 64, 64, "<", GREEN, WHITE, [&]{ goBack = true; finished = true; });
+    addWidget<Button>(SW/2-300, SH-150, 250, 70, "HOST", GREEN, WHITE, [&]{ isHost = true; tryConnect(); });
+    addWidget<Button>(SW/2+50,  SH-150, 250, 70, "CLIENT", GREEN, WHITE, [&]{ isHost = false; tryConnect(); });
 }
 
 void RemoteSetupScreen::tryConnect() {

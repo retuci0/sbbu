@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../Screen.h"
+#include "ui/Screen.h"
 
-#include "../widget/Button.h"
-#include "../widget/Slider.h"
+#include "ui/widget/Button.h"
+#include "ui/widget/Slider.h"
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_render.h>

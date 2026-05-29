@@ -1,9 +1,9 @@
 #include "Player.h"
 
-#include "Platform.h"
-#include "../Resources.h"
-#include "../misc/Common.h"
-#include "../misc/Renderer.h"
+#include "obj/Platform.h"
+#include "core/Resources.h"
+#include "misc/Common.h"
+#include "misc/Renderer.h"
 
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_rect.h>
@@ -514,6 +514,8 @@ void Player::animate(float ts) {
         case Status::SPECIAL_DOWN:
             advanceFrame(character->specialDownFrames, 0.21f);
             break;
+        case Status::STUNNED:
+            advanceFrame(character->specialDownFrames, 0.21f);
         default:
             currentSpriteIndex = 0.0f;
             break;
@@ -550,6 +552,9 @@ void Player::draw(SDL_Renderer* r, TTF_Font* font, float a) {
         case Status::SPECIAL_DOWN:
             drawAnimatedSprite(character->specialDownFrames);
             break;
+        case Status::STUNNED:
+            drawAnimatedSprite(character->stunnedFrames);
+            break;
         case Status::SHOOTING:
             drawSprite(r, character->shoot, flipH, a);
             break;
@@ -558,9 +563,6 @@ void Player::draw(SDL_Renderer* r, TTF_Font* font, float a) {
             break;
         case Status::SHIELDED:
             drawSprite(r, character->shielded, flipH, a);
-            break;
-        case Status::STUNNED:
-            drawSprite(r, character->stunned, flipH, a);
             break;
         default:
             drawSprite(r, character->idle, flipH, a);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Color.h"
+#include "misc/Color.h"
 
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>

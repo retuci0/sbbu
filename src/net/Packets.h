@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ByteBuffer.h"
-#include "../misc/Common.h"
+#include "net/ByteBuffer.h"
+#include "misc/Common.h"
 
 #include <algorithm>
 #include <cstdint>

@@ -2,8 +2,8 @@
 
 #include "CollisionRect.h"
 
-#include "Player.h"
-#include "../misc/Common.h"
+#include "obj/Player.h"
+#include "misc/Common.h"
 
 #include <SDL2/SDL_rect.h>
 

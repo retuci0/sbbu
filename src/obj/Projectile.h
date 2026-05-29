@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../misc/Common.h"
-#include "../objects/Player.h"
+#include "misc/Common.h"
+#include "obj/Player.h"
 
 #include <SDL2/SDL.h>
 

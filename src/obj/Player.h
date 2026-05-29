@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../misc/Characters.h"
-#include "../misc/Common.h"
-#include "../misc/Color.h"
+#include "misc/Characters.h"
+#include "misc/Common.h"
+#include "misc/Color.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
@@ -110,7 +110,7 @@ public:
     float currentSpriteIndex = 0.0f;
 
     // player color indicator (drawn above head)
-    Color color = { 255, 255, 255, 255 };
+    Color color = WHITE;
 
     // sprite in use
     SDL_Texture* currentTexture = nullptr;

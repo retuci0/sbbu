@@ -1,4 +1,4 @@
-#include "InputHandler.h"
+#include "core/InputHandler.h"
 
 #include <SDL2/SDL.h>
 

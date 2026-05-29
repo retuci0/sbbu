@@ -2,10 +2,10 @@
 
 #include "../Widget.h"
 
-#include "../../Resources.h"
-#include "../../misc/Color.h"
-#include "../../misc/Common.h"
-#include "../../misc/Renderer.h"
+#include "core/Resources.h"
+#include "misc/Color.h"
+#include "misc/Common.h"
+#include "misc/Renderer.h"
 
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_render.h>

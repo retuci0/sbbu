@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL2/SDL_pixels.h>
+
 #include <algorithm>
 
 

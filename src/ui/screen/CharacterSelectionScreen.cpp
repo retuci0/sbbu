@@ -1,10 +1,10 @@
 #include "CharacterSelectionScreen.h"
 
-#include "../widget/Button.h"
-#include "../../misc/Common.h"
-#include "../../misc/Renderer.h"
+#include "ui/widget/Button.h"
+#include "misc/Common.h"
+#include "misc/Renderer.h"
 
-#include "../../../inc/tinyfiledialogs.h"
+#include "tinyfiledialogs.h"
 
 #include <SDL2/SDL_rect.h>
 
@@ -32,8 +32,10 @@ CharacterSelectionScreen::CharacterSelectionScreen(
     selectedChar2 = findIdx(defaultChar2);
     setDefaultColors();
     addWidget<Button>(START_BTN_X, START_BTN_Y, START_BTN_W, START_BTN_H,
-        "start game", Color{50, 180, 50, 255}, WHITE,
+        "start game", GREEN, WHITE,
         [&]{ tryStart(); });
+    addWidget<Button>(4, 4, 64, 64, "<", GREEN, WHITE, 
+        [&]{ goBack = true; });
 }
 
 int CharacterSelectionScreen::findIdx(const Character* ch) const {
@@ -144,11 +146,20 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
         }
         const SDL_Rect nameField1 = {NAME_BOX_X1, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H};
         const SDL_Rect nameField2 = {NAME_BOX_X2, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H};
-        if      (pointInRect(mx, my, nameField1)) activeField = 1;
-        else if (pointInRect(mx, my, nameField2)) activeField = 2;
-        else                                       activeField = 0;
-        if (pointInRect(mx, my, SDL_Rect{COL1_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H})) pickColorFor(1);
-        if (pointInRect(mx, my, SDL_Rect{COL2_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H})) pickColorFor(2);
+        if (pointInRect(mx, my, nameField1)) {
+            activeField = 1;
+        } else if (pointInRect(mx, my, nameField2)) {
+            activeField = 2;
+        }
+        else { 
+            activeField = 0;
+        }
+        if (pointInRect(mx, my, SDL_Rect{COL1_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H})) {
+            pickColorFor(1);
+        }
+        if (pointInRect(mx, my, SDL_Rect{COL2_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H})) {
+            pickColorFor(2);
+        }
     }
 }
 
@@ -158,7 +169,7 @@ void CharacterSelectionScreen::render(SDL_Renderer* renderer) {
     Renderer::renderText(renderer, font, "player 1", COL1_X, 150, WHITE);
     Renderer::renderText(renderer, font, "player 2", COL2_X, 150, WHITE);
 
-    for (int i = 0; i < (int)chars.size(); ++i) {
+    for (int i = 0; i < static_cast<int>(chars.size()); ++i) {
         if (!chars[i] || !chars[i]->loaded) continue;
 
         int col = i / 4, row = i % 4;
@@ -167,10 +178,10 @@ void CharacterSelectionScreen::render(SDL_Renderer* renderer) {
         int x2 = COL2_X + col * (BOX_W + 20);
         const std::string charName = chars[i]->stats.name;
 
-        SDL_Color bg1 = (selectedChar1 == i) ? SDL_Color{80, 150, 80, 255} : SDL_Color{60, 60, 60, 255};
+        SDL_Color bg1 = (selectedChar1 == i) ? GREEN.brighter().toSdlColor() : GREEN.toSdlColor();
         Renderer::renderButton(renderer, font, charName, x1, y, BOX_W, BOX_H, bg1, WHITE);
 
-        SDL_Color bg2 = (selectedChar2 == i) ? SDL_Color{80, 150, 80, 255} : SDL_Color{60, 60, 60, 255};
+        SDL_Color bg2 = (selectedChar2 == i) ? GREEN.brighter().toSdlColor() : GREEN.toSdlColor();
         Renderer::renderButton(renderer, font, charName, x2, y, BOX_W, BOX_H, bg2, WHITE);
     }
 

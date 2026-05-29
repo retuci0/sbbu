@@ -1,11 +1,11 @@
+#include "core/Game.h"
 #define SDL_MAIN_HANDLED
-
-#include "Game.h"
 
 #include <filesystem>
 #include <fstream>
 #include <ctime>
 #include <cstdio>
+
 
 static const char* CRASH_TEXT =
     "something went wrong!\n"

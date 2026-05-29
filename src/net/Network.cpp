@@ -1,6 +1,6 @@
 #include "Network.h"
 
-#include "PacketRegistry.h"
+#include "net/PacketRegistry.h"
 
 #include <SDL2/SDL.h>
 

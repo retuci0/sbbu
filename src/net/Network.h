@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Packets.h"
+#include "net/Packets.h"
 
 #include <SDL2/SDL_net.h>
 

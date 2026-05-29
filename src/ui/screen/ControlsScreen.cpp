@@ -1,9 +1,10 @@
 #include "ControlsScreen.h"
 
-#include "../widget/Button.h"
-#include "../widget/KeybindWidget.h"
-#include "../../misc/Common.h"
-#include "../../misc/Renderer.h"
+#include "ui/widget/Button.h"
+#include "ui/widget/KeybindWidget.h"
+
+#include "misc/Common.h"
+#include "misc/Renderer.h"
 
 #include <SDL2/SDL_ttf.h>
 
@@ -34,7 +35,7 @@ ControlsScreen::ControlsScreen(Options& o)
         int y = ROW_Y + i * ROW_STEP;
         addWidget<KeybindWidget>(COL2_X, y, ROW_W, ROW_H, p2[i].name, p2[i].key);
     }
-    addWidget<Button>(SW/2-100, 780, 200, 60, "done", Color{50,180,50,255}, WHITE, [&]{ finished = true; });
+    addWidget<Button>(SW/2-100, 780, 200, 60, "done", GREEN, WHITE, [&]{ finished = true; });
 }
 
 void ControlsScreen::handle(const SDL_Event& e) {

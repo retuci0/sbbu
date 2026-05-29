@@ -1,8 +1,8 @@
-#include "Platform.h"
+#include "obj/Platform.h"
 
-#include "../Resources.h"
-#include "../misc/Common.h"
-#include "../misc/Renderer.h"
+#include "core/Resources.h"
+#include "misc/Common.h"
+#include "misc/Renderer.h"
 
 
 Platform::Platform(int x, int y, int w, int h, PlatformSize size) : size(size) {

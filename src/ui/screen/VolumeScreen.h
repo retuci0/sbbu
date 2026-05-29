@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../Screen.h"
-#include "../widget/Slider.h"
+#include "ui/Screen.h"
+
+#include "ui/widget/Slider.h"
 
 #include <SDL2/SDL_ttf.h>
 

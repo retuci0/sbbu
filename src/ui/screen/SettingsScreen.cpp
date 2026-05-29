@@ -1,8 +1,8 @@
 #include "SettingsScreen.h"
 
-#include "../../misc/Color.h"
-#include "../widget/Button.h"
-#include "../widget/Slider.h"
+#include "ui/widget/Button.h"
+#include "ui/widget/Slider.h"
+#include "misc/Color.h"
 
 #include <SDL2/SDL_render.h>
 

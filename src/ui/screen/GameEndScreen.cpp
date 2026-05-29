@@ -1,8 +1,8 @@
 #include "GameEndScreen.h"
 
-#include "../widget/Button.h"
-#include "../../misc/Common.h"
-#include "../../misc/Renderer.h"
+#include "ui/widget/Button.h"
+#include "misc/Common.h"
+#include "misc/Renderer.h"
 
 #include <SDL2/SDL_ttf.h>
 

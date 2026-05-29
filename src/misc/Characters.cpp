@@ -1,4 +1,4 @@
-#include "Characters.h"
+#include "misc/Characters.h"
 
 #include <SDL2/SDL_haptic.h>
 #include <SDL2/SDL_image.h>

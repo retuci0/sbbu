@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Packets.h"
+#include "net/Packets.h"
 
 #include <memory>
 #include <unordered_map>

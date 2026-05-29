@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../Widget.h"
+#include "ui/Widget.h"
 
-#include "../../misc/Color.h"
-#include "../../misc/Common.h"
-#include "../../misc/Renderer.h"
+#include "misc/Color.h"
+#include "misc/Common.h"
+#include "misc/Renderer.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
@@ -15,7 +15,7 @@
 class KeybindWidget : public Widget {
 public:
     KeybindWidget(int x, int y, int w, int h, const std::string& actionName, SDL_KeyCode& binding)
-    : Widget(x, y, w, h), actionName(actionName), binding(binding) {}
+        : Widget(x, y, w, h), actionName(actionName), binding(binding) {}
 
     bool handle(const SDL_Event& e) override {
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {

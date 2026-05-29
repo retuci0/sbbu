@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Widget.h"
-#include "../Resources.h"
+#include "ui/Widget.h"
+#include "core/Resources.h"
 
 #include <SDL2/SDL.h>
-
 #include <SDL2/SDL_ttf.h>
+
 #include <memory>
 #include <vector>
 

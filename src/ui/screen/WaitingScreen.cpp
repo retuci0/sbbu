@@ -1,16 +1,19 @@
 #include "WaitingScreen.h"
 
-#include "../../misc/Renderer.h"
-#include "../../misc/Common.h"
+#include "ui/widget/Button.h"
+#include "misc/Renderer.h"
+#include "misc/Common.h"
 
 
 WaitingScreen::WaitingScreen()
-    : startTime(SDL_GetTicks()), Screen()  {}
+    : startTime(SDL_GetTicks()), Screen()  
+{
+    addWidget<Button>(4, 4, 64, 64, "<", GREEN, WHITE, [&]{ goBack = true; });
+}
 
 void WaitingScreen::update() {
-    if ((SDL_GetTicks() - startTime) / 500 > dotCount) {
-        dotCount = (dotCount + 1) % 4;
-    }
+    Uint32 elapsed = SDL_GetTicks() - startTime;
+    dotCount = (elapsed / 500) % 4;
 }
 
 void WaitingScreen::render(SDL_Renderer* r) {
@@ -20,4 +23,5 @@ void WaitingScreen::render(SDL_Renderer* r) {
     int tw, th;
     TTF_SizeText(titleFont, msg.c_str(), &tw, &th);
     Renderer::renderText(r, titleFont, msg, (SW-tw)/2, (SH-th)/2, WHITE);
+    Screen::drawWidgets(r, font);
 }

@@ -1,8 +1,8 @@
 #include "Projectile.h"
 
-#include "../Resources.h"
-#include "../misc/Common.h"
-#include "../misc/Renderer.h"
+#include "core/Resources.h"
+#include "misc/Common.h"
+#include "misc/Renderer.h"
 
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>

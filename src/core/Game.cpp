@@ -1,0 +1,207 @@
+#include "core/Game.h"
+
+#include "core/InputHandler.h"
+#include "core/Resources.h"
+
+#include "misc/Common.h"
+#include "misc/Characters.h"
+#include "ui/screen/TitleScreen.h"
+
+#include <SDL2/SDL_image.h>
+#include <SDL2/SDL_mixer.h>
+#include <SDL2/SDL_net.h>
+#include <SDL2/SDL_rect.h>
+#include <SDL2/SDL_render.h>
+#include <SDL2/SDL_timer.h>
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_video.h>
+
+#include <algorithm>
+#include <memory>
+
+
+/////////////////////////////////////
+/*               RUN               */
+/////////////////////////////////////
+
+void Game::run() {
+    // start on title screen, don't play the screen change sound
+    playTitleMusic();
+    setScreen(std::make_unique<TitleScreen>(), false);
+
+    Uint32 prevTicks  = SDL_GetTicks();
+    float accumulator = 0.0f;
+
+    while (running) {
+        beginFrame();
+
+        Uint32 now = SDL_GetTicks();
+        float elapsed = static_cast<float>(now - prevTicks);
+        prevTicks = now;
+
+        // cap to avoid "spiral of death" on lag spikes
+        accumulator += std::min(elapsed, 200.0f);
+
+        processEvents();
+
+        while (accumulator >= TICK_MS) {
+            update(TICK_SCALE);
+            accumulator -= TICK_MS;
+        }
+
+        float alpha = accumulator / TICK_MS;  // [0, 1)
+        render(TICK_SCALE, alpha);
+        if (options.fpsCap != -1) {
+            SDL_Delay(1000 / options.fpsCap);
+        }
+    }
+}
+
+
+void Game::processEvents() {
+    SDL_Event e;
+    while (SDL_PollEvent(&e)) {
+        if (e.type == SDL_QUIT) { running = false; break; }
+
+        if (screen) {
+            screen->handle(e);
+
+            // inject a synthetic KEYDOWN so controller dpad/buttons navigate menus
+            if (e.type == SDL_CONTROLLERBUTTONDOWN) {
+                SDL_Keycode navKey = SDLK_UNKNOWN;
+                switch (static_cast<SDL_GameControllerButton>(e.cbutton.button)) {
+                    case SDL_CONTROLLER_BUTTON_DPAD_UP:    navKey = SDLK_UP;     break;
+                    case SDL_CONTROLLER_BUTTON_DPAD_DOWN:  navKey = SDLK_DOWN;   break;
+                    case SDL_CONTROLLER_BUTTON_DPAD_LEFT:  navKey = SDLK_LEFT;   break;
+                    case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: navKey = SDLK_RIGHT;  break;
+                    case SDL_CONTROLLER_BUTTON_A:
+                    case SDL_CONTROLLER_BUTTON_START:      navKey = SDLK_RETURN; break;
+                    case SDL_CONTROLLER_BUTTON_B:
+                    case SDL_CONTROLLER_BUTTON_BACK:       navKey = SDLK_ESCAPE; break;
+                    default: break;
+                }
+                if (navKey != SDLK_UNKNOWN) {
+                    SDL_Event fake{};
+                    fake.type            = SDL_KEYDOWN;
+                    fake.key.keysym.sym  = navKey;
+                    fake.key.keysym.scancode = SDL_GetScancodeFromKey(navKey);
+                    screen->handle(fake);
+                }
+            }
+        } else {
+            if (e.type == SDL_KEYDOWN && e.key.keysym.sym == options.keyPause) {
+                showPauseScreen();
+                continue;
+            }
+            if (e.type == SDL_CONTROLLERBUTTONDOWN &&
+                e.cbutton.button == SDL_CONTROLLER_BUTTON_START) {
+                showPauseScreen();
+                continue;
+            }
+            processEvent(e);
+        }
+    }
+}
+
+void Game::update(float ts) {
+    if (screen) {
+        screen->update();
+
+        // poll network even while on a screen (e.g. waiting for handshake)
+        if (network) {
+            network->poll();
+            processNetworkPackets();
+            netUpdatePing();
+        }
+
+        handleScreenTransitions();
+        return;
+    }
+
+    // ingame
+    Mix_ResumeMusic();
+
+    if (network) {
+        network->poll();
+        processNetworkPackets();
+        netUpdatePing();
+        if (network->isConnected()
+                && (networkMode == NetworkMode::REMOTE_HOST || networkMode == NetworkMode::REMOTE_CLIENT)
+                && SDL_GetTicks() - network->getLastReceiveTicks() > REMOTE_TIMEOUT_MS
+                && player1.lives >= 0 && player2.lives >= 0) {
+            network->disconnect(false);
+            if (networkMode == NetworkMode::REMOTE_HOST) {
+                player2.lives = -1;
+            } else {
+                player1.lives = -1;
+            }
+        }
+    }
+
+    if (networkMode == NetworkMode::REMOTE_CLIENT) {
+        netSendClientInputs();
+        player1.animate(ts);
+        player2.animate(ts);
+        player1.updateTimers(ts);
+        player2.updateTimers(ts);
+    } else {
+        if (countdownActive) {
+            countdownTimer -= ts;
+            if (countdownTimer <= 0.0f) {
+                countdownTimer  = 0.0f;
+                countdownActive = false;
+            }
+        } else {
+            handleGameplayInput();
+            updateGameplay(ts);
+        }
+        if (networkMode == NetworkMode::REMOTE_HOST && network && network->isConnected()) {
+            netSendStateUpdate();
+        }
+    }
+
+    netFrame++;
+
+    // end game
+    if (player1.lives == -1 && player2.lives == -1) {
+        showEndScreen("both players died", "what a skill issue");
+    } else if (player1.lives == -1) {
+        showEndScreen("gg!", "1st: " + player2.name + " (" + player2.character->stats.name + ")   "
+                            "2nd: " + player1.name + " (" + player1.character->stats.name + ")");
+    } else if (player2.lives == -1) {
+        showEndScreen("gg!", "1st: " + player1.name + " (" + player1.character->stats.name + ")   "
+                            "2nd: " + player2.name + " (" + player2.character->stats.name + ")");
+    }
+}
+
+
+/////////////////////////////////////////
+/*               CLEANUP               */
+/////////////////////////////////////////
+
+void Game::cleanup() {
+    // save to config file
+    options.saveToFile();
+
+    // disconnect
+    if (network) { 
+        network->disconnect(); 
+        network.reset(); 
+    }
+
+    // destroy textures
+    Resources::get().destroy();
+
+    // destroy renderer and window
+    if (renderer) { SDL_DestroyRenderer(renderer); renderer = nullptr; }
+    if (window)   { SDL_DestroyWindow(window);     window   = nullptr; }
+
+    // shutdown input handler
+    InputHandler::shutdown();
+
+    // quit SDL subsystems
+    Mix_CloseAudio();
+    TTF_Quit();
+    IMG_Quit();
+    SDL_Quit();
+}

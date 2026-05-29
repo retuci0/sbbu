@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Screen.h"
+#include "ui/Screen.h"
 
 #include <SDL2/SDL_ttf.h>
 

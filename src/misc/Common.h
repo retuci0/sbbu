@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../misc/Color.h"
+#include "misc/Color.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_keycode.h>
@@ -24,15 +24,15 @@ static constexpr int PROTOCOL_VERSION = 1;
 
 
 // colors
+constexpr Color WHITE           = { 255, 255, 255, 255 };
+constexpr Color GRAY            = { 100, 100, 100, 255 };
+constexpr Color BLACK           = {   0,   0,   0, 255 };
+constexpr Color RED             = { 255,   0,   0, 255 };
+constexpr Color GREEN           = {  60, 100,  60, 255 };
+constexpr Color BLUE            = {   0,   0, 255, 255 };
+constexpr Color DARK_RED        = {  45,   0,   0, 255 };
+constexpr Color MAGENTA         = { 255,   0, 255, 255 };
 
-constexpr Color WHITE    = { 255, 255, 255, 255 };
-constexpr Color GRAY     = { 100, 100, 100, 255 };
-constexpr Color BLACK    = {   0,   0,   0, 255 };
-constexpr Color RED      = { 255,   0,   0, 255 };
-constexpr Color GREEN    = {   0, 255,   0, 255 };
-constexpr Color BLUE     = {   0,   0, 255, 255 };
-constexpr Color DARK_RED = {  45,   0,   0, 255 };
-constexpr Color MAGENTA  = { 255,   0, 255, 255 };
 
 // for network transmission
 enum InputBit : uint8_t {
@@ -46,11 +46,16 @@ enum InputBit : uint8_t {
     SHIELD  = 1 << 7
 };
 
+// timeout to connect to host
+static constexpr Uint32 REMOTE_TIMEOUT_MS = 5000;
+
+// represents a side
 enum class Facing { 
     LEFT, 
     RIGHT
 };
 
+// represents a direction
 enum class Direction {
     NONE,
     LEFT,
@@ -63,6 +68,13 @@ enum class Direction {
 // screen size
 constexpr int SW = 1920;
 constexpr int SH = 1080;
+
+// minimap constants
+static constexpr int PADDING = 2;
+static constexpr int MM_W = 200;
+static constexpr int MM_H = 120;
+static constexpr int MM_X = PADDING;
+static constexpr int MM_Y = SH - MM_H - PADDING;
 
 
 // hit testing

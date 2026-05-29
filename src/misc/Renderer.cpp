@@ -1,7 +1,8 @@
-#include "Renderer.h"
+#include "misc/Renderer.h"
 
-#include "Color.h"
-#include "../misc/Common.h"
+#include "misc/Color.h"
+#include "misc/Common.h"
+
 #include <SDL2/SDL_render.h>
 
 

@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../Screen.h"
+#include "ui/Screen.h"
 
-#include "../../misc/Characters.h"
-#include "../../misc/Color.h"
-#include "../../misc/Common.h"
+#include "misc/Characters.h"
+#include "misc/Color.h"
+#include "misc/Common.h"
 
 #include <SDL2/SDL_ttf.h>
 
@@ -32,6 +32,7 @@ public:
 
     bool isFinished() const { return finished; }
     CharacterSelectionResult getResult() const { return result; }
+    bool shouldGoBack() const { return goBack; }
 
 private:
     std::array<const Character*, CHARACTER_NUM> chars;
@@ -43,6 +44,7 @@ private:
     bool nameError = false;
     bool finished  = false;
     CharacterSelectionResult result;
+    bool goBack = false;
 
     int  findIdx(const Character* ch) const;
     void pickColorFor(int player);  // 1 or 2

@@ -3,13 +3,16 @@
 #include "InputHandler.h"
 #include "Options.h"
 
-#include "objects/CollisionRect.h"
-#include "objects/Platform.h"
-#include "objects/Player.h"
-#include "objects/Projectile.h"
+#include "obj/CollisionRect.h"
+#include "obj/Platform.h"
+#include "obj/Player.h"
+#include "obj/Projectile.h"
+#include "obj/Shockwave.h"
+
 #include "misc/Characters.h"
-#include "objects/Shockwave.h"
+
 #include "ui/Screen.h"
+
 #include "net/Network.h"
 
 #include <SDL2/SDL.h>
@@ -37,36 +40,43 @@ class GameEndScreen;
 
 class Game : public InputHandler {
 public:
+    // game stuff
     void init();
     void run();
     void cleanup();
 
-protected:
-    void onKey(SDL_Keycode key, KeyAction action) override;
-    void onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action, int ctrl) override;
-
 private:
-    static constexpr int MAX_PROJ = 8;
+    // more game stuff
+    bool running = true;
+    void update(float ts);
+    void processEvents();
+    void setup(const Character* c1, const std::string& n1, 
+               const Character* c2, const std::string& n2);
 
+    // SDL
     SDL_Window*   window   = nullptr;
     SDL_Renderer* renderer = nullptr;
+
+    // settings and current input
     Options       options;
+    Input         input;
 
-    bool running = true;
-    bool isPaused() const;
-
-    Input input = Input();
-
+    // screen
     std::unique_ptr<Screen> screen;
     void setScreen(std::unique_ptr<Screen> screen, bool playSound = true);
+    void handleScreenTransitions();
+    void showPauseScreen();
+    void showTitleScreen();
+    void showEndScreen(const std::string& title, const std::string& details);
 
+    // game objects
+    static constexpr int MAX_PROJ = 8;
     std::vector<Projectile> projectiles;
     std::vector<Shockwave> shockwaves;
     std::vector<CollisionRect> meleeHitboxes;
     std::vector<CollisionRect> specialHitboxes;
-
-    Player player1, player2;
     std::vector<Platform> platforms;
+    Player player1, player2;
 
     // countdown
     void renderCountdown() const;
@@ -74,39 +84,34 @@ private:
     bool countdownActive = false;
     static constexpr float COUNTDOWN_DURATION = 210.0f;
 
+    // fps related stuff
     float fps;
     int frames;
     Uint32 lastFpsUpdate;
-
     static constexpr int   TICK_RATE    = 20;                   // 20 tps
     static constexpr float TICK_MS      = 1000.0f / TICK_RATE;  // 50 ms
     static constexpr float TICK_SCALE   = 60.0f / TICK_RATE;    // 3.0 at 20hz
 
-    void setup(const Character* c1, const std::string& n1, const Character* c2, const std::string& n2);
+    // music
     void playTitleMusic();
     void playGameMusic();
-
-    void respawn(Player& p, bool voidDeath);
-
-    void showPauseScreen();
-    void showTitleScreen();
-    void showEndScreen(const std::string& title, const std::string& details);
     
-    void update(float ts);
+    // gameplay
+    void respawn(Player& p, bool voidDeath);
     void updateGameplay(float ts);
 
-    void processEvents();
+    // input
+    void onKey(SDL_Keycode key, KeyAction action) override;
+    void onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action, int ctrl) override;
     void handleGameplayInput();
 
+    // render stuff
     void render(float ts, float a);
     void renderPlayerHud(const Player& player) const;
     void renderMinimap() const;
     void renderGameplay(float ts, float a);
-    void handleScreenTransitions();
 
-    TTF_Font* findFont(int size);
 
-    
     // network stuff
 
     std::unique_ptr<Network> network;
@@ -140,7 +145,8 @@ private:
     }
 
     bool remoteIsPressed(uint8_t bit) const {
-        return ((remoteInputBits & bit) != 0) && ((prevRemoteInputBits & bit) == 0);
+        return ((remoteInputBits & bit) != 0) 
+            && ((prevRemoteInputBits & bit) == 0);
     }
 
     void processNetworkPackets();
