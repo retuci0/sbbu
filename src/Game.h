@@ -53,12 +53,12 @@ private:
     Options       options;
 
     bool running = true;
-    bool paused  = false;
+    bool isPaused() const;
 
     Input input = Input();
 
     std::unique_ptr<Screen> screen;
-    void setScreen(std::unique_ptr<Screen> screen);
+    void setScreen(std::unique_ptr<Screen> screen, bool playSound = true);
 
     std::vector<Projectile> projectiles;
     std::vector<Shockwave> shockwaves;
@@ -68,6 +68,12 @@ private:
     Player player1, player2;
     std::vector<Platform> platforms;
 
+    // countdown
+    void renderCountdown() const;
+    float countdownTimer = 0.0f;
+    bool countdownActive = false;
+    static constexpr float COUNTDOWN_DURATION = 210.0f;
+
     float fps;
     int frames;
     Uint32 lastFpsUpdate;
@@ -76,13 +82,14 @@ private:
     static constexpr float TICK_MS      = 1000.0f / TICK_RATE;  // 50 ms
     static constexpr float TICK_SCALE   = 60.0f / TICK_RATE;    // 3.0 at 20hz
 
-    void setupPlayers(const Character* c1, const std::string& n1, const Character* c2, const std::string& n2);
+    void setup(const Character* c1, const std::string& n1, const Character* c2, const std::string& n2);
     void playTitleMusic();
     void playGameMusic();
 
     void respawn(Player& p, bool voidDeath);
 
-    void applySfxVolume(float multiplier);
+    void showPauseScreen();
+    void showTitleScreen();
     void showEndScreen(const std::string& title, const std::string& details);
     
     void update(float ts);

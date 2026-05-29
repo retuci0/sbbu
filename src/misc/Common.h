@@ -32,6 +32,7 @@ constexpr Color RED      = { 255,   0,   0, 255 };
 constexpr Color GREEN    = {   0, 255,   0, 255 };
 constexpr Color BLUE     = {   0,   0, 255, 255 };
 constexpr Color DARK_RED = {  45,   0,   0, 255 };
+constexpr Color MAGENTA  = { 255,   0, 255, 255 };
 
 // for network transmission
 enum InputBit : uint8_t {
@@ -57,6 +58,7 @@ enum class Direction {
     UP,
     DOWN
 };
+
 
 // screen size
 constexpr int SW = 1920;

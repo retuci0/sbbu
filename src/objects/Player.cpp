@@ -339,13 +339,15 @@ void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed,
     
     updateTimers(ts);
 
-    int w, h;
-    SDL_QueryTexture(currentTexture, nullptr, nullptr, &w, &h);
-    if (facing == Facing::LEFT && w != rect.w) {
-        rect.x -= w - rect.w;
+    if (currentTexture) {
+        int w, h;
+        SDL_QueryTexture(currentTexture, nullptr, nullptr, &w, &h);
+        if (facing == Facing::LEFT && w != rect.w) {
+            rect.x -= w - rect.w;
+        }
+        rect.w = w;
+        rect.h = h;
     }
-    rect.w = w;
-    rect.h = h;
 
     charge = std::clamp(charge, 0.0f, 1.0f);
 
@@ -467,7 +469,6 @@ void Player::resetTimers() {
 
 void Player::drawSprite(SDL_Renderer* r, SDL_Texture* tex, bool flipH, float a) {
     SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
-    if (!tex) { return; }
     currentTexture = tex;
     SDL_RendererFlip flip = flipH ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
 
@@ -479,7 +480,7 @@ void Player::drawSprite(SDL_Renderer* r, SDL_Texture* tex, bool flipH, float a) 
         SDL_SetTextureAlphaMod(tex, 255);
     }
 
-    SDL_RenderCopyEx(r, tex, nullptr, &drawRect, 0.0, nullptr, flip);
+    Renderer::drawSprite(r, tex, &drawRect, flipH);
     SDL_SetTextureAlphaMod(tex, 255);
 }
 
@@ -559,7 +560,7 @@ void Player::draw(SDL_Renderer* r, TTF_Font* font, float a) {
             drawSprite(r, character->shielded, flipH, a);
             break;
         case Status::STUNNED:
-            drawSprite(r, character->damage, flipH, a);
+            drawSprite(r, character->stunned, flipH, a);
             break;
         default:
             drawSprite(r, character->idle, flipH, a);

@@ -16,9 +16,7 @@ Platform::Platform(int x, int y, int w, int h, PlatformSize size) : size(size) {
 }
 
 void Platform::draw(SDL_Renderer* r, float /*a*/) const {
-    if (image) { 
-        SDL_RenderCopy(r, image, nullptr, &rect); 
-    }
+    Renderer::drawSprite(r, image, &rect, false); 
 }
 
 void Platform::drawHitbox(SDL_Renderer* r, float /*a*/) const {

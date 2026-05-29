@@ -63,6 +63,19 @@ namespace Renderer {
      * @param x, y center coordinates of the filled circle
      * @param r radius of filled circle
      * @param color color of filled circle
-    */
+     */
     int fillCircle(SDL_Renderer* renderer, int x, int y, int r, Color color);
+
+    /**
+     * draws an SDL_Texture to an SDL_Renderer
+     * handles null textures
+     * @author retucio
+     * @return whether the sprite was valid
+     * @param renderer SDL_Renderer object to which the texture will be drawn
+     * @param tex the SDL_Texture sprite 
+     * @param rect SDL_Rect that holds the position and size of the texture
+     * @param flipH whether to flip the texture horizontally
+     * @param angle how much to tilt the texture, clockwise
+    */
+    bool drawSprite(SDL_Renderer* renderer, SDL_Texture* tex, const SDL_Rect* rect, const bool flipH, const double angle = 0);
 };

@@ -45,7 +45,7 @@ void TitleScreen::handle(const SDL_Event& e) {
 
 void TitleScreen::render(SDL_Renderer* r) {
     SDL_Rect bgRect = { 0, 0, SW, SH };
-    SDL_RenderCopy(r, bg, nullptr, &bgRect);
+    Renderer::drawSprite(r, bg, &bgRect, false);
     for (size_t i = 0; i < widgets.size(); ++i) {
         auto* btn = dynamic_cast<Button*>(widgets[i].get());
         if (btn) {

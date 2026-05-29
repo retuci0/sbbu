@@ -31,7 +31,7 @@ Button(int x, int y, int w, int h, const std::string& label, Color bg, Color fg,
             fg
         );
         if (texture) {
-            SDL_RenderCopy(renderer, texture, nullptr, &rect);
+            Renderer::drawSprite(renderer, texture, &rect, false);
         }
     }
 

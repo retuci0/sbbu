@@ -1,8 +1,11 @@
 #include "Renderer.h"
 
 #include "Color.h"
+#include "../misc/Common.h"
 #include <SDL2/SDL_render.h>
 
+
+static constexpr int CHECKER_SIZE = 16;
 
 void Renderer::renderText(SDL_Renderer* r, TTF_Font* font, const std::string& text, int x, int y, Color c) {
     // return if font hasn't been loaded or string is empty
@@ -87,4 +90,36 @@ int Renderer::fillCircle(SDL_Renderer* renderer, int x, int y, int r, Color colo
     }
 
     return status;
+}
+
+bool Renderer::drawSprite(SDL_Renderer *renderer, SDL_Texture *tex, const SDL_Rect* rect, const bool flipH, const double angle) {
+    if (!renderer) return false;
+    if (!rect) return false;
+
+    // missing texture, draw the Garry's Mod missing texture texture
+    if (!tex) {
+        for (int y = 0; y < rect->h; y += CHECKER_SIZE) {
+            int block_h = (y + CHECKER_SIZE > rect->h) ? (rect->h - y) : CHECKER_SIZE;
+            for (int x = 0; x < rect->w; x += CHECKER_SIZE) {
+                int block_w = (x + CHECKER_SIZE > rect->w) ? (rect->w - x) : CHECKER_SIZE;
+                Color c = ((x / CHECKER_SIZE) + (y / CHECKER_SIZE)) % 2 == 0
+                                    ? MAGENTA : BLACK;
+                fillRect(renderer, rect->x + x, rect->y + y, block_w, block_h, c);
+            }
+        }
+        return false;
+    }
+
+    // draw the sprite to the renderer
+    return SDL_RenderCopyEx(
+        renderer, 
+        tex, 
+        nullptr, 
+        rect, 
+        angle, 
+        nullptr, 
+        flipH 
+            ? SDL_FLIP_HORIZONTAL 
+            : SDL_FLIP_NONE
+    ) == 0;
 }

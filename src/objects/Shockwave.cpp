@@ -31,12 +31,10 @@ void Shockwave::update(float ts) {
 }
 
 void Shockwave::draw(SDL_Renderer* r, float a) {
-    if (img) {
-        SDL_Rect drawRect1 = interpolatedRect(rects.first.prevRect, rects.first.rect, a);
-        SDL_Rect drawRect2 = interpolatedRect(rects.second.prevRect, rects.second.rect, a);
-        SDL_RenderCopy(r, img, nullptr, &drawRect1);
-        SDL_RenderCopy(r, img, nullptr, &drawRect2);
-    }
+    SDL_Rect drawRect1 = interpolatedRect(rects.first.prevRect, rects.first.rect, a);
+    SDL_Rect drawRect2 = interpolatedRect(rects.second.prevRect, rects.second.rect, a);
+    Renderer::drawSprite(r, img, &drawRect1, false);
+    Renderer::drawSprite(r, img, &drawRect2, false);
 }
 
 std::optional<Facing> Shockwave::checkCollision(const Player& player) {

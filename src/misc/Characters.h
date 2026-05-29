@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL.h>
 
+#include <SDL2/SDL_render.h>
 #include <string>
 #include <vector>
 
@@ -24,13 +25,14 @@ struct Character {
     CharacterStats stats;
 
     // only right-facing frames are stored
-    std::vector<SDL_Texture*> walkFrames;   // 5 frames
-    std::vector<SDL_Texture*> jumpFrames;   // 5 frames
-    std::vector<SDL_Texture*> attackFrames; // 5 frames
-    std::vector<SDL_Texture*> specialStaticFrames;
+    std::vector<SDL_Texture*> walkFrames;           // 5 frames
+    std::vector<SDL_Texture*> jumpFrames;           // 5 frames
+    std::vector<SDL_Texture*> attackFrames;         // 5 frames
+    std::vector<SDL_Texture*> stunnedFrames;        // 3 frames
+    std::vector<SDL_Texture*> specialStaticFrames;  // 6 frames
     std::vector<SDL_Texture*> specialSideFrames;
     std::vector<SDL_Texture*> specialUpFrames;
-    std::vector<SDL_Texture*> specialDownFrames;
+    std::vector<SDL_Texture*> specialDownFrames;    // 3 frames
     
     SDL_Texture* idle       = nullptr;
     SDL_Texture* shoot      = nullptr;

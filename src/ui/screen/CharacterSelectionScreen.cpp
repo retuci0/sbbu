@@ -177,11 +177,11 @@ void CharacterSelectionScreen::render(SDL_Renderer* renderer) {
     // character icons
     if (chars[selectedChar1] && chars[selectedChar1]->icon) {
         SDL_Rect r = {300, 130, 125, 57};
-        SDL_RenderCopy(renderer, chars[selectedChar1]->icon, nullptr, &r);
+        Renderer::drawSprite(renderer, chars[selectedChar1]->icon, &r, false);
     }
     if (chars[selectedChar2] && chars[selectedChar2]->icon) {
         SDL_Rect r = {1250, 130, 125, 57};
-        SDL_RenderCopy(renderer, chars[selectedChar2]->icon, nullptr, &r);
+        Renderer::drawSprite(renderer, chars[selectedChar2]->icon, &r, false);
     }
 
     // name fields

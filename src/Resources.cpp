@@ -19,7 +19,7 @@ bool Resources::registerTexture(SDL_Renderer* renderer, const std::string& name,
     return true;
 }
 
-bool Resources::registerSound(SDL_Renderer* /*renderer*/, const std::string& name, const std::string& path) {
+bool Resources::registerSound(const std::string& name, const std::string& path) {
     Mix_Chunk* chunk = Mix_LoadWAV(path.c_str());
     if (!chunk) {
         SDL_Log("failed to load sound \"%s\": %s", path.c_str(), Mix_GetError());
@@ -57,23 +57,29 @@ void Resources::load(SDL_Renderer* renderer) {
     registerTexture(renderer, "bg",             "assets/images/ui/background.png");
     registerTexture(renderer, "title_bg",       "assets/images/ui/titlescreen.png");
     registerTexture(renderer, "settings",       "assets/images/ui/settings.png");
+    registerTexture(renderer, "3",              "assets/images/ui/3.png");
+    registerTexture(renderer, "2",              "assets/images/ui/2.png");
+    registerTexture(renderer, "1",              "assets/images/ui/1.png");
+    registerTexture(renderer, "go",              "assets/images/ui/go.png");
+
 
     // sounds effects
-    registerSound(renderer, "click",        "assets/sound/click.wav");
-    registerSound(renderer, "jump",         "assets/sound/jump.wav");
-    registerSound(renderer, "jump2",        "assets/sound/jump2.wav");
-    registerSound(renderer, "death",        "assets/sound/death.wav");
-    registerSound(renderer, "projectile",   "assets/sound/projectile.wav");
-    registerSound(renderer, "melee",        "assets/sound/punch.wav");
-    registerSound(renderer, "parry",        "assets/sound/parry.wav");
-    registerSound(renderer, "void_death",   "assets/sound/void_death.wav");
-    registerSound(renderer, "damage",       "assets/sound/damage.wav");
-    registerSound(renderer, "block",        "assets/sound/block.wav");
-    registerSound(renderer, "game_end",     "assets/sound/game_end.wav");
-    registerSound(renderer, "special_static","assets/sound/special_static.wav");
-    registerSound(renderer, "special_side", "assets/sound/special_side.wav");
-    registerSound(renderer, "special_up",   "assets/sound/special_up.wav");
-    registerSound(renderer, "special_down", "assets/sound/special_down.wav");
+    registerSound("click",        "assets/sound/click.wav");
+    registerSound("jump",         "assets/sound/jump.wav");
+    registerSound("jump2",        "assets/sound/jump2.wav");
+    registerSound("death",        "assets/sound/death.wav");
+    registerSound("projectile",   "assets/sound/projectile.wav");
+    registerSound("melee",        "assets/sound/punch.wav");
+    registerSound("parry",        "assets/sound/parry.wav");
+    registerSound("void_death",   "assets/sound/void_death.wav");
+    registerSound("damage",       "assets/sound/damage.wav");
+    registerSound("block",        "assets/sound/block.wav");
+    registerSound("game_end",     "assets/sound/game_end.wav");
+    registerSound("special_static","assets/sound/special_static.wav");
+    registerSound("special_side", "assets/sound/special_side.wav");
+    registerSound("special_up",   "assets/sound/special_up.wav");
+    registerSound("special_down", "assets/sound/special_down.wav");
+    registerSound("select",       "assets/sound/select.wav");
 
     // music
     music            = Mix_LoadMUS("assets/sound/music.mp3");
@@ -115,6 +121,8 @@ void Resources::applySfxVolume(float multiplier) {
     setVol("special_side",  64);
     setVol("special_up",    64);
     setVol("special_down",  64);
+    setVol("click",         31);
+    setVol("select",        32);
 
     if (music)            Mix_VolumeMusic(static_cast<int>(9 * multiplier));
     if (titleScreenMusic) Mix_VolumeMusic(static_cast<int>(9 * multiplier));

@@ -1,7 +1,10 @@
 #include "Characters.h"
 
+#include <SDL2/SDL_haptic.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_log.h>
+#include <SDL2/SDL_render.h>
+
 #include <string>
 
 
@@ -48,14 +51,20 @@ void Character::unload() {
     for (auto* t : jumpFrames) {          if (t) { SDL_DestroyTexture(t); }}
     for (auto* t : attackFrames) {        if (t) { SDL_DestroyTexture(t); }}
     for (auto* t : specialStaticFrames) { if (t) { SDL_DestroyTexture(t); }}
-    if (idle)   { SDL_DestroyTexture(idle); }
-    if (shoot)  { SDL_DestroyTexture(shoot); }
+    for (auto* t : specialDownFrames) {   if (t) { SDL_DestroyTexture(t); }}
+    for (auto* t : stunnedFrames) {       if (t) { SDL_DestroyTexture(t); }}
+    if (idle) { SDL_DestroyTexture(idle); }
+    if (shoot) { SDL_DestroyTexture(shoot); }
     if (damage) { SDL_DestroyTexture(damage); }
-    if (icon)   { SDL_DestroyTexture(icon); }
+    if (shielded) { SDL_DestroyTexture(shielded); }
+    if (icon) { SDL_DestroyTexture(icon); }
+    if (deadIcon) { SDL_DestroyTexture(deadIcon); }
     walkFrames.clear();
     jumpFrames.clear();
     attackFrames.clear();
     specialStaticFrames.clear();
+    specialDownFrames.clear();
+    stunnedFrames.clear();
     idle = shoot = damage = icon = nullptr;
     loaded = false;
 }
@@ -65,6 +74,7 @@ Character loadCharacter(SDL_Renderer* renderer, const CharacterStats& stats, con
     c.stats = stats;
 
     for (int i = 0; i < 3; ++i) {
+        c.stunnedFrames.push_back(loadTex(renderer, folder + "/stunner/" + std::to_string(i) + ".png"));
         c.specialDownFrames.push_back(loadTex(renderer, folder + "/special/down/" + std::to_string(i) + ".png"));
     }
     for (int i = 0; i < 5; ++i) {

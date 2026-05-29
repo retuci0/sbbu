@@ -42,12 +42,7 @@ void Projectile::parry(Player* newOwner) {
 
 void Projectile::draw(SDL_Renderer* r, float a) {
     SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
-    if (img) { 
-        SDL_RenderCopyEx(r, img, nullptr, &drawRect, 0, 0, direction == Facing::LEFT 
-                        ? SDL_RendererFlip::SDL_FLIP_HORIZONTAL
-                        : SDL_RendererFlip::SDL_FLIP_NONE
-        ); 
-    }
+    Renderer::drawSprite(r, img, &drawRect, direction == Facing::LEFT);
     if (parryFlashTimer > 0.0f && (static_cast<int>(parryFlashTimer) / 2) % 2 == 0) {
         Renderer::outlineRect(r, drawRect.x - 4, drawRect.y - 4, drawRect.w + 8, drawRect.h + 8, WHITE, 4);
     }

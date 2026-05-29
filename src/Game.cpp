@@ -87,10 +87,14 @@ void Game::init() {
     // load config
     options.loadFromFile();
 
+    // get monitor size;
+    SDL_DisplayMode dm;
+    SDL_GetCurrentDisplayMode(0, &dm);
+
     window = SDL_CreateWindow(
         "super bert bros ultimate",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        SW, SH, SDL_WINDOW_SHOWN);
+        dm.w, dm.h, SDL_WINDOW_SHOWN);
     if (!window) throw std::runtime_error(std::string("SDL_CreateWindow: ") + SDL_GetError());
     Uint32 flags = SDL_GetWindowFlags(window);
     SDL_SetWindowFullscreen(window, flags | (options.fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
@@ -109,7 +113,7 @@ void Game::init() {
     InputHandler::init();
 }
 
-void Game::setupPlayers(const Character* c1, const std::string& n1,
+void Game::setup(const Character* c1, const std::string& n1,
                         const Character* c2, const std::string& n2)
 {
     platforms.clear();
@@ -138,6 +142,9 @@ void Game::setupPlayers(const Character* c1, const std::string& n1,
     pendingPingSequence = 0;
     lastPingSentTicks = 0;
     ping = -1;
+
+    countdownTimer  = COUNTDOWN_DURATION;
+    countdownActive = true;
 }
 
 
@@ -398,6 +405,9 @@ void Game::updateGameplay(float ts) {
     handleDeath(player2);
 }
 
+bool Game::isPaused() const {
+    return screen.get();
+}
 
 
 ///////////////////////////////////////
@@ -827,12 +837,10 @@ void Game::renderPlayerHud(const Player& player) const {
     SDL_Texture* icon = (player.invulnerableTimer > 0 && player.damagedTimer == 0)
                       ? player.character->deadIcon
                       : player.character->icon;
-    if (icon) {
-        int w, h;
-        SDL_QueryTexture(icon, nullptr, nullptr, &w, &h);
-        SDL_Rect iconRect = { x, SH - 183 - h, w, h };
-        SDL_RenderCopy(renderer, icon, nullptr, &iconRect);
-    }
+    int w2, h2;
+    SDL_QueryTexture(icon, nullptr, nullptr, &w2, &h2);
+    SDL_Rect iconRect = { x, SH - 183 - h2, w2, h2 };
+    Renderer::drawSprite(renderer, icon, &iconRect, false);
 
     Renderer::fillRect(renderer, x, 950, 150, 45, WHITE);
     Renderer::renderText(renderer, Resources::get().font, player.name, x + 10, 955, BLACK);
@@ -842,10 +850,8 @@ void Game::renderPlayerHud(const Player& player) const {
             std::to_string(player.hp) + " hp", x, 900, WHITE);
         for (int i = 0; i < player.lives; ++i) {
             SDL_Texture* heartImage = Resources::get().getTexture("heart");
-            if (heartImage) {
-                SDL_Rect heart = { x + i * 35, 997, 30, 30 };
-                SDL_RenderCopy(renderer, heartImage, nullptr, &heart);
-            }
+            SDL_Rect heart = { x + i * 35, 997, 30, 30 };
+            Renderer::drawSprite(renderer, heartImage, &heart, false);
         }
     } else {
         Renderer::renderText(renderer, Resources::get().titleFont, "DEAD", x, 900, DARK_RED);
@@ -933,17 +939,31 @@ void Game::renderMinimap() const {
     drawPlayer(player2, player2.color);
 }
 
+void Game::renderCountdown() const {
+    if (!countdownActive || countdownTimer <= 0.0f) return;
+
+    std::string name;
+    float progress = countdownTimer / COUNTDOWN_DURATION;
+    if (progress > 0.75)        name = "3";
+    else if (progress > 0.5)    name = "2";
+    else if (progress > 0.25)   name = "1";
+    else                        name = "go";
+
+    SDL_Texture* tex = Resources::get().getTexture(name);
+    int w, h;
+    SDL_QueryTexture(tex, nullptr, nullptr, &w, &h);
+    SDL_Rect rect = { (SW - w) / 2, (SH - h) / 2, w, h };
+    Renderer::drawSprite(renderer, tex, &rect, false);
+}
+
 void Game::renderGameplay(float ts, float a) {
     TTF_Font* font = Resources::get().font;
     TTF_Font* smallFont = Resources::get().smallFont;
     TTF_Font* titleFont = Resources::get().titleFont;
 
     SDL_Texture* bgImage = Resources::get().getTexture("bg");
-    if (bgImage) {
-        SDL_RenderCopy(renderer, bgImage, nullptr, nullptr);
-    } else {
-        Renderer::fillRect(renderer, 0, 0, SW, SH, {20, 20, 60, 255});
-    }
+    SDL_Rect bgRect = { 0, 0, SW, SH };
+    Renderer::drawSprite(renderer, bgImage, &bgRect, false);
 
     for (auto& p : platforms) {
         p.draw(renderer, a);
@@ -990,6 +1010,8 @@ void Game::renderGameplay(float ts, float a) {
     ) {
         renderMinimap();
     }
+
+    renderCountdown();
 }
 
 
@@ -1022,7 +1044,7 @@ void Game::handleScreenTransitions() {
     if (auto* rs = dynamic_cast<RemoteSetupScreen*>(screen.get())) {
         if (!rs->isFinished()) return;
         if (rs->shouldGoBack()) {
-            setScreen(std::make_unique<TitleScreen>());
+            showTitleScreen();
             return;
         }
         auto setupResult = rs->takeResult();
@@ -1050,7 +1072,7 @@ void Game::handleScreenTransitions() {
             if (!charList[i1] || !charList[i2] || !charList[i1]->loaded || !charList[i2]->loaded) {
                 return;
             }
-            setupPlayers(charList[i1], pendingSetup.name1, charList[i2], pendingSetup.name2);
+            setup(charList[i1], pendingSetup.name1, charList[i2], pendingSetup.name2);
             player1.color = { pendingSetup.r1, pendingSetup.g1, pendingSetup.b1, 230 };
             player2.color = { pendingSetup.r2, pendingSetup.g2, pendingSetup.b2, 230 };
             player1.resetTimers(); player2.resetTimers();
@@ -1075,7 +1097,7 @@ void Game::handleScreenTransitions() {
             return;
         }
 
-        setupPlayers(csResult.char1, csResult.name1, csResult.char2, csResult.name2);
+        setup(csResult.char1, csResult.name1, csResult.char2, csResult.name2);
         player1.color = csResult.color1;
         player2.color = csResult.color2;
         player1.resetTimers();
@@ -1111,7 +1133,7 @@ void Game::handleScreenTransitions() {
                 setScreen(nullptr);
                 break;
             case PauseActionResult::QUIT:
-                running = false;
+                showTitleScreen();
                 break;
             case PauseActionResult::RESTART:
                 Mix_HaltMusic(); Mix_HaltChannel(-1);
@@ -1120,7 +1142,7 @@ void Game::handleScreenTransitions() {
                     if (network) network->disconnect();
                     network.reset();
                     networkMode = NetworkMode::NONE;
-                    setScreen(std::make_unique<TitleScreen>());
+                    showTitleScreen();
                 } else {
                     setScreen(std::make_unique<CharacterSelectionScreen>(
                         Resources::get().characterList(),
@@ -1152,14 +1174,14 @@ void Game::handleScreenTransitions() {
         options.musVolume = vols.music;
         Resources::get().applySfxVolume(options.sfxVolume);
         Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
-        setScreen(std::make_unique<PauseScreen>(options));
+        showPauseScreen();
         return;
     }
 
     if (auto* cs = dynamic_cast<ControlsScreen*>(screen.get())) {
         if (!cs->isFinished()) return;
         options.saveToFile();
-        setScreen(std::make_unique<PauseScreen>(options));
+        showPauseScreen();
         return;
     }
 
@@ -1178,7 +1200,7 @@ void Game::handleScreenTransitions() {
         options.debug = settings.debug;
         options.vsync = settings.vsync;
         options.fullscreen = settings.fullscreen;
-        setScreen(std::make_unique<PauseScreen>(options));
+        showPauseScreen();
     }
 
     if (auto* ge = dynamic_cast<GameEndScreen*>(screen.get())) {
@@ -1187,24 +1209,35 @@ void Game::handleScreenTransitions() {
             running = false;
             return;
         }
-        playTitleMusic();
-        setScreen(std::make_unique<TitleScreen>());
+        showTitleScreen();
         return;
     }
 }
 
-void Game::setScreen(std::unique_ptr<Screen> newScreen) {
+void Game::setScreen(std::unique_ptr<Screen> newScreen, bool playSound) {
     screen = std::move(newScreen);
+    if (playSound) Mix_PlayChannel(-1, Resources::get().getSound("select"), 0);
 }
+
+void Game::showPauseScreen() {
+    Mix_PauseMusic();
+    setScreen(std::make_unique<PauseScreen>(options));
+}
+
+void Game::showTitleScreen() {
+    playTitleMusic();
+    setScreen(std::make_unique<TitleScreen>());
+}
+
 
 ///////////////////////////////////////////
 /*               MAIN LOOP               */
 ///////////////////////////////////////////
 
 void Game::run() {
-    // start on title screen
+    // start on title screen, don't play the screen change sound
     playTitleMusic();
-    setScreen(std::make_unique<TitleScreen>());
+    setScreen(std::make_unique<TitleScreen>(), false);
 
     Uint32 prevTicks  = SDL_GetTicks();
     float accumulator = 0.0f;
@@ -1267,14 +1300,12 @@ void Game::processEvents() {
             }
         } else {
             if (e.type == SDL_KEYDOWN && e.key.keysym.sym == options.keyPause) {
-                Mix_PauseMusic();
-                setScreen(std::make_unique<PauseScreen>(options));
+                showPauseScreen();
                 continue;
             }
             if (e.type == SDL_CONTROLLERBUTTONDOWN &&
                 e.cbutton.button == SDL_CONTROLLER_BUTTON_START) {
-                Mix_PauseMusic();
-                setScreen(std::make_unique<PauseScreen>(options));
+                showPauseScreen();
                 continue;
             }
             processEvent(e);
@@ -1324,8 +1355,16 @@ void Game::update(float ts) {
         player1.updateTimers(ts);
         player2.updateTimers(ts);
     } else {
-        handleGameplayInput();
-        updateGameplay(ts);
+        if (countdownActive) {
+            countdownTimer -= ts;
+            if (countdownTimer <= 0.0f) {
+                countdownTimer  = 0.0f;
+                countdownActive = false;
+            }
+        } else {
+            handleGameplayInput();
+            updateGameplay(ts);
+        }
         if (networkMode == NetworkMode::REMOTE_HOST && network && network->isConnected()) {
             netSendStateUpdate();
         }

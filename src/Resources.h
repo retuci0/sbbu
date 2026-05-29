@@ -43,7 +43,7 @@ private:
     ~Resources() = default;
 
     bool registerTexture(SDL_Renderer* renderer, const std::string& name, const std::string& path);
-    bool registerSound(SDL_Renderer* renderer, const std::string& name, const std::string& path);
+    bool registerSound(const std::string& name, const std::string& path);
     
     TTF_Font* findFont(int size);
 
