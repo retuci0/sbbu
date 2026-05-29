@@ -1,4 +1,4 @@
-#include "ControlsScreen.h"
+#include "ui/screen/ControlsScreen.h"
 
 #include "ui/widget/Button.h"
 #include "ui/widget/KeybindWidget.h"

@@ -82,6 +82,7 @@ void Resources::load(SDL_Renderer* renderer) {
     registerSound("special_up",   "assets/sound/special_up.wav");
     registerSound("special_down", "assets/sound/special_down.wav");
     registerSound("select",       "assets/sound/select.wav");
+    registerSound("countdown",    "assets/sound/countdown.wav");
 
     // music
     music            = Mix_LoadMUS("assets/sound/music.mp3");

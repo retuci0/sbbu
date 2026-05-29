@@ -1,4 +1,4 @@
-#include "RemoteSetupScreen.h"
+#include "ui/screen/RemoteSetupScreen.h"
 
 #include "ui/widget/Button.h"
 #include "misc/Renderer.h"

@@ -1,4 +1,4 @@
-#include "WaitingScreen.h"
+#include "ui/screen/WaitingScreen.h"
 
 #include "ui/widget/Button.h"
 #include "misc/Renderer.h"

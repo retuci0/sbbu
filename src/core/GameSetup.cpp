@@ -2,6 +2,7 @@
 
 #include "core/Resources.h"
 #include "core/InputHandler.h"
+#include <SDL2/SDL_mixer.h>
 
 
 ///////////////////////////////////////
@@ -89,4 +90,5 @@ void Game::setup(const Character* c1, const std::string& n1,
 
     countdownTimer  = COUNTDOWN_DURATION;
     countdownActive = true;
+    Mix_PlayChannel(-1, Resources::get().getSound("countdown"), 0);
 }
