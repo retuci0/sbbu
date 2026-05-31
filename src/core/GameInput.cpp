@@ -154,7 +154,6 @@ void Game::onKey(SDL_Keycode key, KeyAction action) {
 void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action, int ctrl) {
     if (action != ControllerButtonAction::PRESS) return;
 
-    // ctrl 0 → P1 actions, ctrl 1 → P2 actions (local only)
     // ctrl 0: P1 actions; ctrl 1: P2 actions (local only)
     if (ctrl == 0) {
         switch (button) {
@@ -172,6 +171,100 @@ void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonA
             case SDL_CONTROLLER_BUTTON_X:     input.meleeP2   = true; break;
             case SDL_CONTROLLER_BUTTON_Y:     input.specialP2 = true; break;
             default: break;
+        }
+    }
+}
+
+void Game::injectNavigationKey(SDL_KeyCode key) {
+    if (!screen) return;
+    Uint32 now = SDL_GetTicks();
+
+    // if it's a different key than last time, reset the repeat state
+    if (key != navRepeat.lastKey) {
+        navRepeat.lastKey = key;
+        navRepeat.lastTime = now;
+        navRepeat.repeatActive = false;
+
+        // always inject the first press immediately
+        SDL_Event fake{};
+        fake.type = SDL_KEYDOWN;
+        fake.key.keysym.sym = key;
+        fake.key.keysym.scancode = SDL_GetScancodeFromKey(key);
+        screen->handle(fake);
+        return;
+    }
+
+    // same key as before
+    if (!navRepeat.repeatActive) {
+        // wait for initial delay before allowing repeats
+        if (now - navRepeat.lastTime >= NAV_INITIAL_DELAY) {
+            navRepeat.repeatActive = true;
+            navRepeat.lastTime = now;
+            // inject the first repeat immediately
+            SDL_Event fake{};
+            fake.type = SDL_KEYDOWN;
+            fake.key.keysym.sym = key;
+            fake.key.keysym.scancode = SDL_GetScancodeFromKey(key);
+            screen->handle(fake);
+        }
+    } else {
+        // wait for repeat interval (since repeat is active)
+        if (now - navRepeat.lastTime >= NAV_REPEAT_INTERVAL) {
+            navRepeat.lastTime = now;
+            SDL_Event fake{};
+            fake.type = SDL_KEYDOWN;
+            fake.key.keysym.sym = key;
+            fake.key.keysym.scancode = SDL_GetScancodeFromKey(key);
+            screen->handle(fake);
+        }
+    }
+}
+
+void Game::injectControllerNav(SDL_Event e) {
+    if (e.type == SDL_CONTROLLERBUTTONDOWN) {
+        SDL_KeyCode navKey = SDLK_UNKNOWN;
+        switch (static_cast<SDL_GameControllerButton>(e.cbutton.button)) {
+            case SDL_CONTROLLER_BUTTON_DPAD_UP:    navKey = SDLK_UP;     break;
+            case SDL_CONTROLLER_BUTTON_DPAD_DOWN:  navKey = SDLK_DOWN;   break;
+            case SDL_CONTROLLER_BUTTON_DPAD_LEFT:  navKey = SDLK_LEFT;   break;
+            case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: navKey = SDLK_RIGHT;  break;
+            case SDL_CONTROLLER_BUTTON_A:
+            case SDL_CONTROLLER_BUTTON_START:      navKey = SDLK_RETURN; break;
+            case SDL_CONTROLLER_BUTTON_B:
+            case SDL_CONTROLLER_BUTTON_BACK:       navKey = SDLK_ESCAPE; break;
+            default: break;
+        }
+        if (navKey != SDLK_UNKNOWN) {
+            lastActiveNavAxis = SDL_CONTROLLER_AXIS_INVALID;  // reset stick tracking
+            injectNavigationKey(navKey);
+        }
+    }
+
+    if (e.type == SDL_CONTROLLERAXISMOTION) {
+        SDL_GameControllerAxis axis = static_cast<SDL_GameControllerAxis>(e.caxis.axis);
+        if (axis == SDL_CONTROLLER_AXIS_LEFTX || axis == SDL_CONTROLLER_AXIS_LEFTY) {
+            float n = getNormalizedAxis(axis);
+            SDL_KeyCode navKey = SDLK_UNKNOWN;
+
+            if (axis == SDL_CONTROLLER_AXIS_LEFTY) {
+                if (n > 0.2f)       navKey = SDLK_DOWN;
+                else if (n < -0.2f) navKey = SDLK_UP;
+            } else if (axis == SDL_CONTROLLER_AXIS_LEFTX) {
+                if (n > 0.2f)       navKey = SDLK_RIGHT;
+                else if (n < -0.2f) navKey = SDLK_LEFT;
+            }
+
+            if (navKey != SDLK_UNKNOWN) {
+                lastActiveNavAxis = axis;
+                injectNavigationKey(navKey);
+            } else {
+                // only reset if this axis was the one tracked
+                if (axis == lastActiveNavAxis) {
+                    navRepeat.lastKey = SDLK_UNKNOWN;
+                    navRepeat.repeatActive = false;
+                    lastActiveNavAxis = SDL_CONTROLLER_AXIS_INVALID;
+                }
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-#include "SettingsScreen.h"
+#include "ui/screen/SettingsScreen.h"
 
 #include "ui/widget/Button.h"
 #include "ui/widget/Slider.h"

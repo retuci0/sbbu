@@ -1,4 +1,4 @@
-#include "GameEndScreen.h"
+#include "ui/screen/GameEndScreen.h"
 
 #include "ui/widget/Button.h"
 #include "misc/Common.h"

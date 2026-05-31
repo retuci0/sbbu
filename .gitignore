@@ -49,4 +49,5 @@ CMakeUserPresets.json
 .cache/
 
 todo.txt
+todo.md
 crash_logs/

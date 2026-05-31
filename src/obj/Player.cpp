@@ -516,6 +516,7 @@ void Player::animate(float ts) {
             break;
         case Status::STUNNED:
             advanceFrame(character->specialDownFrames, 0.21f);
+            break;
         default:
             currentSpriteIndex = 0.0f;
             break;

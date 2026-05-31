@@ -1,4 +1,4 @@
-#include "CharacterSelectionScreen.h"
+#include "ui/screen/CharacterSelectionScreen.h"
 
 #include "ui/widget/Button.h"
 #include "misc/Common.h"
@@ -6,6 +6,7 @@
 
 #include "tinyfiledialogs.h"
 
+#include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_rect.h>
 
 #include <SDL2/SDL_ttf.h>
@@ -122,6 +123,9 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
                 selected = newIdx;
                 break;
             }
+            case SDLK_ESCAPE:
+                goBack = true;
+                break;
         }
     }
 

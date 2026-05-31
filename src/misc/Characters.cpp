@@ -47,25 +47,32 @@ static SDL_Texture* loadTex(SDL_Renderer* r, const std::string& path) {
 }
 
 void Character::unload() {
-    for (auto* t : walkFrames) {          if (t) { SDL_DestroyTexture(t); }}
-    for (auto* t : jumpFrames) {          if (t) { SDL_DestroyTexture(t); }}
-    for (auto* t : attackFrames) {        if (t) { SDL_DestroyTexture(t); }}
-    for (auto* t : specialStaticFrames) { if (t) { SDL_DestroyTexture(t); }}
-    for (auto* t : specialDownFrames) {   if (t) { SDL_DestroyTexture(t); }}
-    for (auto* t : stunnedFrames) {       if (t) { SDL_DestroyTexture(t); }}
-    if (idle) { SDL_DestroyTexture(idle); }
-    if (shoot) { SDL_DestroyTexture(shoot); }
-    if (damage) { SDL_DestroyTexture(damage); }
-    if (shielded) { SDL_DestroyTexture(shielded); }
-    if (icon) { SDL_DestroyTexture(icon); }
-    if (deadIcon) { SDL_DestroyTexture(deadIcon); }
-    walkFrames.clear();
-    jumpFrames.clear();
-    attackFrames.clear();
-    specialStaticFrames.clear();
-    specialDownFrames.clear();
-    stunnedFrames.clear();
-    idle = shoot = damage = icon = nullptr;
+    auto destroyFrame = [](SDL_Texture* t) {
+        if (t) SDL_DestroyTexture(t);
+        t = nullptr;
+    };
+
+    auto destroyAnim = [](std::vector<SDL_Texture*>& a) {
+        for (SDL_Texture* t : a) if (t) SDL_DestroyTexture(t);
+        a.clear();
+    };
+
+    destroyAnim(walkFrames);
+    destroyAnim(jumpFrames);
+    destroyAnim(attackFrames);
+    destroyAnim(specialStaticFrames);
+    destroyAnim(specialSideFrames);
+    destroyAnim(specialUpFrames);
+    destroyAnim(specialDownFrames);
+    destroyAnim(stunnedFrames);
+
+    destroyFrame(idle);
+    destroyFrame(shoot);
+    destroyFrame(damage);
+    destroyFrame(shielded);
+    destroyFrame(icon);
+    destroyFrame(deadIcon);
+
     loaded = false;
 }
 

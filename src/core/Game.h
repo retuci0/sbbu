@@ -104,6 +104,17 @@ private:
     void onKey(SDL_Keycode key, KeyAction action) override;
     void onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action, int ctrl) override;
     void handleGameplayInput();
+    void injectControllerNav(SDL_Event e);
+    void injectNavigationKey(SDL_KeyCode key);
+    struct NavRepeat {
+        SDL_KeyCode lastKey = SDLK_UNKNOWN;
+        Uint32 lastTime = 0;
+        bool repeatActive = false;
+    };
+    NavRepeat navRepeat;
+    SDL_GameControllerAxis lastActiveNavAxis = SDL_CONTROLLER_AXIS_INVALID;
+    static constexpr Uint32 NAV_INITIAL_DELAY   = 300;  // ms before first repeat
+    static constexpr Uint32 NAV_REPEAT_INTERVAL = 200;  // ms between repeats
 
     // render stuff
     void render(float ts, float a);

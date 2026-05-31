@@ -10,6 +10,8 @@
 #include "ui/screen/VolumeScreen.h"
 #include "ui/screen/WaitingScreen.h"
 
+#include <memory>
+
 
 /////////////////////////////////////////
 /*               SCREENS               */
@@ -66,7 +68,7 @@ void Game::handleScreenTransitions() {
     // waiting screen
     if (auto* ws = dynamic_cast<WaitingScreen*>(screen.get())) {
         if (ws->shouldGoBack()) {
-            showTitleScreen();
+            setScreen(std::make_unique<RemoteSetupScreen>());
             return;
         }
         if (hasPendingSetup && networkMode == NetworkMode::REMOTE_CLIENT) {
@@ -93,7 +95,7 @@ void Game::handleScreenTransitions() {
     // character selection
     if (auto* cs = dynamic_cast<CharacterSelectionScreen*>(screen.get())) {
         if (cs->shouldGoBack()) {
-            showTitleScreen();
+            showTitleScreen();  // should sometimes go back to RemoteSetupScreen but idc for now
             return;
         }
         if (!cs->isFinished()) return;

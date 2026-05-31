@@ -7,7 +7,11 @@
 #include "misc/Characters.h"
 #include "ui/screen/TitleScreen.h"
 
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_gamecontroller.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_keyboard.h>
+#include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_net.h>
 #include <SDL2/SDL_rect.h>
@@ -49,6 +53,8 @@ void Game::run() {
             accumulator -= TICK_MS;
         }
 
+        if (!running) return;
+
         float alpha = accumulator / TICK_MS;  // [0, 1)
         render(TICK_SCALE, alpha);
         if (options.fpsCap != -1) {
@@ -65,30 +71,9 @@ void Game::processEvents() {
 
         if (screen) {
             screen->handle(e);
-
-            // inject a synthetic KEYDOWN so controller dpad/buttons navigate menus
-            if (e.type == SDL_CONTROLLERBUTTONDOWN) {
-                SDL_Keycode navKey = SDLK_UNKNOWN;
-                switch (static_cast<SDL_GameControllerButton>(e.cbutton.button)) {
-                    case SDL_CONTROLLER_BUTTON_DPAD_UP:    navKey = SDLK_UP;     break;
-                    case SDL_CONTROLLER_BUTTON_DPAD_DOWN:  navKey = SDLK_DOWN;   break;
-                    case SDL_CONTROLLER_BUTTON_DPAD_LEFT:  navKey = SDLK_LEFT;   break;
-                    case SDL_CONTROLLER_BUTTON_DPAD_RIGHT: navKey = SDLK_RIGHT;  break;
-                    case SDL_CONTROLLER_BUTTON_A:
-                    case SDL_CONTROLLER_BUTTON_START:      navKey = SDLK_RETURN; break;
-                    case SDL_CONTROLLER_BUTTON_B:
-                    case SDL_CONTROLLER_BUTTON_BACK:       navKey = SDLK_ESCAPE; break;
-                    default: break;
-                }
-                if (navKey != SDLK_UNKNOWN) {
-                    SDL_Event fake{};
-                    fake.type            = SDL_KEYDOWN;
-                    fake.key.keysym.sym  = navKey;
-                    fake.key.keysym.scancode = SDL_GetScancodeFromKey(navKey);
-                    screen->handle(fake);
-                }
-            }
+            injectControllerNav(e);
         } else {
+            // ingame pause handling
             if (e.type == SDL_KEYDOWN && e.key.keysym.sym == options.keyPause) {
                 showPauseScreen();
                 continue;
@@ -98,8 +83,8 @@ void Game::processEvents() {
                 showPauseScreen();
                 continue;
             }
-            processEvent(e);
         }
+        processEvent(e);
     }
 }
 

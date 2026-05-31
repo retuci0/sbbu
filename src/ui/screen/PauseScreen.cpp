@@ -1,4 +1,4 @@
-#include "PauseScreen.h"
+#include "ui/screen/PauseScreen.h"
 
 #include "core/Options.h"
 #include "ui/widget/Button.h"
