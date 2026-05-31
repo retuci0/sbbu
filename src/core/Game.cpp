@@ -56,9 +56,12 @@ void Game::run() {
         if (!running) return;
 
         float alpha = accumulator / TICK_MS;  // [0, 1)
+        Uint32 frameStart = SDL_GetTicks();
         render(TICK_SCALE, alpha);
         if (options.fpsCap != -1) {
-            SDL_Delay(1000 / options.fpsCap);
+            Uint32 frameMs = 1000u / static_cast<Uint32>(options.fpsCap);
+            Uint32 elapsed = SDL_GetTicks() - frameStart;
+            if (elapsed < frameMs) SDL_Delay(frameMs - elapsed);
         }
     }
 }

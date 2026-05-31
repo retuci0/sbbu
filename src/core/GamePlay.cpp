@@ -122,7 +122,7 @@ void Game::updateGameplay(float ts) {
         }
         ++it;
     }
-    if (projectiles.size() > MAX_PROJ) projectiles.erase(projectiles.begin());
+    if (projectiles.size() > MAX_PROJ) projectiles.erase(projectiles.end());
 
     // melee hitboxes
     for (auto it = meleeHitboxes.begin(); it != meleeHitboxes.end(); ) {

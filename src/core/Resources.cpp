@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <stdexcept>
 
+
 Resources& Resources::get() {
     static Resources instance;
     return instance;

@@ -12,8 +12,8 @@ super bert bros is a local (and now remote too) multiplayer brawler game, heavil
 - **hand drawn sprites** - credits to myself, [Tafeef](https://youtube.com/@Tafeef) and [IVZA](https://www.youtube.com/@IVZA-d6h)
 - **goofy ahh sfx** - will make you want to ditch your eardrums
 
-## controls
 
+## controls (now with controller)
 
 ### player 1 (the one on the left side)
 

@@ -623,9 +623,9 @@ std::string Player::getStatusName() const {
         case Status::DAMAGED:
             return "damaged";
         case Status::SPECIAL_STATIC:
-            return "special (static) " + std::to_string(static_cast<int>(currentSpriteIndex) + 1) + "/6)";
+            return "special (static) (" + std::to_string(static_cast<int>(currentSpriteIndex) + 1) + "/6)";
         case Status::SPECIAL_DOWN:
-            return "special (down) " + std::to_string(static_cast<int>(currentSpriteIndex) + 1) + "/3)";
+            return "special (down) (" + std::to_string(static_cast<int>(currentSpriteIndex) + 1) + "/3)";
         case Status::SHIELDED:
             return "shielded";
         case Status::STUNNED:

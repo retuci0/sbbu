@@ -1,5 +1,6 @@
 #include "core/Options.h"
 
+#include <exception>
 #include <fstream>
 
 
@@ -50,6 +51,7 @@ void Options::loadFromFile(const std::string& filename) {
 
     std::string line;
     while (std::getline(file, line)) {
+        // ignore empty lines or comments
         if (line.empty() || line[0] == '#') continue;
 
         auto sep = line.find('=');
@@ -59,7 +61,13 @@ void Options::loadFromFile(const std::string& filename) {
         std::string val = line.substr(sep + 1);
 
         auto parseKey = [&](SDL_KeyCode& target, const char* expectedKey) {
-            if (key == expectedKey) target = static_cast<SDL_KeyCode>(std::stoi(val));
+            try {
+                if (key == expectedKey) {
+                    target = static_cast<SDL_KeyCode>(std::stoi(val));
+                }
+            } catch (const std::exception& e) {
+                // empty catch block
+            }
         };
         
         parseKey(keyP1Left,     "keyP1Left");
@@ -85,12 +93,35 @@ void Options::loadFromFile(const std::string& filename) {
         parseKey(keyDebug,      "keyDebug");
         parseKey(keyFullscreen, "keyFullscreen");
 
-        if (key == "sfxVolume")   sfxVolume   = std::stof(val);
-        if (key == "musVolume")   musVolume   = std::stof(val);
-        if (key == "debug")       debug       = (std::stoi(val) != 0);
+        auto getFloatValue = [=](float& v) {
+            try {
+                v = std::stof(val);
+            } catch (const std::exception& e) {
+                // empty catch block
+            }
+        };
 
-        if (key == "fpsCap")      fpsCap      = std::stoi(val);
-        if (key == "vsync")       vsync       = (std::stoi(val) != 0);
-        if (key == "fullscreen")  fullscreen  = (std::stoi(val) != 0);
+        auto getBoolValue = [=](bool& v) {
+            try {
+                v = (std::stoi(val) != 0);
+            } catch (const std::exception& e) {
+                // empty catch block
+            }
+        };
+
+        auto getIntValue = [=](int& v) {
+            try {
+                v = std::stoi(val);
+            } catch (const std::exception& e) {
+                // empty catch block
+            }
+        };
+
+        if (key == "sfxVolume")   getFloatValue(sfxVolume);
+        if (key == "musVolume")   getFloatValue(musVolume);
+        if (key == "fpsCap")      getIntValue(fpsCap);
+        if (key == "debug")       getBoolValue(debug);
+        if (key == "vsync")       getBoolValue(vsync);
+        if (key == "fullscreen")  getBoolValue(fullscreen);
     }
 }
