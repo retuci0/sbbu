@@ -124,3 +124,15 @@ bool Renderer::drawSprite(SDL_Renderer *renderer, SDL_Texture *tex, const SDL_Re
             : SDL_FLIP_NONE
     ) == 0;
 }
+
+void Renderer::renderArrow(SDL_Renderer* r, int cx, int cy, Facing dir) {
+    // three vertices of a triangle
+    int tip = dir == Facing::LEFT ? cx - 18 : cx + 18;
+    int base = dir == Facing::LEFT ? cx + 10 : cx - 10;
+    SDL_Vertex verts[3] = {
+        { { static_cast<float>(tip),    static_cast<float>(cy)      }, {255,255,255,220}, {0,0} },
+        { { static_cast<float>(base),   static_cast<float>(cy - 14) }, {255,255,255,220}, {0,0} },
+        { { static_cast<float>(base),   static_cast<float>(cy + 14) }, {255,255,255,220}, {0,0} },
+    };
+    SDL_RenderGeometry(r, nullptr, verts, 3, nullptr, 0);
+}

@@ -9,9 +9,11 @@
 #include "obj/Projectile.h"
 #include "obj/Shockwave.h"
 
+#include "misc/Stages.h"
 #include "misc/Characters.h"
 
 #include "ui/Screen.h"
+#include "ui/screen/StageSelectionScreen.h"
 
 #include "net/Network.h"
 
@@ -30,13 +32,15 @@
 
 // forward declare screen classes
 class CharacterSelectionScreen;
-class PauseScreen;
-class VolumeScreen;
-class SettingsScreen;
-class TitleScreen;
-class RemoteSetupScreen;
-class WaitingScreen;
 class GameEndScreen;
+class PauseScreen;
+class RemoteSetupScreen;
+class SettingsScreen;
+class StageSelectionScreen;
+class TitleScreen;
+class VolumeScreen;
+class WaitingScreen;
+
 
 class Game : public InputHandler {
 public:
@@ -48,10 +52,12 @@ public:
 private:
     // more game stuff
     bool running = true;
+    Stage stage;
     void update(float ts);
     void processEvents();
     void setup(const Character* c1, const std::string& n1, 
-               const Character* c2, const std::string& n2);
+               const Character* c2, const std::string& n2,
+               const Stage& stage);
 
     // SDL
     SDL_Window*   window   = nullptr;
@@ -68,6 +74,10 @@ private:
     void showPauseScreen();
     void showTitleScreen();
     void showEndScreen(const std::string& title, const std::string& details);
+
+    // pending stage selection result
+    StageSelectionResult pendingStageResult;
+    bool hasPendingStageResult = false;
 
     // game objects
     static constexpr int MAX_PROJ = 8;
@@ -144,6 +154,7 @@ private:
 
     struct GameSetupPayload {
         uint8_t char1Idx = 0, char2Idx = 0;
+        uint8_t stageIdx = 0;
         std::string name1, name2;
         uint8_t r1 = 0, g1 = 0, b1 = 0;
         uint8_t r2 = 0, g2 = 0, b2 = 0;

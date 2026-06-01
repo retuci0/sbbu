@@ -14,7 +14,7 @@ struct CharacterStats {
     int   damage           = 5;
     int   projectileDamage = 3;
     float velocity         = 5.0f;
-    float jumpVelocity     = 11.0f;
+    float jumpVelocity     = 12.2f;
     float critChance       = 0.2f;
     float gravity          = 0.5f;
     float terminalVelocity = 20.0f;

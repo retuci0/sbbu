@@ -158,7 +158,7 @@ void Game::renderGameplay(float ts, float a) {
     TTF_Font* smallFont = Resources::get().smallFont;
     TTF_Font* titleFont = Resources::get().titleFont;
 
-    SDL_Texture* bgImage = Resources::get().getTexture("bg");
+    SDL_Texture* bgImage = Resources::get().getTexture(stage.bg);
     SDL_Rect bgRect = { 0, 0, SW, SH };
     Renderer::drawSprite(renderer, bgImage, &bgRect, false);
 
@@ -173,9 +173,9 @@ void Game::renderGameplay(float ts, float a) {
 
 
     if (options.debug) {
-        for (auto& p : platforms)                p.drawHitbox(renderer, a);
         player1.drawHitbox(renderer, a);
         player2.drawHitbox(renderer, a);
+        for (auto& p : platforms)                 p.drawHitbox(renderer, a);
         for (auto& pr : projectiles)           pr.drawHitbox(renderer, a);
         for (auto& cr : meleeHitboxes)      cr.drawHitbox(renderer, a);
         for (auto& cr : specialHitboxes)    cr.drawHitbox(renderer, a);

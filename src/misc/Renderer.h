@@ -1,6 +1,7 @@
 #pragma once
 
 #include "misc/Color.h"
+#include "misc/Common.h"
 
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
@@ -78,4 +79,13 @@ namespace Renderer {
      * @param angle how much to tilt the texture, clockwise
     */
     bool drawSprite(SDL_Renderer* renderer, SDL_Texture* tex, const SDL_Rect* rect, const bool flipH, const double angle = 0);
+
+    /**
+     * draws a filled triangle arrow at cx, cy
+     * @author retucio
+     * @param r pointer to SDL_Renderer
+     * @param cx, cy center coordinates of the triangle arrow
+     * @param dir direction to point towards
+    */
+    void renderArrow(SDL_Renderer* r, int cx, int cy, Facing dir);
 };

@@ -59,17 +59,19 @@ void Game::init() {
 }
 
 void Game::setup(const Character* c1, const std::string& n1,
-                        const Character* c2, const std::string& n2)
+                 const Character* c2, const std::string& n2,
+                 const Stage& s)
 {
-    platforms.clear();
-    platforms.emplace_back(360, 500, 1200, 300, PlatformSize::BIG);
-    platforms.emplace_back(640, 250, 200, 30, PlatformSize::SMALL);
-    platforms.emplace_back(1080, 250, 200, 30, PlatformSize::SMALL);
+    platforms = s.platforms;
+    stage = s;
 
-    player1.init(640, 0, c1, n1);
+    int x1 = s.spawnpoints.size() > 0 ? s.spawnpoints[0].x : 640;
+    int x2 = s.spawnpoints.size() > 1 ? s.spawnpoints[1].x : 1080;
+
+    player1.init(x1, 0, c1, n1);
     player1.id = 0;
 
-    player2.init(1080, 0, c2, n2);
+    player2.init(x2, 0, c2, n2);
     player2.id = 1;
 
     player1.color = {100, 149, 237, 230};

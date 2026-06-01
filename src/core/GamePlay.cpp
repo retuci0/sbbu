@@ -226,8 +226,9 @@ void Game::updateGameplay(float ts) {
 
 void Game::respawn(Player& p, bool voidDeath) {
     static std::mt19937 rng(std::random_device{}());
-    std::uniform_int_distribution<int> pick(0, 1);
-    int spawnX = pick(rng) ? 640 : 1080;
+    const auto& spawns = stage.spawnpoints;
+    std::uniform_int_distribution<int> pick(0, static_cast<int>(spawns.size()) - 1);
+    const auto& sp = spawns[pick(rng)];
 
     Mix_Chunk* voidDeathSound = Resources::get().getSound("void_death");
     Mix_Chunk* deathSound = Resources::get().getSound("death");
@@ -237,9 +238,10 @@ void Game::respawn(Player& p, bool voidDeath) {
     else if (deathSound)
         Mix_PlayChannel(-1, deathSound, 0);
 
+    // reset the player
     p.hp                 = p.character->stats.health;
-    p.rect.x             = spawnX;
-    p.rect.y             = -2000;
+    p.rect.x             = sp.x;
+    p.rect.y             = sp.y - 2000;
     p.lives             -= 1;
     p.status             = Status::IDLE;
     p.charge             = 0.0f;

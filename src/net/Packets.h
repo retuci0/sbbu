@@ -200,11 +200,13 @@ public:
     GameSetupPacket(uint8_t char1Idx, uint8_t char2Idx,
                     const std::string& name1, const std::string& name2,
                     uint8_t r1, uint8_t g1, uint8_t b1,
-                    uint8_t r2, uint8_t g2, uint8_t b2)
+                    uint8_t r2, uint8_t g2, uint8_t b2,
+                    uint8_t stageIdx)
         : char1Idx(char1Idx), char2Idx(char2Idx),
           name1(name1), name2(name2),
           r1(r1), g1(g1), b1(b1),
-          r2(r2), g2(g2), b2(b2) {}
+          r2(r2), g2(g2), b2(b2),
+          stageIdx(stageIdx) {}
 
     PacketType getType() const override { return PacketType::GAME_SETUP; }
     PacketDirection getDirection() const override { return PacketDirection::CLIENTBOUND; }
@@ -216,6 +218,7 @@ public:
         out.writeString(name2);
         out.writeUint8(r1); out.writeUint8(g1); out.writeUint8(b1);
         out.writeUint8(r2); out.writeUint8(g2); out.writeUint8(b2);
+        out.writeUint8(stageIdx);
     }
     void read(ByteBuffer& in) override {
         char1Idx = in.readUint8();
@@ -224,9 +227,11 @@ public:
         name2 = in.readString();
         r1 = in.readUint8(); g1 = in.readUint8(); b1 = in.readUint8();
         r2 = in.readUint8(); g2 = in.readUint8(); b2 = in.readUint8();
+        stageIdx = in.readUint8();
     }
 
     uint8_t char1Idx = 0, char2Idx = 0;
+    uint8_t stageIdx = 0;
     std::string name1, name2;
     uint8_t r1 = 0, g1 = 0, b1 = 0;
     uint8_t r2 = 0, g2 = 0, b2 = 0;

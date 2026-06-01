@@ -1,11 +1,14 @@
 #include "core/Game.h"
 
+#include "misc/Stages.h"
+
 #include "ui/screen/CharacterSelectionScreen.h"
 #include "ui/screen/ControlsScreen.h"
 #include "ui/screen/GameEndScreen.h"
 #include "ui/screen/PauseScreen.h"
 #include "ui/screen/RemoteSetupScreen.h"
 #include "ui/screen/SettingsScreen.h"
+#include "ui/screen/StageSelectionScreen.h"
 #include "ui/screen/TitleScreen.h"
 #include "ui/screen/VolumeScreen.h"
 #include "ui/screen/WaitingScreen.h"
@@ -29,10 +32,11 @@ void Game::handleScreenTransitions() {
         switch (ts->getResult()) {
             case TitleScreenResult::LOCAL:
                 networkMode = NetworkMode::LOCAL;
-                setScreen(std::make_unique<CharacterSelectionScreen>(
-                    Resources::get().characterList(),
-                    "player 1", &Resources::get().BERT, "player 2", &Resources::get().BERT));
-                    break;
+                {
+                    auto stages = allStages();
+                    setScreen(std::make_unique<StageSelectionScreen>(stages[0], stages));
+                }
+                break;
             case TitleScreenResult::ONLINE:
                 setScreen(std::make_unique<RemoteSetupScreen>());
                 break;
@@ -55,9 +59,8 @@ void Game::handleScreenTransitions() {
 
         if (setupResult.role == RemoteSetupRole::HOST) {
             networkMode = NetworkMode::REMOTE_HOST;
-            setScreen(std::make_unique<CharacterSelectionScreen>(
-                Resources::get().characterList(),
-                "player 1", &Resources::get().BERT, "player 2", &Resources::get().BERT));
+            auto stages = allStages();
+            setScreen(std::make_unique<StageSelectionScreen>(stages[0], stages));
         } else {
             networkMode = NetworkMode::REMOTE_CLIENT;
             setScreen(std::make_unique<WaitingScreen>());
@@ -79,7 +82,10 @@ void Game::handleScreenTransitions() {
             if (!charList[i1] || !charList[i2] || !charList[i1]->loaded || !charList[i2]->loaded) {
                 return;
             }
-            setup(charList[i1], pendingSetup.name1, charList[i2], pendingSetup.name2);
+            auto stages = allStages();
+            uint8_t si  = pendingSetup.stageIdx;
+            if (si >= stages.size()) si = 0;
+            setup(charList[i1], pendingSetup.name1, charList[i2], pendingSetup.name2, stages[si]);
             player1.color = { pendingSetup.r1, pendingSetup.g1, pendingSetup.b1, 230 };
             player2.color = { pendingSetup.r2, pendingSetup.g2, pendingSetup.b2, 230 };
             player1.resetTimers(); player2.resetTimers();
@@ -92,10 +98,31 @@ void Game::handleScreenTransitions() {
         return;
     }
 
-    // character selection
+    // stage selection screen
+    if (auto* ss = dynamic_cast<StageSelectionScreen*>(screen.get())) {
+        if (ss->shouldGoBack()) {
+            showTitleScreen();
+            return;
+        }
+        if (!ss->isFinished()) return;
+
+        auto stageResult = ss->getResult();
+        pendingStageResult = stageResult;  // store it
+        hasPendingStageResult = true;
+
+        setScreen(std::make_unique<CharacterSelectionScreen>(
+            Resources::get().characterList(),
+            "player 1", &Resources::get().BERT,
+            "player 2", &Resources::get().BERT));
+        return;
+    }
+
+    // character selection screen
     if (auto* cs = dynamic_cast<CharacterSelectionScreen*>(screen.get())) {
         if (cs->shouldGoBack()) {
-            showTitleScreen();  // should sometimes go back to RemoteSetupScreen but idc for now
+            // go back to stage selection
+            auto stages = allStages();
+            setScreen(std::make_unique<StageSelectionScreen>(pendingStageResult.stage, stages));
             return;
         }
         if (!cs->isFinished()) return;
@@ -108,7 +135,9 @@ void Game::handleScreenTransitions() {
             return;
         }
 
-        setup(csResult.char1, csResult.name1, csResult.char2, csResult.name2);
+        setup(csResult.char1, csResult.name1, csResult.char2, csResult.name2,
+          pendingStageResult.stage);  // use stored stage
+        hasPendingStageResult = false;
         player1.color = csResult.color1;
         player2.color = csResult.color2;
         player1.resetTimers();
@@ -124,9 +153,14 @@ void Game::handleScreenTransitions() {
                 if (charList[i] == csResult.char1) i1 = static_cast<uint8_t>(i);
                 if (charList[i] == csResult.char2) i2 = static_cast<uint8_t>(i);
             }
+            auto stages = allStages();
+            uint8_t si = 0;
+            for (int i = 0; i < static_cast<int>(stages.size()); ++i) {
+                if (stages[i].name == pendingStageResult.stage.name) si = static_cast<uint8_t>(i);
+            }
             GameSetupPacket gsp(i1, i2, csResult.name1, csResult.name2,
                                 csResult.color1.r, csResult.color1.g, csResult.color1.b,
-                                csResult.color2.r, csResult.color2.g, csResult.color2.b);
+                                csResult.color2.r, csResult.color2.g, csResult.color2.b, si);
             network->send(gsp);
         }
 
@@ -148,17 +182,14 @@ void Game::handleScreenTransitions() {
                 break;
             case PauseActionResult::RESTART:
                 Mix_HaltMusic(); Mix_HaltChannel(-1);
-                if (networkMode == NetworkMode::REMOTE_HOST ||
-                    networkMode == NetworkMode::REMOTE_CLIENT) {
+                if (networkMode == NetworkMode::REMOTE_HOST || networkMode == NetworkMode::REMOTE_CLIENT) {
                     if (network) network->disconnect();
                     network.reset();
                     networkMode = NetworkMode::NONE;
                     showTitleScreen();
                 } else {
-                    setScreen(std::make_unique<CharacterSelectionScreen>(
-                        Resources::get().characterList(),
-                        player1.name, player1.character,
-                        player2.name, player2.character));
+                    auto stages = allStages();
+                    setScreen(std::make_unique<StageSelectionScreen>(stage, stages));
                 }
                 break;
             case PauseActionResult::CHANGE_VOLUME:

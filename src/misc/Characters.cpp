@@ -10,11 +10,11 @@
 
 const CharacterStats BERT_STATS = {
     "Bert", "average human.",
-    100, 5, 3, 5.0f, 11.0f, 0.20f, 0.50f, 20.0f, 1.0f
+    100, 5, 3, 5.0f, 12.2f, 0.20f, 0.50f, 20.0f, 1.0f
 };
 const CharacterStats BERROTA_STATS = {
     "Berrota", "lightweight skinny mf, moves faster than your mom",
-    90, 5, 3, 7.0f, 13.0f, 0.35f, 0.50f, 17.0f, 1.5f
+    90, 5, 3, 7.0f, 13.2f, 0.35f, 0.50f, 17.0f, 1.5f
 };
 const CharacterStats LORC_STATS = {
     "Lorc", "heavy tank - only weakness is gravity",

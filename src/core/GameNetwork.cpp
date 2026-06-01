@@ -37,6 +37,7 @@ void Game::processNetworkPackets() {
                                 break;
                             pendingSetup.char1Idx = gsp->char1Idx;
                             pendingSetup.char2Idx = gsp->char2Idx;
+                            pendingSetup.stageIdx = gsp->stageIdx;
                             pendingSetup.name1 = gsp->name1;
                             pendingSetup.name2 = gsp->name2;
                             pendingSetup.r1 = gsp->r1; pendingSetup.g1 = gsp->g1; pendingSetup.b1 = gsp->b1;
