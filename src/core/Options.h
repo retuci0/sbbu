@@ -20,8 +20,8 @@ public:
     SDL_KeyCode keyP2Right      = SDLK_RIGHT;
     SDL_KeyCode keyP2Down       = SDLK_DOWN;
     SDL_KeyCode keyP2Jump       = SDLK_UP;
-    SDL_KeyCode keyP2Shoot      = SDLK_LCTRL;
-    SDL_KeyCode keyP2Melee      = SDLK_LSHIFT;
+    SDL_KeyCode keyP2Shoot      = SDLK_RCTRL;
+    SDL_KeyCode keyP2Melee      = SDLK_RSHIFT;
     SDL_KeyCode keyP2Special    = SDLK_RETURN;
     SDL_KeyCode keyP2Shield     = SDLK_SLASH;
 

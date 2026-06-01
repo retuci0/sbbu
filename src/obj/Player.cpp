@@ -149,6 +149,8 @@ void Player::releaseShield() {
 }
 
 void Player::breakShield() {
+    Mix_Chunk* breakSound = Resources::get().getSound("shield_break");
+    if (breakSound) Mix_PlayChannel(-1, breakSound, 0);
     shieldBroken = true;
     shieldBreakTimer = SHIELD_BREAK_STUN;
     status = Status::STUNNED;

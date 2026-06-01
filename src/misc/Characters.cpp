@@ -81,7 +81,7 @@ Character loadCharacter(SDL_Renderer* renderer, const CharacterStats& stats, con
     c.stats = stats;
 
     for (int i = 0; i < 3; ++i) {
-        c.stunnedFrames.push_back(loadTex(renderer, folder + "/stunner/" + std::to_string(i) + ".png"));
+        c.stunnedFrames.push_back(loadTex(renderer, folder + "/stunned/" + std::to_string(i) + ".png"));
         c.specialDownFrames.push_back(loadTex(renderer, folder + "/special/down/" + std::to_string(i) + ".png"));
     }
     for (int i = 0; i < 5; ++i) {

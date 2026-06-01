@@ -80,22 +80,25 @@ void Resources::load(SDL_Renderer* renderer) {
 
     // sounds effects
     registerSound("click",        "assets/sound/click.wav");
+    registerSound("select",       "assets/sound/select.wav");
+
     registerSound("jump",         "assets/sound/jump.wav");
     registerSound("jump2",        "assets/sound/jump2.wav");
-    registerSound("death",        "assets/sound/death.wav");
-    registerSound("projectile",   "assets/sound/projectile.wav");
     registerSound("melee",        "assets/sound/punch.wav");
-    registerSound("parry",        "assets/sound/parry.wav");
-    registerSound("void_death",   "assets/sound/void_death.wav");
-    registerSound("damage",       "assets/sound/damage.wav");
-    registerSound("block",        "assets/sound/block.wav");
-    registerSound("game_end",     "assets/sound/game_end.wav");
+    registerSound("projectile",   "assets/sound/projectile.wav");
     registerSound("special_static","assets/sound/special_static.wav");
     registerSound("special_side", "assets/sound/special_side.wav");
     registerSound("special_up",   "assets/sound/special_up.wav");
     registerSound("special_down", "assets/sound/special_down.wav");
-    registerSound("select",       "assets/sound/select.wav");
+    registerSound("parry",        "assets/sound/parry.wav");
+    registerSound("damage",       "assets/sound/damage.wav");
+    registerSound("block",        "assets/sound/block.wav");
+    registerSound("shield_break", "assets/sound/break.wav");
+    registerSound("death",        "assets/sound/death.wav");
+    registerSound("void_death",   "assets/sound/void_death.wav");
+    
     registerSound("countdown",    "assets/sound/countdown.wav");
+    registerSound("game_end",     "assets/sound/game_end.wav");
 
     // music
     music            = Mix_LoadMUS("assets/sound/music.mp3");
@@ -139,6 +142,7 @@ void Resources::applySfxVolume(float multiplier) {
     setVol("special_down",  64);
     setVol("click",         31);
     setVol("select",        32);
+    setVol("shield_break",  20);
 
     if (music)            Mix_VolumeMusic(static_cast<int>(9 * multiplier));
     if (titleScreenMusic) Mix_VolumeMusic(static_cast<int>(9 * multiplier));
