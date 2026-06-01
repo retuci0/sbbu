@@ -1,5 +1,6 @@
 #include "ui/screen/TitleScreen.h"
 
+#include "ui/Screen.h"
 #include "ui/widget/Button.h"
 #include "misc/Common.h"
 #include "misc/Renderer.h"
@@ -22,7 +23,7 @@ void TitleScreen::handle(const SDL_Event& e) {
     if (e.type == SDL_KEYDOWN) {
         switch (e.key.keysym.sym) {
             case SDLK_ESCAPE:
-                finished = true;
+                requestTransition(ScreenAction::QUIT_GAME);
                 break;
             case SDLK_UP:
                 selectedIndex = (selectedIndex + 2) % 3;

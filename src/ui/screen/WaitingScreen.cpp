@@ -8,7 +8,14 @@
 WaitingScreen::WaitingScreen()
     : startTime(SDL_GetTicks()), Screen()  
 {
-    addWidget<Button>(4, 4, 64, 64, "<", GREEN, WHITE, [&]{ goBack = true; });
+    addWidget<Button>(4, 4, 64, 64, "<", GREEN, WHITE, [&]{ goBack(); });
+}
+
+void WaitingScreen::handle(const SDL_Event& e) {
+    Screen::handle(e);
+    if (e.type == SDL_KEYDOWN && e.key.keysym.sym == SDLK_ESCAPE) {
+        goBack();
+    }
 }
 
 void WaitingScreen::update() {

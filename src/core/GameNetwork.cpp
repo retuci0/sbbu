@@ -21,7 +21,7 @@ void Game::processNetworkPackets() {
                 break;
             }
             case PacketType::STATE_UPDATE: {
-                if (networkMode == NetworkMode::REMOTE_CLIENT && !screen) {
+                if (networkMode == NetworkMode::REMOTE_CLIENT && !screens) {
                     auto* sup = dynamic_cast<StateUpdatePacket*>(pkt.get());
                     if (sup) netApplyStateUpdate(*sup);
                 }
@@ -32,7 +32,7 @@ void Game::processNetworkPackets() {
                     auto* gsp = dynamic_cast<GameSetupPacket*>(pkt.get());
                     if (gsp) {
                         // only apply setup if in the waiting screen
-                        if (dynamic_cast<WaitingScreen*>(screen.get())) {
+                        if (screens.currentAs<WaitingScreen>()) {
                             if (gsp->char1Idx >= CHARACTER_NUM || gsp->char2Idx >= CHARACTER_NUM)
                                 break;
                             pendingSetup.char1Idx = gsp->char1Idx;
@@ -50,7 +50,7 @@ void Game::processNetworkPackets() {
             }
             case PacketType::DISCONNECT:
                 if (network) network->disconnect(false);
-                if (!screen && player1.lives >= 0 && player2.lives >= 0) {
+                if (!screens && player1.lives >= 0 && player2.lives >= 0) {
                     if (networkMode == NetworkMode::REMOTE_HOST) {
                         player2.lives = -1;
                     } else if (networkMode == NetworkMode::REMOTE_CLIENT) {

@@ -20,8 +20,8 @@ public:
     void render(SDL_Renderer* renderer) override;
 
     bool isFinished()   const { return finished; }
-    bool shouldGoBack() const { return goBack; }
     StageSelectionResult getResult() const { return result; }
+    void resetFinished();
 
 private:
     std::vector<Stage> stages;
@@ -30,7 +30,6 @@ private:
     int   timeLimit    = -1;   // -1 = off, else seconds
 
     bool  finished = false;
-    bool  goBack = false;
     StageSelectionResult result;
 
     // layout constants

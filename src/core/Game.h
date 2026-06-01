@@ -14,7 +14,7 @@
 #include "misc/Stages.h"
 #include "misc/Characters.h"
 
-#include "ui/Screen.h"
+#include "ui/ScreenStack.h"
 #include "ui/screen/StageSelectionScreen.h"
 
 #include "net/Network.h"
@@ -69,9 +69,8 @@ private:
     Options       options;
     Input         input;
 
-    // screen
-    std::unique_ptr<Screen> screen;
-    void setScreen(std::unique_ptr<Screen> screen, bool playSound = true);
+    // screens
+    ScreenStack screens;
     void handleScreenTransitions();
     void showPauseScreen();
     void showTitleScreen();
@@ -106,6 +105,7 @@ private:
     static constexpr float TICK_SCALE   = 60.0f / TICK_RATE;    // 3.0 at 20hz
 
     // music
+    Mix_Music* music = nullptr;
     void playTitleMusic();
     void playGameMusic();
     
@@ -115,7 +115,8 @@ private:
 
     // input
     void onKey(SDL_Keycode key, KeyAction action) override;
-    void onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action, int ctrl) override;
+    void onControllerButton(SDL_GameControllerButton button, 
+                            ControllerButtonAction action, int ctrl) override;
     void handleGameplayInput();
     void injectControllerNav(SDL_Event e);
     void injectNavigationKey(SDL_KeyCode key);

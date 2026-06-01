@@ -31,7 +31,7 @@
 void Game::run() {
     // start on title screen, don't play the screen change sound
     playTitleMusic();
-    setScreen(std::make_unique<TitleScreen>(), false);
+    screens.clearAndPush(std::make_unique<TitleScreen>(), false);
 
     Uint32 prevTicks  = SDL_GetTicks();
     float accumulator = 0.0f;
@@ -72,8 +72,8 @@ void Game::processEvents() {
     while (SDL_PollEvent(&e)) {
         if (e.type == SDL_QUIT) { running = false; break; }
 
-        if (screen) {
-            screen->handle(e);
+        if (screens) {
+            screens.handle(e);
             injectControllerNav(e);
         } else {
             // ingame pause handling
@@ -92,8 +92,8 @@ void Game::processEvents() {
 }
 
 void Game::update(float ts) {
-    if (screen) {
-        screen->update();
+    if (screens) {
+        screens.update();
 
         // poll network even while on a screen (e.g. waiting for handshake)
         if (network) {

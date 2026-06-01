@@ -20,25 +20,29 @@
 /*               SCREENS               */
 /////////////////////////////////////////
 
-void Game::setScreen(std::unique_ptr<Screen> newScreen, bool playSound) {
-    screen = std::move(newScreen);
-    if (playSound) Mix_PlayChannel(-1, Resources::get().getSound("select"), 0);
-}
-
 void Game::handleScreenTransitions() {
+    if (Screen* screen = screens.current(); screen && screen->hasTransition()) {
+        if (screens.applyTransition(screen->takeTransition()) == ScreenAction::QUIT_GAME) {
+            running = false;
+        }
+        return;
+    }
+
     // title screen
-    if (auto* ts = dynamic_cast<TitleScreen*>(screen.get())) {
+    if (auto* ts = screens.currentAs<TitleScreen>()) {
         if (!ts->isFinished()) return;
         switch (ts->getResult()) {
             case TitleScreenResult::LOCAL:
                 networkMode = NetworkMode::LOCAL;
                 {
                     auto stages = allStages();
-                    setScreen(std::make_unique<StageSelectionScreen>(stages[0], stages));
+                    ts->resetFinished();
+                    screens.push(std::make_unique<StageSelectionScreen>(stages[0], stages));
                 }
                 break;
             case TitleScreenResult::ONLINE:
-                setScreen(std::make_unique<RemoteSetupScreen>());
+                ts->resetFinished();
+                screens.push(std::make_unique<RemoteSetupScreen>());
                 break;
             case TitleScreenResult::QUIT:
                 running = false;
@@ -48,32 +52,26 @@ void Game::handleScreenTransitions() {
     }
 
     // remote setup (p2p)
-    if (auto* rs = dynamic_cast<RemoteSetupScreen*>(screen.get())) {
+    if (auto* rs = screens.currentAs<RemoteSetupScreen>()) {
         if (!rs->isFinished()) return;
-        if (rs->shouldGoBack()) {
-            showTitleScreen();
-            return;
-        }
         auto setupResult = rs->takeResult();
         network = std::move(setupResult.network);
 
         if (setupResult.role == RemoteSetupRole::HOST) {
             networkMode = NetworkMode::REMOTE_HOST;
             auto stages = allStages();
-            setScreen(std::make_unique<StageSelectionScreen>(stages[0], stages));
+            rs->resetFinished();
+            screens.push(std::make_unique<StageSelectionScreen>(stages[0], stages));
         } else {
             networkMode = NetworkMode::REMOTE_CLIENT;
-            setScreen(std::make_unique<WaitingScreen>());
+            rs->resetFinished();
+            screens.push(std::make_unique<WaitingScreen>());
         }
         return;
     }
 
     // waiting screen
-    if (auto* ws = dynamic_cast<WaitingScreen*>(screen.get())) {
-        if (ws->shouldGoBack()) {
-            setScreen(std::make_unique<RemoteSetupScreen>());
-            return;
-        }
+    if (auto* ws = screens.currentAs<WaitingScreen>()) {
         if (hasPendingSetup && networkMode == NetworkMode::REMOTE_CLIENT) {
             hasPendingSetup = false;
             auto charList = Resources::get().characterList();
@@ -92,7 +90,7 @@ void Game::handleScreenTransitions() {
             projectiles.clear(); meleeHitboxes.clear(); specialHitboxes.clear();
             particles.clear();
             if (Resources::get().music) playGameMusic();
-            setScreen(nullptr);
+            screens.clear();
             return;
         }
         // keep waiting
@@ -100,18 +98,15 @@ void Game::handleScreenTransitions() {
     }
 
     // stage selection screen
-    if (auto* ss = dynamic_cast<StageSelectionScreen*>(screen.get())) {
-        if (ss->shouldGoBack()) {
-            showTitleScreen();
-            return;
-        }
+    if (auto* ss = screens.currentAs<StageSelectionScreen>()) {
         if (!ss->isFinished()) return;
 
         auto stageResult = ss->getResult();
         pendingStageResult = stageResult;  // store it
         hasPendingStageResult = true;
 
-        setScreen(std::make_unique<CharacterSelectionScreen>(
+        ss->resetFinished();
+        screens.push(std::make_unique<CharacterSelectionScreen>(
             Resources::get().characterList(),
             "player 1", &Resources::get().BERT,
             "player 2", &Resources::get().BERT));
@@ -119,13 +114,7 @@ void Game::handleScreenTransitions() {
     }
 
     // character selection screen
-    if (auto* cs = dynamic_cast<CharacterSelectionScreen*>(screen.get())) {
-        if (cs->shouldGoBack()) {
-            // go back to stage selection
-            auto stages = allStages();
-            setScreen(std::make_unique<StageSelectionScreen>(pendingStageResult.stage, stages));
-            return;
-        }
+    if (auto* cs = screens.currentAs<CharacterSelectionScreen>()) {
         if (!cs->isFinished()) return;
         auto csResult = cs->getResult();
 
@@ -167,17 +156,17 @@ void Game::handleScreenTransitions() {
         }
 
         if (Resources::get().music) { playGameMusic(); }
-        setScreen(nullptr);
+        screens.clear();
         return;
     }
 
     // pause screen
-    if (auto* ps = dynamic_cast<PauseScreen*>(screen.get())) {
+    if (auto* ps = screens.currentAs<PauseScreen>()) {
         if (!ps->isFinished()) return;
         switch (ps->getResult()) {
             case PauseActionResult::RESUME:
                 Mix_ResumeMusic(); Mix_Resume(-1);
-                setScreen(nullptr);
+                screens.pop();
                 break;
             case PauseActionResult::QUIT:
                 showTitleScreen();
@@ -191,19 +180,23 @@ void Game::handleScreenTransitions() {
                     showTitleScreen();
                 } else {
                     auto stages = allStages();
-                    setScreen(std::make_unique<StageSelectionScreen>(stage, stages));
+                    showTitleScreen();
+                    screens.push(std::make_unique<StageSelectionScreen>(stage, stages));
                 }
                 break;
             case PauseActionResult::CHANGE_VOLUME:
-                setScreen(std::make_unique<VolumeScreen>(
+                ps->resetFinished();
+                screens.push(std::make_unique<VolumeScreen>(
                     options.sfxVolume, options.musVolume));
                 break;
             case PauseActionResult::CHANGE_CONTROLS:
-                setScreen(std::make_unique<ControlsScreen>(
+                ps->resetFinished();
+                screens.push(std::make_unique<ControlsScreen>(
                     options));
                 break;
             case PauseActionResult::SETTINGS:
-                setScreen(std::make_unique<SettingsScreen>(
+                ps->resetFinished();
+                screens.push(std::make_unique<SettingsScreen>(
                     options.fpsCap, options.vsync, options.fullscreen, options.debug, options.particles));
                 break;
         }
@@ -211,27 +204,27 @@ void Game::handleScreenTransitions() {
     }
 
     // volume screen
-    if (auto* vs = dynamic_cast<VolumeScreen*>(screen.get())) {
+    if (auto* vs = screens.currentAs<VolumeScreen>()) {
         if (!vs->isFinished()) return;
         auto vols = vs->getResult();
         options.sfxVolume   = vols.sfx;
         options.musVolume = vols.music;
         Resources::get().applySfxVolume(options.sfxVolume);
         Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
-        showPauseScreen();
+        screens.goBack();
         return;
     }
 
     // controls screen
-    if (auto* cs = dynamic_cast<ControlsScreen*>(screen.get())) {
+    if (auto* cs = screens.currentAs<ControlsScreen>()) {
         if (!cs->isFinished()) return;
         options.saveToFile();
-        showPauseScreen();
+        screens.goBack();
         return;
     }
 
     // video settings screen
-    if (auto* ss = dynamic_cast<SettingsScreen*>(screen.get())) {
+    if (auto* ss = screens.currentAs<SettingsScreen>()) {
         if (!ss->isFinished()) return;
         auto settings = ss->getResult();
         options.fpsCap = settings.fpsCap;
@@ -247,10 +240,10 @@ void Game::handleScreenTransitions() {
         options.vsync = settings.vsync;
         options.fullscreen = settings.fullscreen;
         options.particles = settings.particles;
-        showPauseScreen();
+        screens.goBack();
     }
 
-    if (auto* ge = dynamic_cast<GameEndScreen*>(screen.get())) {
+    if (auto* ge = screens.currentAs<GameEndScreen>()) {
         if (!ge->isFinished()) return;
         if (ge->getResult() == GameEndActionResult::QUIT) {
             running = false;
@@ -264,12 +257,12 @@ void Game::handleScreenTransitions() {
 void Game::showPauseScreen() {
     Mix_PauseMusic();
     Mix_Pause(-1);
-    setScreen(std::make_unique<PauseScreen>(options));
+    screens.push(std::make_unique<PauseScreen>(options));
 }
 
 void Game::showTitleScreen() {
     playTitleMusic();
-    setScreen(std::make_unique<TitleScreen>());
+    screens.clearAndPush(std::make_unique<TitleScreen>());
 }
 
 void Game::showEndScreen(const std::string& title, const std::string& details) {
@@ -279,5 +272,5 @@ void Game::showEndScreen(const std::string& title, const std::string& details) {
         network.reset();
     }
     networkMode = NetworkMode::NONE;
-    setScreen(std::make_unique<GameEndScreen>(title, details));
+    screens.clearAndPush(std::make_unique<GameEndScreen>(title, details));
 }

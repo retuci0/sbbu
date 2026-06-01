@@ -11,7 +11,7 @@
 
 
 RemoteSetupScreen::RemoteSetupScreen() : Screen() {
-    addWidget<Button>(4, 4, 64, 64, "<", GREEN, WHITE, [&]{ goBack = true; finished = true; });
+    addWidget<Button>(4, 4, 64, 64, "<", GREEN, WHITE, [&]{ goBack(); });
     addWidget<Button>(SW/2-300, SH-150, 250, 70, "HOST", GREEN, WHITE, [&]{ isHost = true; tryConnect(); });
     addWidget<Button>(SW/2+50,  SH-150, 250, 70, "CLIENT", GREEN, WHITE, [&]{ isHost = false; tryConnect(); });
 }
@@ -31,6 +31,11 @@ void RemoteSetupScreen::tryConnect() {
     connecting = false;
 }
 
+void RemoteSetupScreen::resetFinished() {
+    finished = false;
+    result = {};
+}
+
 void RemoteSetupScreen::handle(const SDL_Event& e) {
     Screen::handle(e);
     if (e.type == SDL_KEYDOWN) {
@@ -41,7 +46,7 @@ void RemoteSetupScreen::handle(const SDL_Event& e) {
                 break;
             case SDLK_RETURN:
                 switch (selectedWidget) {
-                    case 0: goBack = true; finished = true; break;
+                    case 0: goBack(); break;
                     case 1: activeField = 1; break;
                     case 2: activeField = 2; break;
                     case 3: isHost = true; tryConnect(); break;
@@ -49,7 +54,7 @@ void RemoteSetupScreen::handle(const SDL_Event& e) {
                 }
                 break;
             case SDLK_ESCAPE:
-                goBack = true; finished = true; break;
+                goBack(); break;
             case SDLK_BACKSPACE:
                 if (activeField == 1 && !ipInput.empty()) ipInput.pop_back();
                 if (activeField == 2 && !portInput.empty()) portInput.pop_back();

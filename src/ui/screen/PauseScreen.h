@@ -25,6 +25,7 @@ public:
     bool isFinished() const { return finished; }
     bool isTransparent() const override;
     PauseActionResult getResult() const { return result; }
+    void resetFinished();
 
 private:
     Options options;

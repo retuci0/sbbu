@@ -186,7 +186,7 @@ void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonA
 }
 
 void Game::injectNavigationKey(SDL_KeyCode key) {
-    if (!screen) return;
+    if (!screens) return;
     Uint32 now = SDL_GetTicks();
 
     // if it's a different key than last time, reset the repeat state
@@ -200,7 +200,7 @@ void Game::injectNavigationKey(SDL_KeyCode key) {
         fake.type = SDL_KEYDOWN;
         fake.key.keysym.sym = key;
         fake.key.keysym.scancode = SDL_GetScancodeFromKey(key);
-        screen->handle(fake);
+        screens.handle(fake);
         return;
     }
 
@@ -215,7 +215,7 @@ void Game::injectNavigationKey(SDL_KeyCode key) {
             fake.type = SDL_KEYDOWN;
             fake.key.keysym.sym = key;
             fake.key.keysym.scancode = SDL_GetScancodeFromKey(key);
-            screen->handle(fake);
+            screens.handle(fake);
         }
     } else {
         // wait for repeat interval (since repeat is active)
@@ -225,7 +225,7 @@ void Game::injectNavigationKey(SDL_KeyCode key) {
             fake.type = SDL_KEYDOWN;
             fake.key.keysym.sym = key;
             fake.key.keysym.scancode = SDL_GetScancodeFromKey(key);
-            screen->handle(fake);
+            screens.handle(fake);
         }
     }
 }

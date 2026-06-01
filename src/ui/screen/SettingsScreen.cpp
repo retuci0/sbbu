@@ -49,7 +49,9 @@ void SettingsScreen::handle(const SDL_Event& e) {
     Screen::handle(e);
 
     static constexpr int WIDGET_COUNT = 6;
-    Widget* widgets[WIDGET_COUNT] = { fpsCapSlider, fullscreenButton, vsyncButton, okButton };
+    Widget* widgets[WIDGET_COUNT] = {
+        fpsCapSlider, fullscreenButton, vsyncButton, debugButton, particlesButton, okButton
+    };
     Widget* active = widgets[selectedIndex];
 
     if (e.type != SDL_KEYDOWN) return;

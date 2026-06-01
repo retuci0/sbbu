@@ -9,7 +9,7 @@
 ///////////////////////////////////////////
 
 void Game::render(float ts, float a) {
-    if (screen) {
+    if (Screen* screen = screens.current()) {
         // render the gameplay underneath on transparent screens
         if (screen->isTransparent()) {
             renderGameplay(ts, a);

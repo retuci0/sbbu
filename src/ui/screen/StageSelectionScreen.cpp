@@ -30,6 +30,9 @@ StageSelectionScreen::StageSelectionScreen(const Stage& defaultStage, const std:
     addWidget<Button>(START_BTN_X, START_BTN_Y, START_BTN_W, START_BTN_H,
         "select characters", GREEN, WHITE,
         [&]{ confirm(); });
+
+    addWidget<Button>(4, 4, 64, 64, "<", GREEN, WHITE, 
+        [&]{ goBack(); });
 }
 
 void StageSelectionScreen::navigate(int dir) {
@@ -54,6 +57,10 @@ void StageSelectionScreen::confirm() {
     finished = true;
 }
 
+void StageSelectionScreen::resetFinished() {
+    finished = false;
+}
+
 void StageSelectionScreen::handle(const SDL_Event& e) {
     Screen::handle(e);
 
@@ -63,7 +70,7 @@ void StageSelectionScreen::handle(const SDL_Event& e) {
             case SDLK_RIGHT:  navigate(+1); break;
 
             case SDLK_RETURN: confirm();    break;
-            case SDLK_ESCAPE: goBack = true; break;
+            case SDLK_ESCAPE: goBack(); break;
 
             // tab toggles omega
             case SDLK_TAB:

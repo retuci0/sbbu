@@ -32,7 +32,6 @@ public:
 
     bool isFinished() const { return finished; }
     CharacterSelectionResult getResult() const { return result; }
-    bool shouldGoBack() const { return goBack; }
 
 private:
     std::array<const Character*, CHARACTER_NUM> chars;
@@ -44,7 +43,6 @@ private:
     bool nameError = false;
     bool finished  = false;
     CharacterSelectionResult result;
-    bool goBack = false;
 
     int  findIdx(const Character* ch) const;
     void pickColorFor(int player);  // 1 or 2

@@ -18,6 +18,7 @@ public:
     void render(SDL_Renderer* r) override;
     bool isFinished() const { return finished; }
     TitleScreenResult getResult() const { return result; }
+    void resetFinished() { finished = false; }
     
 private:
     SDL_Texture* bg;

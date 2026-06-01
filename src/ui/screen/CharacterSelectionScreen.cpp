@@ -36,7 +36,7 @@ CharacterSelectionScreen::CharacterSelectionScreen(
         "start game", GREEN, WHITE,
         [&]{ tryStart(); });
     addWidget<Button>(4, 4, 64, 64, "<", GREEN, WHITE, 
-        [&]{ goBack = true; });
+        [&]{ goBack(); });
 }
 
 int CharacterSelectionScreen::findIdx(const Character* ch) const {
@@ -124,7 +124,7 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
                 break;
             }
             case SDLK_ESCAPE:
-                goBack = true;
+                goBack();
                 break;
         }
     }

@@ -79,3 +79,8 @@ void PauseScreen::handle(const SDL_Event& event) {
 bool PauseScreen::isTransparent() const {
     return true;
 }
+
+void PauseScreen::resetFinished() {
+    finished = false;
+    result = PauseActionResult::RESUME;
+}
