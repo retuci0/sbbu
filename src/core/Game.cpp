@@ -152,6 +152,18 @@ void Game::update(float ts) {
     netFrame++;
 
     // end game
+    if (timer <= 0.0f) {
+        std::string details;
+        if (player1.lives > player2.lives) {
+            details = player1.name + " wins!";
+        } else if (player2.lives > player1.lives) {
+            details = player2.name + " wins!";
+        } else {
+            details = "it's a tie!";
+        }
+        showEndScreen("time concluded!", details);
+        return;
+    }
     if (player1.lives == -1 && player2.lives == -1) {
         showEndScreen("both players died", "what a skill issue");
     } else if (player1.lives == -1) {

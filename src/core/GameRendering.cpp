@@ -2,6 +2,7 @@
 
 #include "misc/Renderer.h"
 #include <SDL2/SDL_ttf.h>
+#include <string>
 
 
 ///////////////////////////////////////////
@@ -154,6 +155,19 @@ void Game::renderCountdown() const {
     Renderer::drawSprite(renderer, tex, &rect, false);
 }
 
+void Game::renderTimer() const {
+    if (timer <= 0.0f || timerDuration <= 0) return;
+    // format manually because i wanted to
+    int seconds = static_cast<int>(timer / 60);
+    int minutes = static_cast<int>(seconds / 60);
+    int secs = minutes > 0 ? seconds % minutes : seconds;
+    std::string s = secs < 10 ? "0" + std::to_string(secs) : std::to_string(secs);
+    std::string time = std::to_string(minutes) + ":" + s;
+    int w, h;
+    TTF_SizeText(Resources::get().titleFont, time.c_str(), &w, &h);
+    Renderer::renderText(renderer, Resources::get().titleFont, time, SW - w - 8, SH - h - 8, WHITE);
+}
+
 void Game::renderDebug(float a, TTF_Font* font) {
     player1.drawHitbox(renderer, a);
     player2.drawHitbox(renderer, a);
@@ -212,4 +226,5 @@ void Game::renderGameplay(float ts, float a) {
     }
 
     renderCountdown();
+    renderTimer();
 }

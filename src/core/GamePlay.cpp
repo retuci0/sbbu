@@ -13,9 +13,9 @@ namespace {
         bool critical;
     };
 
-        HitValues rollCriticalHit(const Player& attacker, int damage, float kbScale) {
-            static std::mt19937 rng(std::random_device{}());
-            static std::uniform_real_distribution<float> chance(0.0f, 1.0f);
+    HitValues rollCriticalHit(const Player& attacker, int damage, float kbScale) {
+        static std::mt19937 rng(std::random_device{}());
+        static std::uniform_real_distribution<float> chance(0.0f, 1.0f);
 
         if (chance(rng) >= attacker.character->stats.critChance) {
             return {damage, kbScale, false};
@@ -30,6 +30,8 @@ namespace {
 //////////////////////////////////////
 
 void Game::updateGameplay(float ts) {
+    if (timer > 0) timer -= ts;
+
     player1.update(platforms, isDown(options.keyP1Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0) > 0.5f, ts);
     bool p2Down = (networkMode == NetworkMode::REMOTE_HOST)
                   ? remoteIsDown(InputBit::DOWN)
@@ -252,8 +254,6 @@ void Game::updateGameplay(float ts) {
         if (p.lives > 0) {
             respawn(p, voidDeath);
         } else if (p.lives == 0) {
-            Mix_Chunk* gameEndSound = Resources::get().getSound("game_end");
-            if (gameEndSound) Mix_PlayChannel(-1, gameEndSound, 0);
             p.lives = -1;
         }
     };

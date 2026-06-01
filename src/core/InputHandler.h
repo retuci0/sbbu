@@ -7,7 +7,8 @@
 #include <array>
 
 
-static constexpr int MAX_CONTROLLERS = 2;
+constexpr int MAX_CONTROLLERS = 2;
+constexpr float AXIS_THRESHOLD = 0.2f;
 
 struct KeyState {
     bool down = false;

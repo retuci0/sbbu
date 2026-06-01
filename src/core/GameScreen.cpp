@@ -103,6 +103,8 @@ void Game::handleScreenTransitions() {
 
         auto stageResult = ss->getResult();
         pendingStageResult = stageResult;  // store it
+        timerDuration = stageResult.time * 60;  // in ticks
+        timer = timerDuration;
         hasPendingStageResult = true;
 
         ss->resetFinished();
@@ -267,6 +269,8 @@ void Game::showTitleScreen() {
 
 void Game::showEndScreen(const std::string& title, const std::string& details) {
     Mix_HaltMusic();
+    Mix_Chunk* gameEndSound = Resources::get().getSound("game_end");
+    if (gameEndSound) Mix_PlayChannel(-1, gameEndSound, 0);
     if (network) {
         network->disconnect();
         network.reset();

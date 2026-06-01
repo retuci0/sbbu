@@ -90,11 +90,12 @@ private:
     ParticleManager particles = ParticleManager(&options.particles);
     Player player1, player2;
 
-    // countdown
-    void renderCountdown() const;
+    // countdown and timer
     float countdownTimer = 0.0f;
     bool countdownActive = false;
     static constexpr float COUNTDOWN_DURATION = 210.0f;
+    float timer = 0.0f;
+    int timerDuration = 0;
 
     // fps related stuff
     float fps;
@@ -136,6 +137,9 @@ private:
     void renderMinimap() const;
     void renderGameplay(float ts, float a);
     void renderDebug(float a, TTF_Font* font);
+    void renderCountdown() const;
+    void renderTimer() const;
+
 
 
     // network stuff

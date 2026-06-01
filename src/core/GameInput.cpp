@@ -6,10 +6,12 @@
 ///////////////////////////////////////
 
 void Game::handleGameplayInput() {
+    if (!screens.empty()) return;
+
     // player 1 - always local (ctrl 0)
     float p1Axis  = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
-    bool p1Left   = isDown(options.keyP1Left)   || (p1Axis < -0.2f);
-    bool p1Right  = isDown(options.keyP1Right)  || (p1Axis > 0.2f);
+    bool p1Left   = isDown(options.keyP1Left)   || (p1Axis < -AXIS_THRESHOLD);
+    bool p1Right  = isDown(options.keyP1Right)  || (p1Axis > AXIS_THRESHOLD);
     bool p1Shield = isDown(options.keyP1Shield) || isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, 0);
 
     if (player1.status != Status::DAMAGED) {
@@ -50,10 +52,10 @@ void Game::handleGameplayInput() {
         Direction dir = Direction::NONE;
         float axisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
         float axisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0);
-        if (axisX < -0.2f) dir = Direction::LEFT;
-        else if (axisX > 0.2f) dir = Direction::RIGHT;
-        else if (axisY < -0.2f) dir = Direction::UP;
-        else if (axisY > 0.2f) dir = Direction::DOWN;
+        if (axisX < -AXIS_THRESHOLD)        dir = Direction::LEFT;
+        else if (axisX > AXIS_THRESHOLD)    dir = Direction::RIGHT;
+        else if (axisY < -AXIS_THRESHOLD)   dir = Direction::UP;
+        else if (axisY > AXIS_THRESHOLD)    dir = Direction::DOWN;
         if (isDown(options.keyP1Left)) dir = Direction::LEFT;
         else if (isDown(options.keyP1Right)) dir = Direction::RIGHT;
         else if (isDown(options.keyP1Jump)) dir = Direction::UP;
@@ -88,9 +90,9 @@ void Game::handleGameplayInput() {
     } else {
         // local player 2: keyboard OR controller 1
         float p2Axis = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 1);
-        p2Left   = isDown(options.keyP2Left)   || (p2Axis < -0.2f);
-        p2Right  = isDown(options.keyP2Right)  || (p2Axis > 0.2f);
-        p2Down   = isDown(options.keyP2Down)   || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 1) > 0.5f;
+        p2Left   = isDown(options.keyP2Left)   || (p2Axis < -AXIS_THRESHOLD);
+        p2Right  = isDown(options.keyP2Right)  || (p2Axis > AXIS_THRESHOLD);
+        p2Down   = isDown(options.keyP2Down)   || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 1) > AXIS_THRESHOLD;
         p2Shield = isDown(options.keyP2Shield) || isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, 1);
         p2JumpDn = isDown(options.keyP2Jump)   || isDown(SDL_CONTROLLER_BUTTON_A, 1);
         p2JumpPr    = input.jumpP2;    input.jumpP2 = false;
@@ -121,10 +123,10 @@ void Game::handleGameplayInput() {
         Direction dir = Direction::NONE;
         float p2AxisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 1);
         float p2AxisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 1);
-        if      (p2Left  || p2AxisX < -0.2f) dir = Direction::LEFT;
-        else if (p2Right || p2AxisX >  0.2f) dir = Direction::RIGHT;
-        else if (p2JumpDn || p2AxisY < -0.2f) dir = Direction::UP;
-        else if (p2Down  || p2AxisY >  0.2f) dir = Direction::DOWN;
+        if      (p2Left  || p2AxisX < -AXIS_THRESHOLD)  dir = Direction::LEFT;
+        else if (p2Right || p2AxisX >  AXIS_THRESHOLD)  dir = Direction::RIGHT;
+        else if (p2JumpDn || p2AxisY < -AXIS_THRESHOLD) dir = Direction::UP;
+        else if (p2Down  || p2AxisY >  AXIS_THRESHOLD)  dir = Direction::DOWN;
         player2.trySpecial(dir);
     }
 
@@ -257,11 +259,11 @@ void Game::injectControllerNav(SDL_Event e) {
             SDL_KeyCode navKey = SDLK_UNKNOWN;
 
             if (axis == SDL_CONTROLLER_AXIS_LEFTY) {
-                if (n > 0.2f)       navKey = SDLK_DOWN;
-                else if (n < -0.2f) navKey = SDLK_UP;
+                if (n > AXIS_THRESHOLD)       navKey = SDLK_DOWN;
+                else if (n < -AXIS_THRESHOLD) navKey = SDLK_UP;
             } else if (axis == SDL_CONTROLLER_AXIS_LEFTX) {
-                if (n > 0.2f)       navKey = SDLK_RIGHT;
-                else if (n < -0.2f) navKey = SDLK_LEFT;
+                if (n > AXIS_THRESHOLD)       navKey = SDLK_RIGHT;
+                else if (n < -AXIS_THRESHOLD) navKey = SDLK_LEFT;
             }
 
             if (navKey != SDLK_UNKNOWN) {
