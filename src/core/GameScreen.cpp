@@ -263,6 +263,7 @@ void Game::handleScreenTransitions() {
 
 void Game::showPauseScreen() {
     Mix_PauseMusic();
+    Mix_Pause(-1);
     setScreen(std::make_unique<PauseScreen>(options));
 }
 
