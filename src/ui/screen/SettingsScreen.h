@@ -15,11 +15,12 @@ struct OptionsResult {
     bool vsync;
     bool fullscreen;
     bool debug;
+    bool particles;
 };
 
 class SettingsScreen : public Screen {
 public:
-    SettingsScreen(int maxFps, bool vsync, bool fullscreen, bool debug);
+    SettingsScreen(int maxFps, bool vsync, bool fullscreen, bool debug, bool particles);
 
     void handle(const SDL_Event& event) override;
     void render(SDL_Renderer* renderer) override;
@@ -33,6 +34,7 @@ private:
     Button* fullscreenButton = nullptr;
     Button* vsyncButton      = nullptr;
     Button* debugButton      = nullptr;
+    Button* particlesButton  = nullptr;
     Button* okButton         = nullptr;
     bool finished = false;
 

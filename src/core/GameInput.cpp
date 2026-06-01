@@ -16,8 +16,18 @@ void Game::handleGameplayInput() {
         player1.move((p1Left && p1Right) ? 0 : p1Left ? -1 : p1Right ? +1 : 0);
     }
 
+    auto tryJumpWithParticles = [&](Player& player) {
+        bool wasOnGround = player.onGround;
+        bool hadAirJumped = player.hasAirJumped;
+        player.jump();
+        if (!wasOnGround && !hadAirJumped && player.hasAirJumped) {
+            particles.spawnDoubleJump(player.rect.x + player.rect.w / 2.0f,
+                                      player.rect.y + player.rect.h);
+        }
+    };
+
     if (input.jumpP1) {
-        player1.jump();
+        tryJumpWithParticles(player1);
         input.jumpP1 = false;
     }
     if (input.shootP1) {
@@ -92,7 +102,7 @@ void Game::handleGameplayInput() {
     if (player2.status != Status::DAMAGED)
         player2.move((p2Left && p2Right) ? 0 : p2Left ? -1 : p2Right ? 1 : 0);
 
-    if (p2JumpPr) player2.jump();
+    if (p2JumpPr) tryJumpWithParticles(player2);
     if (p2ShootPr) {
         if (player2.tryShoot()) {
             int px = (player2.facing == Facing::LEFT) ? player2.rect.x - 20 : player2.rect.x + 20;

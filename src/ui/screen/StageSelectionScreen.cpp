@@ -4,6 +4,7 @@
 #include "misc/Common.h"
 #include "misc/Renderer.h"
 #include "obj/Platform.h"
+#include "ui/widget/Button.h"
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_keycode.h>
@@ -12,6 +13,9 @@
 #include <algorithm>
 #include <string>
 
+
+static constexpr int START_BTN_X = 760, START_BTN_Y = 870;
+static constexpr int START_BTN_W = 400, START_BTN_H = 80;
 
 StageSelectionScreen::StageSelectionScreen(const Stage& defaultStage, const std::vector<Stage>& stages) : stages(stages)
 {
@@ -22,6 +26,10 @@ StageSelectionScreen::StageSelectionScreen(const Stage& defaultStage, const std:
             break;
         }
     }
+
+    addWidget<Button>(START_BTN_X, START_BTN_Y, START_BTN_W, START_BTN_H,
+        "select characters", GREEN, WHITE,
+        [&]{ confirm(); });
 }
 
 void StageSelectionScreen::navigate(int dir) {
@@ -147,14 +155,14 @@ void StageSelectionScreen::render(SDL_Renderer* r) {
                          SW / 2 - tw / 2, PREVIEW_Y + PREVIEW_H + 24, WHITE);
 
     int arrowY = PREVIEW_Y + PREVIEW_H / 2;
-    Renderer::renderArrow(r, PREVIEW_X - 40,          arrowY, Facing::LEFT);
+    Renderer::renderArrow(r, PREVIEW_X - 40, arrowY, Facing::LEFT);
     Renderer::renderArrow(r, PREVIEW_X + PREVIEW_W + 40, arrowY, Facing::RIGHT);
 
     // stage dots (pagination indicator)
     int n = static_cast<int>(stages.size());
     int dotsW = n * 18;
     int dotX  = SW / 2 - dotsW / 2;
-    int dotY  = PREVIEW_Y + PREVIEW_H + 85;
+    int dotY  = PREVIEW_Y + PREVIEW_H + 100;
     for (int i = 0; i < n; ++i) {
         Color c = (i == selectedIdx) ? WHITE : GRAY;
         Renderer::fillCircle(r, dotX + i * 18, dotY, (i == selectedIdx) ? 6 : 4, c);
@@ -177,4 +185,6 @@ void StageSelectionScreen::render(SDL_Renderer* r) {
     // hint
     Renderer::renderText(r, font, "enter to confirm; esc to go back",
                          SW / 2 - 200, SH - 60, GRAY);
+
+    drawWidgets(r, font);
 }

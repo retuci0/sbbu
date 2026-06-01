@@ -9,6 +9,8 @@
 #include "obj/Projectile.h"
 #include "obj/Shockwave.h"
 
+#include "obj/particle/ParticleManager.h"
+
 #include "misc/Stages.h"
 #include "misc/Characters.h"
 
@@ -86,6 +88,7 @@ private:
     std::vector<CollisionRect> meleeHitboxes;
     std::vector<CollisionRect> specialHitboxes;
     std::vector<Platform> platforms;
+    ParticleManager particles = ParticleManager(&options.particles);
     Player player1, player2;
 
     // countdown
@@ -131,6 +134,7 @@ private:
     void renderPlayerHud(const Player& player) const;
     void renderMinimap() const;
     void renderGameplay(float ts, float a);
+    void renderDebug(float a, TTF_Font* font);
 
 
     // network stuff

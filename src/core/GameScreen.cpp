@@ -90,6 +90,7 @@ void Game::handleScreenTransitions() {
             player2.color = { pendingSetup.r2, pendingSetup.g2, pendingSetup.b2, 230 };
             player1.resetTimers(); player2.resetTimers();
             projectiles.clear(); meleeHitboxes.clear(); specialHitboxes.clear();
+            particles.clear();
             if (Resources::get().music) playGameMusic();
             setScreen(nullptr);
             return;
@@ -145,6 +146,7 @@ void Game::handleScreenTransitions() {
         projectiles.clear();
         meleeHitboxes.clear();
         specialHitboxes.clear();
+        particles.clear();
 
         if (networkMode == NetworkMode::REMOTE_HOST && network && network->isConnected()) {
             auto charList = Resources::get().characterList();
@@ -202,7 +204,7 @@ void Game::handleScreenTransitions() {
                 break;
             case PauseActionResult::SETTINGS:
                 setScreen(std::make_unique<SettingsScreen>(
-                    options.fpsCap, options.vsync, options.fullscreen, options.debug));
+                    options.fpsCap, options.vsync, options.fullscreen, options.debug, options.particles));
                 break;
         }
         return;
@@ -220,6 +222,7 @@ void Game::handleScreenTransitions() {
         return;
     }
 
+    // controls screen
     if (auto* cs = dynamic_cast<ControlsScreen*>(screen.get())) {
         if (!cs->isFinished()) return;
         options.saveToFile();
@@ -227,6 +230,7 @@ void Game::handleScreenTransitions() {
         return;
     }
 
+    // video settings screen
     if (auto* ss = dynamic_cast<SettingsScreen*>(screen.get())) {
         if (!ss->isFinished()) return;
         auto settings = ss->getResult();
@@ -242,6 +246,7 @@ void Game::handleScreenTransitions() {
         options.debug = settings.debug;
         options.vsync = settings.vsync;
         options.fullscreen = settings.fullscreen;
+        options.particles = settings.particles;
         showPauseScreen();
     }
 

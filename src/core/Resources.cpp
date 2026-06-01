@@ -52,21 +52,30 @@ Mix_Chunk* Resources::getSound(const std::string& name) const {
 
 void Resources::load(SDL_Renderer* renderer) {
     // sprites
-    registerTexture(renderer, "platform_big",   "assets/images/platform/platform_big.png");
-    registerTexture(renderer, "platform_small", "assets/images/platform/platform_small.png");
-    registerTexture(renderer, "projectile",     "assets/images/projectile/projectile.png");
-    registerTexture(renderer, "shockwave",      "assets/images/projectile/shockwave.png");
-    registerTexture(renderer, "heart",          "assets/images/ui/heart.png");
-    registerTexture(renderer, "bg_classic",     "assets/images/ui/bg_classic.png");
-    registerTexture(renderer, "bg_pillar",      "assets/images/ui/bg_pillar.png");
-    registerTexture(renderer, "bg_flat",        "assets/images/ui/bg_flat.png");
-    registerTexture(renderer, "bg_flat",        "assets/images/bg_flat.png");
-    registerTexture(renderer, "title_bg",       "assets/images/ui/titlescreen.png");
-    registerTexture(renderer, "settings",       "assets/images/ui/settings.png");
-    registerTexture(renderer, "3",              "assets/images/ui/3.png");
-    registerTexture(renderer, "2",              "assets/images/ui/2.png");
-    registerTexture(renderer, "1",              "assets/images/ui/1.png");
-    registerTexture(renderer, "go",             "assets/images/ui/go.png");
+    registerTexture(renderer, "platform_big",    "assets/images/platform/platform_big.png");
+    registerTexture(renderer, "platform_small",  "assets/images/platform/platform_small.png");
+
+    registerTexture(renderer, "projectile",      "assets/images/projectile/projectile.png");
+    registerTexture(renderer, "shockwave",       "assets/images/projectile/shockwave.png");
+
+    registerTexture(renderer, "heart",           "assets/images/ui/heart.png");
+    registerTexture(renderer, "settings",        "assets/images/ui/settings.png");
+
+    registerTexture(renderer, "3",               "assets/images/ui/3.png");
+    registerTexture(renderer, "2",               "assets/images/ui/2.png");
+    registerTexture(renderer, "1",               "assets/images/ui/1.png");
+    registerTexture(renderer, "go",              "assets/images/ui/go.png");
+
+    registerTexture(renderer, "title_bg",        "assets/images/ui/titlescreen.png");
+    registerTexture(renderer, "bg_classic",      "assets/images/ui/bg_classic.png");
+    registerTexture(renderer, "bg_pillar",       "assets/images/ui/bg_pillar.png");
+    registerTexture(renderer, "bg_flat",         "assets/images/ui/bg_flat.png");
+    registerTexture(renderer, "bg_flat",         "assets/images/bg_flat.png");
+
+    registerTexture(renderer, "particle_crit",   "assets/images/particle/critical.png");
+    registerTexture(renderer, "particle_damage", "assets/images/particle/damage.png");
+    registerTexture(renderer, "particle_dj",     "assets/images/particle/double_jump.png");
+    registerTexture(renderer, "particle_death",  "assets/images/particle/death.png");
 
 
     // sounds effects

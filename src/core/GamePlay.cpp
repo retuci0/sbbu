@@ -2,7 +2,27 @@
 
 #include "core/Resources.h"
 
+#include <algorithm>
 #include <random>
+
+
+namespace {
+    struct HitValues {
+        int damage;
+        float kbScale;
+        bool critical;
+    };
+
+        HitValues rollCriticalHit(const Player& attacker, int damage, float kbScale) {
+            static std::mt19937 rng(std::random_device{}());
+            static std::uniform_real_distribution<float> chance(0.0f, 1.0f);
+
+        if (chance(rng) >= attacker.character->stats.critChance) {
+            return {damage, kbScale, false};
+        }
+        return {std::max(1, damage * 2), kbScale * 1.5f, true};
+    }
+}
 
 
 //////////////////////////////////////
@@ -67,6 +87,15 @@ void Game::updateGameplay(float ts) {
     trySpawnSpecialHitbox(player1);
     trySpawnSpecialHitbox(player2);
 
+    auto spawnHitParticles = [&](const Player& target, const HitValues& hit) {
+        float x = target.rect.x + target.rect.w / 2.0f;
+        float y = target.rect.y + target.rect.h / 2.0f;
+        particles.spawnDamage(x, y);
+        if (hit.critical) {
+            particles.spawnCrit(x, y);
+        }
+    };
+
     auto tryParryProjectile = [&](Projectile& projectile) {
         auto tryHitbox = [&](const CollisionRect& hitbox) {
             if (!hitbox.owner || projectile.owner == hitbox.owner) return false;
@@ -96,12 +125,14 @@ void Game::updateGameplay(float ts) {
         if (it->rect.x >= SW || it->rect.x <= 0) { it = projectiles.erase(it); continue; }
         if (it->owner != &player1 && SDL_HasIntersection(&it->rect, &player1.rect)) {
             if (player1.invulnerableTimer > 0) { ++it; continue; }
+            auto hit = rollCriticalHit(*it->owner, it->owner->character->stats.projectileDamage, 1.0f);
             if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
-                player1.blockHit(it->owner->character->stats.projectileDamage, 1.0f);
+                player1.blockHit(hit.damage, hit.kbScale);
                 it = projectiles.erase(it);
                 continue;
             } else {
-                player1.getHit(it->direction, it->owner->character->stats.projectileDamage);
+                player1.getHit(it->direction, hit.damage, hit.kbScale);
+                spawnHitParticles(player1, hit);
                 it->owner->charge = std::min(it->owner->charge + 0.1f, Player::MAX_CHARGE);
                 it = projectiles.erase(it);
                 continue;
@@ -109,12 +140,14 @@ void Game::updateGameplay(float ts) {
         }
         if (it->owner != &player2 && SDL_HasIntersection(&it->rect, &player2.rect)) {
             if (player2.invulnerableTimer > 0) { ++it; continue; }
+            auto hit = rollCriticalHit(*it->owner, it->owner->character->stats.projectileDamage, 1.0f);
             if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
-                player2.blockHit(it->owner->character->stats.projectileDamage, 1.0f);
+                player2.blockHit(hit.damage, hit.kbScale);
                 it = projectiles.erase(it);
                 continue;
             } else {
-                player2.getHit(it->direction, it->owner->character->stats.projectileDamage);
+                player2.getHit(it->direction, hit.damage, hit.kbScale);
+                spawnHitParticles(player2, hit);
                 it->owner->charge = std::min(it->owner->charge + 0.1f, Player::MAX_CHARGE);
                 it = projectiles.erase(it);
                 continue;
@@ -129,24 +162,24 @@ void Game::updateGameplay(float ts) {
         it->update(ts);
         if (!it->isAlive()) { it = meleeHitboxes.erase(it); continue; }
         if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
-            int dmg = it->owner->character->stats.damage;
-            float kb = it->kbScale;
+            auto hit = rollCriticalHit(*it->owner, it->owner->character->stats.damage, it->kbScale);
             if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
-                player2.blockHit(dmg, kb);
+                player2.blockHit(hit.damage, hit.kbScale);
             } else {
-                player2.getHit(player1.facing, dmg, kb);
+                player2.getHit(player1.facing, hit.damage, hit.kbScale);
+                spawnHitParticles(player2, hit);
                 player1.charge = std::min(player1.charge + 0.1f, Player::MAX_CHARGE);
             }
             it = meleeHitboxes.erase(it);
             continue;
         }
         if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
-            int dmg = it->owner->character->stats.damage;
-            float kb = it->kbScale;
+            auto hit = rollCriticalHit(*it->owner, it->owner->character->stats.damage, it->kbScale);
             if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
-                player1.blockHit(dmg, kb);
+                player1.blockHit(hit.damage, hit.kbScale);
             } else {
-                player1.getHit(player2.facing, dmg, kb);
+                player1.getHit(player2.facing, hit.damage, hit.kbScale);
+                spawnHitParticles(player1, hit);
                 player2.charge = std::min(player2.charge + 0.1f, Player::MAX_CHARGE);
             }
             it = meleeHitboxes.erase(it);
@@ -165,10 +198,12 @@ void Game::updateGameplay(float ts) {
             if (!dir) return;
             int dmg = static_cast<int>(it->getOwner()->character->stats.damage * 1.5f);
             float kb = 1.5f;
+            auto hit = rollCriticalHit(*it->getOwner(), dmg, kb);
             if (target.status == Status::SHIELDED && target.shieldTimer > 0 && !target.shieldBroken) {
-                target.blockHit(dmg, kb);
+                target.blockHit(hit.damage, hit.kbScale);
             } else {
-                target.getHit(*dir, dmg, kb);
+                target.getHit(*dir, hit.damage, hit.kbScale);
+                spawnHitParticles(target, hit);
             }
         };
         tryHit(player1); tryHit(player2);
@@ -182,11 +217,12 @@ void Game::updateGameplay(float ts) {
         if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
             if (player2.invulnerableTimer == 0) {
                 int dmg = static_cast<int>(player1.character->stats.damage * it->damageScale);
-                float kb = it->kbScale;
+                auto hit = rollCriticalHit(player1, dmg, it->kbScale);
                 if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
-                    player2.blockHit(dmg, kb);
+                    player2.blockHit(hit.damage, hit.kbScale);
                 } else {
-                    player2.getHit(player1.facing, dmg, kb);
+                    player2.getHit(player1.facing, hit.damage, hit.kbScale);
+                    spawnHitParticles(player2, hit);
                 }
                 it = specialHitboxes.erase(it);
                 continue;
@@ -194,11 +230,12 @@ void Game::updateGameplay(float ts) {
         } else if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
             if (player1.invulnerableTimer == 0) {
                 int dmg = static_cast<int>(player2.character->stats.damage * it->damageScale);
-                float kb = it->kbScale;
+                auto hit = rollCriticalHit(player2, dmg, it->kbScale);
                 if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
-                    player1.blockHit(dmg, kb);
+                    player1.blockHit(hit.damage, hit.kbScale);
                 } else {
-                    player1.getHit(player2.facing, dmg, kb);
+                    player1.getHit(player2.facing, hit.damage, hit.kbScale);
+                    spawnHitParticles(player1, hit);
                 }
                 it = specialHitboxes.erase(it);
                 continue;
@@ -233,10 +270,14 @@ void Game::respawn(Player& p, bool voidDeath) {
     Mix_Chunk* voidDeathSound = Resources::get().getSound("void_death");
     Mix_Chunk* deathSound = Resources::get().getSound("death");
 
+    // play corresponding death sound
     if (voidDeath && voidDeathSound)
         Mix_PlayChannel(-1, voidDeathSound, 0);
     else if (deathSound)
         Mix_PlayChannel(-1, deathSound, 0);
+
+    // spawn death particles before respawing
+    particles.spawnDeath(p.rect.x + p.rect.w / 2, p.rect.y + p.rect.h / 2);
 
     // reset the player
     p.hp                 = p.character->stats.health;

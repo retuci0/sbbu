@@ -40,6 +40,8 @@ public:
 
     bool debug                  = false;
 
+    bool particles              = true;
+
     void saveToFile  (const std::string& filename = "config.cfg") const;
     void loadFromFile(const std::string& filename = "config.cfg");
 };

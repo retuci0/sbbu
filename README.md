@@ -9,7 +9,7 @@ super bert bros is a local (and now remote too) multiplayer brawler game, heavil
 - **local multiplayer** - one keyboard, two dumbasses
 - **p2p online** - challenge a friend remotely
 - **special moves** - once you get a full charge, you'll be able to do more powerful moves
-- **hand drawn sprites** - credits to myself, [Tafeef](https://youtube.com/@Tafeef) and [IVZA](https://www.youtube.com/@IVZA-d6h)
+- **hand drawn sprites** - see credits section
 - **goofy ahh sfx** - will make you want to ditch your eardrums
 
 
@@ -17,17 +17,17 @@ super bert bros is a local (and now remote too) multiplayer brawler game, heavil
 
 ### player 1 (the one on the left side)
 
-| action       | key          |
-|--------------|--------------|
-| move left    | `A`          |
-| move right   | `D`          |
-| move down    | `S`          |
-| jump         | `SPACE`      |
-| shoot        | `E`          |
-| melee        | `W`          |
-| special      | `Q`          |
+| action       | key          | controller button |
+|--------------|--------------|-------------------|
+| move left    | `A`          | `Ljoystick ←`     |
+| move right   | `D`          | `Ljoystick →`     |
+| move down    | `S`          | `Ljoystick ↓`     |
+| jump         | `SPACE`      | `A`               |
+| shoot        | `E`          | `B`               |
+| melee        | `W`          | `X`               |
+| special      | `Q`          | `Y`               |
 
-### player 2 (the that's not on the left side)
+### player 2 (the one that's not on the left side)
 
 | action       | key          |
 |--------------|--------------|
@@ -98,13 +98,13 @@ on arch:
 
 ### building
 
-`./run.sh` will do.
+`./run.sh` will do (or `./win.sh` if you want to cross-compile for windows)
 
 
 ### credits
 
 - **music:** *bounce* by фрози and joyful (not made for me)
-- **sprites:** melee and special done by [IVZA](https://www.youtube.com/@IVZA-d6h), some other sprite might have been done by [Tafeef](https://youtube.com/@Tafeef), everything else done by myself
+- **sprites:** melee and special done by [IVZA](https://www.youtube.com/@IVZA-d6h), some other sprite might have been done by [Tafeef](https://youtube.com/@Tafeef), and titlescreen bg by Anubis7356 everything else done by myself
 - **code:** all done by myself, with a tad bit of Claude's help for the networking
 
 

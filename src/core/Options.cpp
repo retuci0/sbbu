@@ -37,11 +37,11 @@ void Options::saveToFile(const std::string& filename) const {
 
     file << "sfxVolume="   << sfxVolume   << "\n";
     file << "musVolume="   << musVolume   << "\n";
-    file << "debug="       << (debug ? 1 : 0) << "\n";
+    file << "debug="       << debug       << "\n";
     file << "fpsCap="      << fpsCap      << "\n";
     file << "vsync="       << vsync       << "\n";
     file << "fullscreen="  << fullscreen  << "\n";
-
+    file << "particles="   << particles   << "\n";
     file.close();
 }
 
@@ -123,5 +123,6 @@ void Options::loadFromFile(const std::string& filename) {
         if (key == "debug")       getBoolValue(debug);
         if (key == "vsync")       getBoolValue(vsync);
         if (key == "fullscreen")  getBoolValue(fullscreen);
+        if (key == "particles")   getBoolValue(particles);
     }
 }

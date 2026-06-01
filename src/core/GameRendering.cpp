@@ -1,6 +1,7 @@
 #include "core/Game.h"
 
 #include "misc/Renderer.h"
+#include <SDL2/SDL_ttf.h>
 
 
 ///////////////////////////////////////////
@@ -153,6 +154,33 @@ void Game::renderCountdown() const {
     Renderer::drawSprite(renderer, tex, &rect, false);
 }
 
+void Game::renderDebug(float a, TTF_Font* font) {
+    player1.drawHitbox(renderer, a);
+    player2.drawHitbox(renderer, a);
+    for (auto& p : platforms)                 p.drawHitbox(renderer, a);
+    for (auto& pr : projectiles)           pr.drawHitbox(renderer, a);
+    for (auto& cr : meleeHitboxes)      cr.drawHitbox(renderer, a);
+    for (auto& cr : specialHitboxes)    cr.drawHitbox(renderer, a);
+    for (auto& sw : shockwaves)             sw.drawHitboxes(renderer, a);
+
+    Renderer::renderText(renderer, font,
+        player1.name + ": " + player1.getStatusName(), 2, 2, BLACK);
+    Renderer::renderText(renderer, font,
+        player2.name + ": " + player2.getStatusName(), 2, 32, BLACK);
+
+    std::string fpsStr = "fps: " + std::to_string(static_cast<int>(fps));
+    int tw, th;
+    TTF_SizeText(font, fpsStr.c_str(), &tw, &th);
+    Renderer::renderText(renderer, font, fpsStr, SW - tw - 2, 2, BLACK);
+
+    if (networkMode == NetworkMode::REMOTE_HOST || networkMode == NetworkMode::REMOTE_CLIENT) {
+        std::string pingStr = "ping: ";
+        pingStr += (ping >= 0) ? std::to_string(ping) + " ms" : "? ms";
+        TTF_SizeText(font, pingStr.c_str(), &tw, &th);
+        Renderer::renderText(renderer, font, pingStr, SW - tw - 2, 34, BLACK);
+    }
+}
+
 void Game::renderGameplay(float ts, float a) {
     TTF_Font* font = Resources::get().font;
     TTF_Font* smallFont = Resources::get().smallFont;
@@ -170,34 +198,9 @@ void Game::renderGameplay(float ts, float a) {
     player2.draw(renderer, smallFont, a);
     for (auto& pr : projectiles) pr.draw(renderer, a);
     for (auto& sw : shockwaves)   sw.draw(renderer, a);
+    particles.draw(renderer, a);
 
-
-    if (options.debug) {
-        player1.drawHitbox(renderer, a);
-        player2.drawHitbox(renderer, a);
-        for (auto& p : platforms)                 p.drawHitbox(renderer, a);
-        for (auto& pr : projectiles)           pr.drawHitbox(renderer, a);
-        for (auto& cr : meleeHitboxes)      cr.drawHitbox(renderer, a);
-        for (auto& cr : specialHitboxes)    cr.drawHitbox(renderer, a);
-        for (auto& sw : shockwaves)             sw.drawHitboxes(renderer, a);
-
-        Renderer::renderText(renderer, font,
-            player1.name + ": " + player1.getStatusName(), 2, 2, BLACK);
-        Renderer::renderText(renderer, font,
-            player2.name + ": " + player2.getStatusName(), 2, 32, BLACK);
-
-        std::string fpsStr = "fps: " + std::to_string(static_cast<int>(fps));
-        int tw, th;
-        TTF_SizeText(font, fpsStr.c_str(), &tw, &th);
-        Renderer::renderText(renderer, font, fpsStr, SW - tw - 2, 2, BLACK);
-
-        if (networkMode == NetworkMode::REMOTE_HOST || networkMode == NetworkMode::REMOTE_CLIENT) {
-            std::string pingStr = "ping: ";
-            pingStr += (ping >= 0) ? std::to_string(ping) + " ms" : "? ms";
-            TTF_SizeText(font, pingStr.c_str(), &tw, &th);
-            Renderer::renderText(renderer, font, pingStr, SW - tw - 2, 34, BLACK);
-        }
-    }
+    if (options.debug) renderDebug(a, font);
 
     renderPlayerHud(player1);
     renderPlayerHud(player2);

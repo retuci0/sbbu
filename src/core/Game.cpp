@@ -143,6 +143,7 @@ void Game::update(float ts) {
             handleGameplayInput();
             updateGameplay(ts);
         }
+        particles.update(ts);
         if (networkMode == NetworkMode::REMOTE_HOST && network && network->isConnected()) {
             netSendStateUpdate();
         }
