@@ -80,7 +80,7 @@ void StageSelectionScreen::handle(const SDL_Event& e) {
             // adjust time limit
             case SDLK_UP:
                 if (timeLimit == -1) timeLimit = 60;
-                else                 timeLimit = std::min(timeLimit + 30, 600);
+                else                 timeLimit = std::min(timeLimit + 30, 600);  // 10 min max
                 break;
             case SDLK_DOWN:
                 if (timeLimit > 60)  timeLimit -= 30;
@@ -88,6 +88,19 @@ void StageSelectionScreen::handle(const SDL_Event& e) {
                 break;
 
             default: break;
+        }
+    } else if (e.type == SDL_MOUSEBUTTONDOWN) {
+        if (e.button.x >= PREVIEW_X - 60 && e.button.x <= PREVIEW_X - 20
+                && e.button.y >= PREVIEW_Y + PREVIEW_H / 2 - 20     
+                && e.button.y <= PREVIEW_Y + PREVIEW_H / 2 + 20
+        ) {
+            navigate(-1);
+        }
+        if (e.button.x >= PREVIEW_X + PREVIEW_W + 20 && e.button.x <= PREVIEW_X + PREVIEW_W + 60
+                && e.button.y >= PREVIEW_Y + PREVIEW_H / 2 - 20     
+                && e.button.y <= PREVIEW_Y + PREVIEW_H / 2 + 20
+        ) {
+            navigate(+1);
         }
     }
 }

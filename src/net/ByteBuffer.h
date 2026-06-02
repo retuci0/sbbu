@@ -17,7 +17,7 @@ public:
     void writeUint16(uint16_t v);
     void writeInt32(int32_t v) { writeUint32(static_cast<uint32_t>(v)); }
     void writeUint32(uint32_t v);
-    void writeFloat(float v);
+    void writeFloat(float v); 
     void writeBool(bool v) { writeUint8(v ? 1 : 0); }
     void writeString(const std::string& s);
     void writeBytes(const void* data, size_t len);

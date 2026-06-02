@@ -196,7 +196,7 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
 }
 
 void Game::netSendClientInputs() {
-    uint8_t inputs = 0;
+    uint16_t inputs = 0;
     // keyboard
     if (isDown(options.keyP1Left))    inputs |= InputBit::LEFT;
     if (isDown(options.keyP1Right))   inputs |= InputBit::RIGHT;
@@ -206,6 +206,7 @@ void Game::netSendClientInputs() {
     if (isDown(options.keyP1Melee))   inputs |= InputBit::MELEE;
     if (isDown(options.keyP1Special)) inputs |= InputBit::SPECIAL;
     if (isDown(options.keyP1Shield))  inputs |= InputBit::SHIELD;
+    if (isDown(options.keyP1Dash))    inputs |= InputBit::DASH;
     // controller 0
     float axisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
     float axisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0);
@@ -217,6 +218,7 @@ void Game::netSendClientInputs() {
     if (isDown(SDL_CONTROLLER_BUTTON_X,           0)) inputs |= InputBit::MELEE;
     if (isDown(SDL_CONTROLLER_BUTTON_Y,           0)) inputs |= InputBit::SPECIAL;
     if (isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,0)) inputs |= InputBit::SHIELD;
+    if (isDown(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,0)) inputs |= InputBit::DASH;
 
     ClientInputPacket cip(netFrame, inputs, lastSentInputs);
     network->send(cip);

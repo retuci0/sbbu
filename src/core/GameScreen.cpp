@@ -89,7 +89,7 @@ void Game::handleScreenTransitions() {
             player1.resetTimers(); player2.resetTimers();
             projectiles.clear(); meleeHitboxes.clear(); specialHitboxes.clear();
             particles.clear();
-            if (Resources::get().music) playGameMusic();
+            if (Resources::get().gameMusic) playGameMusic();
             screens.clear();
             return;
         }
@@ -157,7 +157,7 @@ void Game::handleScreenTransitions() {
             network->send(gsp);
         }
 
-        if (Resources::get().music) { playGameMusic(); }
+        if (Resources::get().gameMusic) { playGameMusic(); }
         screens.clear();
         return;
     }

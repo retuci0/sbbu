@@ -28,7 +28,8 @@ enum class Status {
     SPECIAL_UP,
     SPECIAL_DOWN,
     SHIELDED,
-    STUNNED
+    STUNNED,
+    DASHING
 };
 
 class Player {
@@ -36,7 +37,7 @@ public:
     std::string name;
     const Character* character = nullptr;  // non-owning
 
-    int id;
+    int id = 0;
 
     float dx = 0.0f, dy = 0.0f;
 
@@ -118,8 +119,14 @@ public:
     Player() = default;
     void init(int x, int y, const Character* ch, const std::string& playerName);
 
+    // movement
     void move(int direction);  // -1 left, 0 stop, +1 right
     void jump();
+    void dash();
+    float dashTimer = 0.0f;
+    static constexpr int DASH_DURATION = 10;
+    float dashCooldown = 0.0f;
+    static constexpr int DASH_COOLDOWN = 60;
 
     void getHit(Facing side, int damage, float kbScale = 1.0f);
     bool tryShoot();

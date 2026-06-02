@@ -1,4 +1,4 @@
-#include "Player.h"
+#include "obj/Player.h"
 
 #include "obj/Platform.h"
 #include "core/Resources.h"
@@ -47,7 +47,8 @@ void Player::move(int direction) {
     if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE 
         || status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN 
         || status == Status::SHOOTING || status == Status::SHIELDED
-        || status == Status::STUNNED
+        || status == Status::STUNNED || status == Status::DAMAGED
+        || status == Status::DASHING
     ) {
         return;
     }
@@ -73,7 +74,7 @@ void Player::jump() {
     if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE 
         || status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN 
         || status == Status::SHOOTING || status == Status::SHIELDED
-        || status == Status::STUNNED
+        || status == Status::STUNNED || status == Status::DASHING
     ) {
         return;
     }
@@ -89,6 +90,30 @@ void Player::jump() {
         status = Status::JUMPING;
         hasAirJumped = true;
     }
+}
+
+void Player::dash() {
+    if (dashCooldown > 0.0f) return;
+    if (status == Status::DASHING)  return;
+    if (status == Status::STUNNED || status == Status::DAMAGED 
+                || status == Status::SHIELDED
+    ) {
+        return;
+    }
+
+    status = Status::DASHING;
+    dashTimer = static_cast<float>(DASH_DURATION);
+    dashCooldown = static_cast<float>(DASH_DURATION + DASH_COOLDOWN);
+
+    float speed = character->stats.velocity * 2.8f;
+    dx = (facing == Facing::RIGHT) ? speed : -speed;
+    dy = 0.0f;  // cancel vertical momentum
+
+    // small invulnerability window at the start
+    invulnerableTimer = std::max(invulnerableTimer, 8.0f);
+
+    Mix_Chunk* dashSound = Resources::get().getSound("dash");
+    if (dashSound) Mix_PlayChannel(-1, dashSound, 0);
 }
 
 
@@ -294,7 +319,9 @@ void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed,
 
     // gravity
     dy = std::min(character->stats.terminalVelocity, dy + character->stats.gravity * ts);
-
+    // reduce gravity when dashing
+    if (status == Status::DASHING) dy *= 0.3f;
+    
     
     // horizontal move
     rect.x += static_cast<int>(dx * ts);
@@ -354,10 +381,11 @@ void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed,
     charge = std::clamp(charge, 0.0f, 1.0f);
 
     if (status != Status::DAMAGED && status != Status::ATTACKING
-        && status != Status::SHIELDED && status != Status::SHOOTING
-        && status != Status::SPECIAL_STATIC && status != Status::SPECIAL_SIDE
-        && status != Status::SPECIAL_UP && status != Status::SPECIAL_DOWN
-        && status != Status::STUNNED) {
+            && status != Status::SHIELDED && status != Status::SHOOTING
+            && status != Status::SPECIAL_STATIC && status != Status::SPECIAL_SIDE
+            && status != Status::SPECIAL_UP && status != Status::SPECIAL_DOWN
+            && status != Status::STUNNED && status != Status::DASHING
+    ) {
         if (!onGround) status = Status::JUMPING;
         else if (dx != 0.0f) status = Status::WALKING;
         else status = Status::IDLE;
@@ -445,6 +473,20 @@ void Player::updateTimers(float ts) {
     if (shieldTimer > 0.0f && !shieldHeld && shieldStunTimer <= 0.0f) {
         releaseShield();
     }
+
+    if (dashTimer > 0.0f) {
+        dashTimer -= ts;
+        if (dashTimer <= 0.0f) {
+            dashTimer = 0.0f;
+            if (status == Status::DASHING) {
+                status = onGround ? Status::IDLE : Status::JUMPING;
+                dx *= 0.25f;
+            }
+        }
+    }
+    if (dashCooldown > 0.0f) {
+        dashCooldown = std::max(0.0f, dashCooldown - ts);
+    }
 }
 
 void Player::resetTimers() {
@@ -462,6 +504,8 @@ void Player::resetTimers() {
     shieldBroken         = false;
     shieldHeld           = false;
     specialHitboxSpawned = false;
+    dashTimer            = 0.0f;
+    dashCooldown         = 0.0f;
 }
 
 
@@ -519,6 +563,9 @@ void Player::animate(float ts) {
         case Status::STUNNED:
             advanceFrame(character->specialDownFrames, 0.21f);
             break;
+        case Status::DASHING:  // walk but faster
+            advanceFrame(character->walkFrames, 0.45f);
+            break;
         default:
             currentSpriteIndex = 0.0f;
             break;
@@ -557,6 +604,9 @@ void Player::draw(SDL_Renderer* r, TTF_Font* font, float a) {
             break;
         case Status::STUNNED:
             drawAnimatedSprite(character->stunnedFrames);
+            break;
+        case Status::DASHING:
+            drawAnimatedSprite(character->walkFrames);
             break;
         case Status::SHOOTING:
             drawSprite(r, character->shoot, flipH, a);

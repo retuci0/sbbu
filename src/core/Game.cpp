@@ -152,7 +152,7 @@ void Game::update(float ts) {
     netFrame++;
 
     // end game
-    if (timer <= 0.0f) {
+    if (timer <= 0.0f && timerDuration > 0) {
         std::string details;
         if (player1.lives > player2.lives) {
             details = player1.name + " wins!";

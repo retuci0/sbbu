@@ -63,6 +63,12 @@ void Network::poll() {
 
     while (SDLNet_UDP_Recv(socket, up)) {
         if (up->len < 1) continue;
+
+        // ignore packets from anyone other than the one who established the connection
+        if (connected && (up->address.host != remoteAddr.host || up->address.port != remoteAddr.port)) {
+            continue;
+        }
+
         lastReceiveTicks = SDL_GetTicks();
 
         PacketType type = static_cast<PacketType>(up->data[0]);
@@ -74,12 +80,17 @@ void Network::poll() {
         ByteBuffer buf(payload);
         try {
             pkt->read(buf);
-        } catch (...) {
-            continue;  // malformed packet
+        } catch (...) {  // malformed packet
+            continue;
         }
 
         // handle handshake automatically
         if (!connected && (type == PacketType::HANDSHAKE || type == PacketType::HANDSHAKE_ACK)) {
+            // reject mismatched protocol versions
+            if (type == PacketType::HANDSHAKE) {
+                auto* hs = dynamic_cast<HandshakePacket*>(pkt.get());
+                if (!hs || hs->protocolVersion != PROTOCOL_VERSION) continue;
+            }
             remoteAddr = up->address;
             connected = true;
             if (onConnect) onConnect();

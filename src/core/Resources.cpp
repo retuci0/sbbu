@@ -84,6 +84,7 @@ void Resources::load(SDL_Renderer* renderer) {
 
     registerSound("jump",         "assets/sound/jump.wav");
     registerSound("jump2",        "assets/sound/jump2.wav");
+    registerSound("dash",         "assets/sound/dash.wav");
     registerSound("melee",        "assets/sound/punch.wav");
     registerSound("projectile",   "assets/sound/projectile.wav");
     registerSound("special_static","assets/sound/special_static.wav");
@@ -101,7 +102,7 @@ void Resources::load(SDL_Renderer* renderer) {
     registerSound("game_end",     "assets/sound/game_end.wav");
 
     // music
-    music            = Mix_LoadMUS("assets/sound/music.mp3");
+    gameMusic            = Mix_LoadMUS("assets/sound/music.mp3");
     titleScreenMusic = Mix_LoadMUS("assets/sound/titlescreenmusic.mp3");
 
     // fonts
@@ -144,7 +145,7 @@ void Resources::applySfxVolume(float multiplier) {
     setVol("select",        32);
     setVol("shield_break",  20);
 
-    if (music)            Mix_VolumeMusic(static_cast<int>(9 * multiplier));
+    if (gameMusic)            Mix_VolumeMusic(static_cast<int>(9 * multiplier));
     if (titleScreenMusic) Mix_VolumeMusic(static_cast<int>(9 * multiplier));
 }
 
@@ -162,7 +163,7 @@ void Resources::destroy() {
     if (titleFont) TTF_CloseFont(titleFont);
     if (font)      TTF_CloseFont(font);
     if (smallFont) TTF_CloseFont(smallFont);
-    if (music)     Mix_FreeMusic(music);
+    if (gameMusic)     Mix_FreeMusic(gameMusic);
     if (titleScreenMusic) Mix_FreeMusic(titleScreenMusic);
 
     BERT.unload();     BERROTA.unload(); LORC.unload();

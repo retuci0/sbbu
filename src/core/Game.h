@@ -147,8 +147,8 @@ private:
     std::unique_ptr<Network> network;
     
     NetworkMode networkMode = NetworkMode::NONE;
-    uint8_t remoteInputBits = 0, prevRemoteInputBits = 0;
-    uint8_t lastSentInputs = 0;
+    uint16_t remoteInputBits = 0, prevRemoteInputBits = 0;
+    uint16_t lastSentInputs = 0;
     uint32_t netFrame = 0;
     uint32_t lastAppliedStateFrame = 0;
     bool hasAppliedStateFrame = false;
@@ -171,11 +171,11 @@ private:
 
     bool hasPendingSetup = false;
 
-    bool remoteIsDown(uint8_t bit) const { 
+    bool remoteIsDown(uint16_t bit) const { 
         return (remoteInputBits & bit) != 0; 
     }
 
-    bool remoteIsPressed(uint8_t bit) const {
+    bool remoteIsPressed(uint16_t bit) const {
         return ((remoteInputBits & bit) != 0) 
             && ((prevRemoteInputBits & bit) == 0);
     }

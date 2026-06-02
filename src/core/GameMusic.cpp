@@ -18,10 +18,10 @@ void Game::playTitleMusic() {
 }
 
 void Game::playGameMusic() {
-    Mix_Music* gameMusic = Resources::get().music;
+    Mix_Music* gameMusic = Resources::get().gameMusic;
     if (gameMusic && music != gameMusic) {
         Mix_HaltMusic();
-        Mix_PlayMusic(Resources::get().music, -1);
+        Mix_PlayMusic(Resources::get().gameMusic, -1);
         music = gameMusic;
     }
 }

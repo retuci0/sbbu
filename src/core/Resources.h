@@ -27,10 +27,10 @@ public:
     Mix_Chunk*   getSound(const std::string& name) const;
 
     // convenience
-    TTF_Font* titleFont     = nullptr;
-    TTF_Font* font          = nullptr;
-    TTF_Font* smallFont     = nullptr;
-    Mix_Music* music        = nullptr;
+    TTF_Font* titleFont         = nullptr;
+    TTF_Font* font              = nullptr;
+    TTF_Font* smallFont         = nullptr;
+    Mix_Music* gameMusic        = nullptr;
     Mix_Music* titleScreenMusic = nullptr;
 
     Character BERT, BERROTA, LORC, JORDI, BARCOS, ALSEXITO, SHASHA, OSCAR, FLAN;

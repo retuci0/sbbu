@@ -28,10 +28,12 @@ struct Input {
     bool shootP1   = false;
     bool meleeP1   = false;
     bool specialP1 = false;
+    bool dashP1    = false;
     bool jumpP2    = false;
     bool shootP2   = false;
     bool meleeP2   = false;
     bool specialP2 = false;
+    bool dashP2    = false;
 };
 
 enum class KeyAction {

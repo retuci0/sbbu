@@ -1,4 +1,5 @@
 #include "core/Game.h"
+#include <SDL2/SDL_gamecontroller.h>
 
 
 ///////////////////////////////////////
@@ -14,11 +15,9 @@ void Game::handleGameplayInput() {
     bool p1Right  = isDown(options.keyP1Right)  || (p1Axis > AXIS_THRESHOLD);
     bool p1Shield = isDown(options.keyP1Shield) || isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, 0);
 
-    if (player1.status != Status::DAMAGED) {
-        player1.move((p1Left && p1Right) ? 0 : p1Left ? -1 : p1Right ? +1 : 0);
-    }
+    player1.move((p1Left && p1Right) ? 0 : p1Left ? -1 : p1Right ? +1 : 0);
 
-    auto tryJumpWithParticles = [&](Player& player) {
+    auto tryJump = [&](Player& player) {
         bool wasOnGround = player.onGround;
         bool hadAirJumped = player.hasAirJumped;
         player.jump();
@@ -29,7 +28,7 @@ void Game::handleGameplayInput() {
     };
 
     if (input.jumpP1) {
-        tryJumpWithParticles(player1);
+        tryJump(player1);
         input.jumpP1 = false;
     }
     if (input.shootP1) {
@@ -63,6 +62,10 @@ void Game::handleGameplayInput() {
         player1.trySpecial(dir);
         input.specialP1 = false;
     }
+    if (input.dashP1) {
+        player1.dash();
+        input.dashP1 = false;
+    }
 
     player1.setShieldHeld(p1Shield);
     if (p1Shield) {
@@ -74,7 +77,7 @@ void Game::handleGameplayInput() {
     // player2 - local or remote
     bool p2Left, p2Right, p2Down, p2Shield;
     bool p2JumpPr, p2ShootPr, p2MeleePr, p2SpecialPr;
-    bool p2JumpDn;
+    bool p2JumpDn, p2DashPr;
 
     if (networkMode == NetworkMode::REMOTE_HOST) {
         // remote player: read from network bits
@@ -87,6 +90,7 @@ void Game::handleGameplayInput() {
         p2ShootPr   = remoteIsPressed(InputBit::SHOOT);
         p2MeleePr   = remoteIsPressed(InputBit::MELEE);
         p2SpecialPr = remoteIsPressed(InputBit::SPECIAL);
+        p2DashPr    = remoteIsPressed(InputBit::DASH);
     } else {
         // local player 2: keyboard OR controller 1
         float p2Axis = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 1);
@@ -99,12 +103,13 @@ void Game::handleGameplayInput() {
         p2ShootPr   = input.shootP2;   input.shootP2 = false;
         p2MeleePr   = input.meleeP2;   input.meleeP2 = false;
         p2SpecialPr = input.specialP2; input.specialP2 = false;
+        p2DashPr    = input.dashP2;    input.dashP2 = false;
     }
 
     if (player2.status != Status::DAMAGED)
         player2.move((p2Left && p2Right) ? 0 : p2Left ? -1 : p2Right ? 1 : 0);
 
-    if (p2JumpPr) tryJumpWithParticles(player2);
+    if (p2JumpPr) tryJump(player2);
     if (p2ShootPr) {
         if (player2.tryShoot()) {
             int px = (player2.facing == Facing::LEFT) ? player2.rect.x - 20 : player2.rect.x + 20;
@@ -128,6 +133,9 @@ void Game::handleGameplayInput() {
         else if (p2JumpDn || p2AxisY < -AXIS_THRESHOLD) dir = Direction::UP;
         else if (p2Down  || p2AxisY >  AXIS_THRESHOLD)  dir = Direction::DOWN;
         player2.trySpecial(dir);
+    }
+    if (p2DashPr) {
+        player2.dash();
     }
 
     player2.setShieldHeld(p2Shield);
@@ -156,11 +164,13 @@ void Game::onKey(SDL_Keycode key, KeyAction action) {
     if (key == options.keyP1Shoot)   input.shootP1   = true;
     if (key == options.keyP1Melee)   input.meleeP1   = true;
     if (key == options.keyP1Special) input.specialP1 = true;
+    if (key == options.keyP1Dash)    input.dashP1    = true;
 
     if (key == options.keyP2Jump)    input.jumpP2    = true;
     if (key == options.keyP2Shoot)   input.shootP2   = true;
     if (key == options.keyP2Melee)   input.meleeP2   = true;
     if (key == options.keyP2Special) input.specialP2 = true;
+    if (key == options.keyP2Dash)    input.dashP2    = true;
 }
 
 void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action, int ctrl) {
@@ -173,6 +183,7 @@ void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonA
             case SDL_CONTROLLER_BUTTON_B:     input.shootP1   = true; break;
             case SDL_CONTROLLER_BUTTON_X:     input.meleeP1   = true; break;
             case SDL_CONTROLLER_BUTTON_Y:     input.specialP1 = true; break;
+            case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: input.dashP1 = true; break;
             default: break;
         }
     } else if (ctrl == 1 && networkMode != NetworkMode::REMOTE_CLIENT) {
@@ -182,6 +193,7 @@ void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonA
             case SDL_CONTROLLER_BUTTON_B:     input.shootP2   = true; break;
             case SDL_CONTROLLER_BUTTON_X:     input.meleeP2   = true; break;
             case SDL_CONTROLLER_BUTTON_Y:     input.specialP2 = true; break;
+            case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: input.dashP2 = true; break;
             default: break;
         }
     }

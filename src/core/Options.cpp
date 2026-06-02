@@ -20,6 +20,7 @@ void Options::saveToFile(const std::string& filename) const {
     writeKey("keyP1Melee",    keyP1Melee);
     writeKey("keyP1Special",  keyP1Special);
     writeKey("keyP1Shield",   keyP1Shield);
+    writeKey("keyP1Dash",     keyP1Dash);
 
     writeKey("keyP2Left",     keyP2Left);
     writeKey("keyP2Right",    keyP2Right);
@@ -29,6 +30,7 @@ void Options::saveToFile(const std::string& filename) const {
     writeKey("keyP2Melee",    keyP2Melee);
     writeKey("keyP2Special",  keyP2Special);
     writeKey("keyP2Shield",   keyP2Shield);
+    writeKey("keyP2Dash",     keyP2Dash);
 
     writeKey("keyPause",      keyPause);
     writeKey("keyQuit",       keyQuit);
@@ -78,6 +80,7 @@ void Options::loadFromFile(const std::string& filename) {
         parseKey(keyP1Melee,    "keyP1Melee");
         parseKey(keyP1Special,  "keyP1Special");
         parseKey(keyP1Shield,   "keyP1Shield");
+        parseKey(keyP2Dash,     "keyP2Dash");
 
         parseKey(keyP2Left,     "keyP2Left");
         parseKey(keyP2Right,    "keyP2Right");
@@ -87,6 +90,7 @@ void Options::loadFromFile(const std::string& filename) {
         parseKey(keyP2Melee,    "keyP2Melee");
         parseKey(keyP2Special,  "keyP2Special");
         parseKey(keyP2Shield,   "keyP2Shield");
+        parseKey(keyP2Dash,     "keyP2Dash");
 
         parseKey(keyPause,      "keyPause");
         parseKey(keyQuit,       "keyQuit");

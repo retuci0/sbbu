@@ -35,7 +35,7 @@ constexpr Color MAGENTA         = { 255,   0, 255, 255 };
 
 
 // for network transmission
-enum InputBit : uint8_t {
+enum InputBit : uint16_t {
     LEFT    = 1 << 0,
     RIGHT   = 1 << 1,
     DOWN    = 1 << 2,
@@ -43,7 +43,8 @@ enum InputBit : uint8_t {
     SHOOT   = 1 << 4,
     MELEE   = 1 << 5,
     SPECIAL = 1 << 6,
-    SHIELD  = 1 << 7
+    SHIELD  = 1 << 7,
+    DASH    = 1 << 8
 };
 
 // timeout to connect to host

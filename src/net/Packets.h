@@ -76,7 +76,7 @@ public:
 class ClientInputPacket : public Packet {
 public:
     ClientInputPacket() = default;
-    ClientInputPacket(uint32_t frame, uint8_t inputs, uint8_t lastInputs)
+    ClientInputPacket(uint32_t frame, uint16_t inputs, uint16_t lastInputs)
         : frame(frame), inputs(inputs), lastInputs(lastInputs) {}
 
     PacketType getType() const override { return PacketType::CLIENT_INPUT; }
@@ -84,18 +84,18 @@ public:
 
     void write(ByteBuffer& out) const override {
         out.writeUint32(frame);
-        out.writeUint8(inputs);
-        out.writeUint8(lastInputs);
+        out.writeUint16(inputs);
+        out.writeUint16(lastInputs);
     }
     void read(ByteBuffer& in) override {
         frame = in.readUint32();
-        inputs = in.readUint8();
-        lastInputs = in.readUint8();
+        inputs = in.readUint16();
+        lastInputs = in.readUint16();
     }
 
     uint32_t frame = 0;
-    uint8_t  inputs = 0;
-    uint8_t  lastInputs = 0;
+    uint16_t  inputs = 0;
+    uint16_t  lastInputs = 0;
 };
 
 
