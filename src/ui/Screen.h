@@ -41,6 +41,7 @@ public:
     Screen() {
         titleFont = Resources::get().titleFont;
         font = Resources::get().font;
+        smallFont = Resources::get().smallFont;
     }
 
     virtual ~Screen() {}
@@ -69,6 +70,7 @@ public:
 protected:
     TTF_Font* titleFont;
     TTF_Font* font;
+    TTF_Font* smallFont;
 
     std::vector<std::unique_ptr<Widget>> widgets;
 

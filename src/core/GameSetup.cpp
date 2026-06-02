@@ -2,6 +2,7 @@
 
 #include "core/Resources.h"
 #include "core/InputHandler.h"
+#include "misc/ScreenshotManager.h"
 #include <SDL2/SDL_mixer.h>
 
 
@@ -56,6 +57,8 @@ void Game::init() {
 
     input = Input();
     InputHandler::init();
+
+    screenshots = new ScreenshotManager(renderer);
 }
 
 void Game::setup(const Character* c1, const std::string& n1,

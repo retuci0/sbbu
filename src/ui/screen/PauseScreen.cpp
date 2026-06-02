@@ -1,6 +1,7 @@
 #include "ui/screen/PauseScreen.h"
 
 #include "core/Options.h"
+#include "core/Resources.h"
 #include "ui/widget/Button.h"
 #include "misc/Common.h"
 #include "misc/Renderer.h"
@@ -13,7 +14,7 @@
 
 
 void openAssetsFolder() {
-    openFolder(std::filesystem::current_path().string() + "/assets/");
+    open(std::filesystem::current_path().string() + "/assets/");
 }
 
 PauseScreen::PauseScreen(const Options& options)
@@ -30,6 +31,7 @@ PauseScreen::PauseScreen(const Options& options)
     addWidget<Button>(startX+btnW+colGap, startY+btnH+gap, btnW, btnH, "change volume", WHITE, BLACK, [&]{ result = PauseActionResult::CHANGE_VOLUME; finished = true; });
     addWidget<Button>(startX, startY+2*(btnH+gap), btnW, btnH, "controls", WHITE, BLACK, [&]{ result = PauseActionResult::CHANGE_CONTROLS; finished = true; });
     addWidget<Button>(startX+btnW+colGap, startY+2*(btnH+gap), btnW, btnH, "assets folder", WHITE, BLACK,  openAssetsFolder);
+    addWidget<Button>(SW - 128 - 24, SH - 64 - 12, 64, 64, "", WHITE, BLACK, [&]{ result = PauseActionResult::SCREENSHOTS; finished = true; }, Resources::get().getTexture("screenshots"));
     addWidget<Button>(SW - 64 - 12, SH - 64 - 12, 64, 64, "", WHITE, BLACK, [&]{ result = PauseActionResult::SETTINGS; finished = true; }, Resources::get().getTexture("settings"));
 }
 
@@ -58,7 +60,7 @@ void PauseScreen::handle(const SDL_Event& event) {
                 if (selectedIndex >= 2) selectedIndex -= 2;
                 break;
             case SDLK_DOWN:
-                if (selectedIndex + 2 < (int)widgets.size()) selectedIndex += 2;
+                if (selectedIndex + 2 < (int) widgets.size()) selectedIndex += 2;
                 break;
             case SDLK_LEFT:
                 if (selectedIndex % 2 == 1) selectedIndex--;

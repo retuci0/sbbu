@@ -14,7 +14,8 @@ enum class PauseActionResult {
     RESTART, 
     CHANGE_VOLUME, 
     CHANGE_CONTROLS,
-    SETTINGS
+    SETTINGS,
+    SCREENSHOTS
 };
 
 class PauseScreen : public Screen {

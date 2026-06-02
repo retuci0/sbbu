@@ -31,6 +31,7 @@ public:
     SDL_KeyCode keyQuit         = SDLK_0;
     SDL_KeyCode keyDebug        = SDLK_F3;
     SDL_KeyCode keyFullscreen   = SDLK_F11;
+    SDL_KeyCode keyScreenshot   = SDLK_F2;
 
     float sfxVolume             = 1.0f;
     float musVolume             = 1.0f;

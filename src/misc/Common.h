@@ -92,8 +92,8 @@ inline SDL_Rect interpolatedRect(SDL_Rect prevRect, SDL_Rect rect, float alpha) 
     };
 }
 
-// open a folder with the user's preferred file manager
-inline void openFolder(const std::string& path) {
+// open a file or folder with the user's preferred application
+inline void open(const std::string& path) {
 #if defined _WIN32
     ShellExecuteA(NULL, "open", path.c_str(), NULL, NULL, SW_SHOWNORMAL);
 #else

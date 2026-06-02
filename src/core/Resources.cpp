@@ -60,6 +60,7 @@ void Resources::load(SDL_Renderer* renderer) {
 
     registerTexture(renderer, "heart",           "assets/images/ui/heart.png");
     registerTexture(renderer, "settings",        "assets/images/ui/settings.png");
+    registerTexture(renderer, "screenshots",     "assets/images/ui/screenshots.png");
 
     registerTexture(renderer, "3",               "assets/images/ui/3.png");
     registerTexture(renderer, "2",               "assets/images/ui/2.png");
@@ -81,6 +82,7 @@ void Resources::load(SDL_Renderer* renderer) {
     // sounds effects
     registerSound("click",        "assets/sound/click.wav");
     registerSound("select",       "assets/sound/select.wav");
+    registerSound("screenshot",   "assets/sound/screenshot.wav");
 
     registerSound("jump",         "assets/sound/jump.wav");
     registerSound("jump2",        "assets/sound/jump2.wav");

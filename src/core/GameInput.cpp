@@ -156,6 +156,7 @@ void Game::onKey(SDL_Keycode key, KeyAction action) {
             (flags & SDL_WINDOW_FULLSCREEN_DESKTOP) ? 0 : SDL_WINDOW_FULLSCREEN_DESKTOP);
         return;
     }
+    if (key == options.keyScreenshot) { screenshots->takeScreenshot(); }
 
     
     // handle play inputs

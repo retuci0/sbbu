@@ -200,6 +200,9 @@ void Game::cleanup() {
     // shutdown input handler
     InputHandler::shutdown();
 
+    // delete screenshot manager pointer
+    delete screenshots;
+
     // quit SDL subsystems
     Mix_CloseAudio();
     TTF_Quit();

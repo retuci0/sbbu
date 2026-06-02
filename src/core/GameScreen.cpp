@@ -7,6 +7,7 @@
 #include "ui/screen/GameEndScreen.h"
 #include "ui/screen/PauseScreen.h"
 #include "ui/screen/RemoteSetupScreen.h"
+#include "ui/screen/ScreenshotLibraryScreen.h"
 #include "ui/screen/SettingsScreen.h"
 #include "ui/screen/StageSelectionScreen.h"
 #include "ui/screen/TitleScreen.h"
@@ -200,6 +201,10 @@ void Game::handleScreenTransitions() {
                 ps->resetFinished();
                 screens.push(std::make_unique<SettingsScreen>(
                     options.fpsCap, options.vsync, options.fullscreen, options.debug, options.particles));
+                break;
+            case PauseActionResult::SCREENSHOTS:
+                ps->resetFinished();
+                screens.push(std::make_unique<ScreenshotLibraryScreen>(renderer));
                 break;
         }
         return;

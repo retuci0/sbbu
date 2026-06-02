@@ -3,6 +3,7 @@
 #include "InputHandler.h"
 #include "Options.h"
 
+#include "misc/ScreenshotManager.h"
 #include "obj/CollisionRect.h"
 #include "obj/Platform.h"
 #include "obj/Player.h"
@@ -68,6 +69,9 @@ private:
     // settings and current input
     Options       options;
     Input         input;
+
+    // screenshots
+    ScreenshotManager* screenshots;
 
     // screens
     ScreenStack screens;
