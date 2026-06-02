@@ -16,6 +16,7 @@ public:
     SDL_KeyCode keyP1Special    = SDLK_q;
     SDL_KeyCode keyP1Shield     = SDLK_LSHIFT;
     SDL_KeyCode keyP1Dash       = SDLK_z;
+    SDL_KeyCode keyP1Grapple    = SDLK_r;
 
     SDL_KeyCode keyP2Left       = SDLK_LEFT;
     SDL_KeyCode keyP2Right      = SDLK_RIGHT;
@@ -26,6 +27,7 @@ public:
     SDL_KeyCode keyP2Special    = SDLK_RETURN;
     SDL_KeyCode keyP2Shield     = SDLK_SLASH;
     SDL_KeyCode keyP2Dash       = SDLK_BACKSLASH;
+    SDL_KeyCode keyP2Grapple    = SDLK_QUOTE;
 
     SDL_KeyCode keyPause        = SDLK_ESCAPE;
     SDL_KeyCode keyQuit         = SDLK_0;

@@ -66,6 +66,10 @@ void Game::handleGameplayInput() {
         player1.dash();
         input.dashP1 = false;
     }
+    if (input.grappleP1) {
+        player1.throwGrapple();
+        input.grappleP1 = false;
+    }
 
     player1.setShieldHeld(p1Shield);
     if (p1Shield) {
@@ -77,7 +81,7 @@ void Game::handleGameplayInput() {
     // player2 - local or remote
     bool p2Left, p2Right, p2Down, p2Shield;
     bool p2JumpPr, p2ShootPr, p2MeleePr, p2SpecialPr;
-    bool p2JumpDn, p2DashPr;
+    bool p2JumpDn, p2DashPr, p2GrapplePr;
 
     if (networkMode == NetworkMode::REMOTE_HOST) {
         // remote player: read from network bits
@@ -91,6 +95,7 @@ void Game::handleGameplayInput() {
         p2MeleePr   = remoteIsPressed(InputBit::MELEE);
         p2SpecialPr = remoteIsPressed(InputBit::SPECIAL);
         p2DashPr    = remoteIsPressed(InputBit::DASH);
+        p2GrapplePr = remoteIsPressed(InputBit::GRAPPLE);
     } else {
         // local player 2: keyboard OR controller 1
         float p2Axis = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 1);
@@ -104,6 +109,7 @@ void Game::handleGameplayInput() {
         p2MeleePr   = input.meleeP2;   input.meleeP2 = false;
         p2SpecialPr = input.specialP2; input.specialP2 = false;
         p2DashPr    = input.dashP2;    input.dashP2 = false;
+        p2GrapplePr = input.grappleP2; input.grappleP2 = false;
     }
 
     if (player2.status != Status::DAMAGED)
@@ -166,12 +172,14 @@ void Game::onKey(SDL_Keycode key, KeyAction action) {
     if (key == options.keyP1Melee)   input.meleeP1   = true;
     if (key == options.keyP1Special) input.specialP1 = true;
     if (key == options.keyP1Dash)    input.dashP1    = true;
+    if (key == options.keyP1Grapple) input.grappleP1 = true;
 
     if (key == options.keyP2Jump)    input.jumpP2    = true;
     if (key == options.keyP2Shoot)   input.shootP2   = true;
     if (key == options.keyP2Melee)   input.meleeP2   = true;
     if (key == options.keyP2Special) input.specialP2 = true;
     if (key == options.keyP2Dash)    input.dashP2    = true;
+    if (key == options.keyP2Grapple) input.grappleP2 = true;
 }
 
 void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonAction action, int ctrl) {
@@ -185,6 +193,7 @@ void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonA
             case SDL_CONTROLLER_BUTTON_X:     input.meleeP1   = true; break;
             case SDL_CONTROLLER_BUTTON_Y:     input.specialP1 = true; break;
             case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: input.dashP1 = true; break;
+            case SDL_CONTROLLER_BUTTON_RIGHTSTICK: input.grappleP1 = true; break;
             default: break;
         }
     } else if (ctrl == 1 && networkMode != NetworkMode::REMOTE_CLIENT) {
@@ -195,6 +204,7 @@ void Game::onControllerButton(SDL_GameControllerButton button, ControllerButtonA
             case SDL_CONTROLLER_BUTTON_X:     input.meleeP2   = true; break;
             case SDL_CONTROLLER_BUTTON_Y:     input.specialP2 = true; break;
             case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER: input.dashP2 = true; break;
+            case SDL_CONTROLLER_BUTTON_RIGHTSTICK: input.grappleP2 = true; break;
             default: break;
         }
     }

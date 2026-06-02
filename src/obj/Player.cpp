@@ -1,6 +1,7 @@
 #include "obj/Player.h"
 
 #include "obj/Platform.h"
+#include "obj/Grapple.h"
 #include "core/Resources.h"
 #include "misc/Common.h"
 #include "misc/Renderer.h"
@@ -44,6 +45,9 @@ void Player::init(int x, int y, const Character* ch, const std::string& playerNa
 //////////////////////////////////////
 
 void Player::move(int direction) {
+    // don't fight the grapple
+    if (grapple && grapple->isLatched()) return;
+
     if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE 
         || status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN 
         || status == Status::SHOOTING || status == Status::SHIELDED
@@ -116,6 +120,25 @@ void Player::dash() {
     if (dashSound) Mix_PlayChannel(-1, dashSound, 0);
 }
 
+void Player::throwGrapple() {
+    if (grapple) { delete grapple; grapple = nullptr; }
+ 
+    constexpr int HOOK_W = 14;
+    constexpr int HOOK_H = 14;
+ 
+    int spawnX = (facing == Facing::RIGHT)
+                    ? rect.x + rect.w          // right edge
+                    : rect.x - HOOK_W;         // left edge
+ 
+    int spawnY = rect.y + (rect.h - HOOK_H) / 2;
+ 
+    float velX = (facing == Facing::RIGHT)
+                    ?  Grapple::TRAVEL_SPEED
+                    : -Grapple::TRAVEL_SPEED;
+    float velY = 0.0f;
+ 
+    grapple = new Grapple(*this, spawnX, spawnY, velX, velY);
+}
 
 /////////////////////////////////////
 /*             DEFENCE             */
@@ -312,13 +335,19 @@ bool Player::trySpecial(Direction dir) {
 /*             UPDATE             */
 ////////////////////////////////////
 
-void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed, float ts) {
+void Player::update(const std::vector<Platform>& platforms, 
+                    std::vector<Projectile>& projectiles, 
+                    std::vector<Player>& players,
+                    bool downKeyPressed, float ts
+) {
     prevRect = rect;
 
     if (status == Status::SHIELDED) { dx = 0.0f; }
 
     // gravity
-    dy = std::min(character->stats.terminalVelocity, dy + character->stats.gravity * ts);
+    if (!(grapple && grapple->isLatched())) {
+        dy = std::min(character->stats.terminalVelocity, dy + character->stats.gravity * ts);
+    }
     // reduce gravity when dashing
     if (status == Status::DASHING) dy *= 0.3f;
     
@@ -332,6 +361,15 @@ void Player::update(const std::vector<Platform>& platforms, bool downKeyPressed,
     // vertical move
     rect.y += static_cast<int>(dy * ts);
     onGround = false;
+
+    // update grapple
+    if (grapple) {
+        bool alive = grapple->update(platforms, players, projectiles, ts);
+        if (!alive) {
+            delete grapple;
+            grapple = nullptr;
+        }
+    }
     
     // drop-through
     bool standingOnBig = false;
@@ -622,9 +660,12 @@ void Player::draw(SDL_Renderer* r, TTF_Font* font, float a) {
             break;
     }
 
-    // nametag
+    // shield & nametag
     drawShield(r, a);
     drawNametag(r, font, a);
+
+    // grapple
+    if (grapple) grapple->draw(r);
 }
 
 void Player::drawShield(SDL_Renderer* r, float a) const {

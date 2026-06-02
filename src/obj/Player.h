@@ -15,6 +15,7 @@
 
 class Platform;
 class Projectile;
+class Grapple;
 
 enum class Status {
     IDLE,
@@ -102,6 +103,9 @@ public:
     float stunTimer         = 0.0f;
     bool shieldHeld         = false;
 
+    // grapple
+    Grapple* grapple = nullptr;
+    void throwGrapple();
 
     // hitbox
     SDL_Rect rect = {};
@@ -133,7 +137,10 @@ public:
     bool tryMelee();
     bool trySpecial(Direction dir);
 
-    void update(const std::vector<Platform>& platforms, bool downKeyPressed, float ts);
+    void update(const std::vector<Platform>& platforms, 
+                    std::vector<Projectile>& projectiles, 
+                    std::vector<Player>& players,
+                    bool downKeyPressed, float ts);
     void updateTimers(float ts);
     void resetTimers();
 

@@ -25,7 +25,7 @@ file(GLOB_RECURSE HEADERS
 
 enable_language(C)
 
-add_executable(super_bert_bros ${SRC} ${HEADERS})
+add_executable(super_bert_bros ${SRC} ${HEADERS} icon.rc)
 
 target_include_directories(super_bert_bros PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -51,6 +51,3 @@ target_compile_options(super_bert_bros PRIVATE
     ${SDL2_ttf_CFLAGS_OTHER}
     ${SDL2_net_CFLAGS_OTHER}
 )
-
-message(STATUS "build with: cmake --build build")
-message(STATUS "run from the repo root: ./build/super_bert_bros")

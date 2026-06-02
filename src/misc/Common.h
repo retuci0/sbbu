@@ -32,6 +32,8 @@ constexpr Color GREEN           = {  60, 100,  60, 255 };
 constexpr Color BLUE            = {   0,   0, 255, 255 };
 constexpr Color DARK_RED        = {  45,   0,   0, 255 };
 constexpr Color MAGENTA         = { 255,   0, 255, 255 };
+constexpr Color YELLOW          = { 255, 255,   0, 255 };
+constexpr Color CYAN            = {   0, 255, 255, 255 };
 
 
 // for network transmission
@@ -44,7 +46,8 @@ enum InputBit : uint16_t {
     MELEE   = 1 << 5,
     SPECIAL = 1 << 6,
     SHIELD  = 1 << 7,
-    DASH    = 1 << 8
+    DASH    = 1 << 8,
+    GRAPPLE = 1 << 9
 };
 
 // timeout to connect to host

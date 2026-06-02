@@ -32,11 +32,13 @@ namespace {
 void Game::updateGameplay(float ts) {
     if (timer > 0) timer -= ts;
 
-    player1.update(platforms, isDown(options.keyP1Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0) > 0.5f, ts);
+    std::vector<Player> players = { player1, player2 };
+
+    player1.update(platforms, projectiles, players, isDown(options.keyP1Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0) > 0.5f, ts);
     bool p2Down = (networkMode == NetworkMode::REMOTE_HOST)
                   ? remoteIsDown(InputBit::DOWN)
                   : (isDown(options.keyP2Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 1) > 0.5f);
-    player2.update(platforms, p2Down, ts);
+    player2.update(platforms, projectiles, players, p2Down, ts);
 
     auto trySpawnSpecialHitbox = [&](Player& attacker) {
         if (attacker.status != Status::SPECIAL_STATIC &&
@@ -292,5 +294,6 @@ void Game::respawn(Player& p, bool voidDeath) {
     p.currentSpriteIndex = 0.0f;
     p.specialHitboxSpawned = false;
     p.resetTimers();
+    p.grapple = nullptr;
     p.invulnerableTimer  = Player::INV_DURATION;
 }
