@@ -3,6 +3,7 @@
 #include "InputHandler.h"
 #include "Options.h"
 
+#include "misc/Discord.h"
 #include "misc/ScreenshotManager.h"
 #include "obj/CollisionRect.h"
 #include "obj/Platform.h"
@@ -44,6 +45,8 @@ class TitleScreen;
 class VolumeScreen;
 class WaitingScreen;
 
+// id of the discord bot (aka app)
+constexpr uint64_t DISCORD_APP_ID = 1511836048005660672;
 
 class Game : public InputHandler {
 public:
@@ -72,6 +75,9 @@ private:
 
     // screenshots
     ScreenshotManager* screenshots;
+
+    // discord rpc
+    DiscordManager discord;
 
     // screens
     ScreenStack screens;

@@ -11,6 +11,13 @@ pkg_check_modules(SDL2_mixer REQUIRED SDL2_mixer)
 pkg_check_modules(SDL2_ttf   REQUIRED SDL2_ttf)
 pkg_check_modules(SDL2_net   REQUIRED SDL2_net)
 
+# discord rpc
+set(CLANG_FORMAT_CMD "" CACHE STRING "" FORCE)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+add_subdirectory(lib/discord-rpc)
+target_compile_options(discord-rpc PRIVATE -Wno-error -Wno-template-body)
+
 # automatically find all .CPP files
 file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
@@ -30,6 +37,7 @@ add_executable(super_bert_bros ${SRC} ${HEADERS} icon.rc)
 target_include_directories(super_bert_bros PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/inc
+    ${CMAKE_CURRENT_SOURCE_DIR}/lib/discord-rpc/include
 )
 
 target_link_libraries(super_bert_bros
@@ -38,6 +46,7 @@ target_link_libraries(super_bert_bros
     ${SDL2_mixer_LIBRARIES}
     ${SDL2_ttf_LIBRARIES}
     ${SDL2_net_LIBRARIES}
+    discord-rpc
 )
 
 if (MINGW OR WIN32)

@@ -55,6 +55,8 @@ void Game::init() {
     Resources::get().applySfxVolume(options.sfxVolume);
     Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
 
+    discord.init(DISCORD_APP_ID);
+
     input = Input();
     InputHandler::init();
 
@@ -65,6 +67,8 @@ void Game::setup(const Character* c1, const std::string& n1,
                  const Character* c2, const std::string& n2,
                  const Stage& s)
 {
+    discord.setPresence(n1 + " vs " + n2, "super bert bros ultimate");
+
     platforms = s.platforms;
     stage = s;
 

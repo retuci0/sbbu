@@ -104,7 +104,7 @@ on arch:
 ### credits
 
 - **music:** *bounce* by фрози and joyful (not made for me)
-- **sprites:** melee and special done by [IVZA](https://www.youtube.com/@IVZA-d6h), some other sprite might have been done by [Tafeef](https://youtube.com/@Tafeef), and titlescreen bg by Anubis7356 everything else done by myself
+- **sprites:** melee and special done by [IVZA](https://www.youtube.com/@IVZA-d6h), some other sprite might have been done by [Tafeef](https://youtube.com/@Tafeef), and titlescreen bg by Anubis7356; everything else done by myself
 - **code:** all done by myself, with a tad bit of Claude's help for the networking
 
 

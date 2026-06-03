@@ -28,8 +28,8 @@ struct Grapple {
     Player*     targetPlayer     = nullptr;
     Projectile* targetProjectile = nullptr;
 
-    static constexpr float TRAVEL_SPEED  = 18.0f;
-    static constexpr float PULL_FORCE    = 5.0f;
+    static constexpr float TRAVEL_SPEED  = 24.0f;
+    static constexpr float PULL_FORCE    = 12.0f;
     static constexpr float MAX_RANGE     = 400.0f;
     static constexpr float RETRACT_SPEED = 10.0f;
     static constexpr float ARRIVE_DIST   = 8.0f;

@@ -151,6 +151,9 @@ void Game::update(float ts) {
 
     netFrame++;
 
+    // update discord rpc
+    discord.update();
+
     // end game
     if (timer <= 0.0f && timerDuration > 0) {
         std::string details;
@@ -202,6 +205,9 @@ void Game::cleanup() {
 
     // delete screenshot manager pointer
     delete screenshots;
+
+    // cleanup discord stuff
+    discord.cleanup(); 
 
     // quit SDL subsystems
     Mix_CloseAudio();
