@@ -45,6 +45,7 @@ struct Grapple {
     void draw(SDL_Renderer* r) const;
 
     bool isLatched() const;
+    void retract();
 
 private:
     float distanceFromOrigin() const;

@@ -57,6 +57,7 @@ void Resources::load(SDL_Renderer* renderer) {
 
     registerTexture(renderer, "projectile",      "assets/images/projectile/projectile.png");
     registerTexture(renderer, "shockwave",       "assets/images/projectile/shockwave.png");
+    registerTexture(renderer, "grapple",         "assets/images/projectile/grapple.png");
 
     registerTexture(renderer, "heart",           "assets/images/ui/heart.png");
     registerTexture(renderer, "settings",        "assets/images/ui/settings.png");

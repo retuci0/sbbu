@@ -1,4 +1,5 @@
 #include "obj/Grapple.h"
+#include "core/Resources.h"
 #include "obj/Player.h"
 #include "obj/Platform.h"
 #include "obj/Projectile.h"
@@ -53,7 +54,6 @@ bool Grapple::update(const std::vector<Platform>& platforms,
 {
     switch (state) {
 
-        // ── FLYING ────────────────────────────────────────────────────────
         case GrappleState::FLYING: {
             rect.x += static_cast<int>(dx * ts);
             rect.y += static_cast<int>(dy * ts);
@@ -164,18 +164,24 @@ void Grapple::draw(SDL_Renderer* r) const {
     int hx = rect.x + rect.w / 2;
     int hy = rect.y + rect.h / 2;
 
-    SDL_SetRenderDrawColor(r, 100, 200, 255, 180);
-    SDL_RenderDrawLine(r, px, py, hx, hy);
-
-    // hook head color by state
-    Color hookColor;
+    Color c;
+    // hook rope color by state
     switch (state) {
-        case GrappleState::LATCHED_PLATFORM:   hookColor = GREEN;  break;
-        case GrappleState::LATCHED_PLAYER:     hookColor = RED;    break;
-        case GrappleState::LATCHED_PROJECTILE: hookColor = YELLOW; break;
-        default:                               hookColor = CYAN;   break;
+        case GrappleState::LATCHED_PLATFORM:   c = GREEN;  break;
+        case GrappleState::LATCHED_PLAYER:     c = RED;    break;
+        case GrappleState::LATCHED_PROJECTILE: c = YELLOW; break;
+        default:                               c = CYAN;   break;
     }
-    Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, hookColor, 2);
+
+    SDL_SetRenderDrawColor(r, c.r, c.g, c.b, 180);
+
+    // draw three lines to emulate a thick line
+    SDL_RenderDrawLine(r, px, py, hx, hy);
+    SDL_RenderDrawLine(r, px, py - 1, hx, hy - 1);
+    SDL_RenderDrawLine(r, px, py + 1, hx, hy + 1);
+
+    Renderer::drawSprite(r, Resources::get().getTexture("grapple"), &rect, dx < 0);
+    // Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, hookColor, 2);
 }
 
 
@@ -183,4 +189,8 @@ bool Grapple::isLatched() const {
     return state == GrappleState::LATCHED_PLATFORM
         || state == GrappleState::LATCHED_PLAYER
         || state == GrappleState::LATCHED_PROJECTILE;
+}
+
+void Grapple::retract() {
+    state = GrappleState::RETRACTING;
 }

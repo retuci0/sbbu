@@ -75,6 +75,9 @@ void Player::move(int direction) {
 }
 
 void Player::jump() {
+    // cancel grapple
+    if (grapple && grapple->isLatched()) grapple->retract();
+
     if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE 
         || status == Status::SPECIAL_UP || status == Status::SPECIAL_DOWN 
         || status == Status::SHOOTING || status == Status::SHIELDED
@@ -161,9 +164,9 @@ void Player::getHit(Facing side, int damage, float kbScale) {
     float w = character->stats.weight;
 
     if (side == Facing::LEFT) {
-        dx = (-kbMult / 3.3f) * w * kbScale;
+        dx += (-kbMult / 3.3f) * w * kbScale;
     } else {
-        dx = (kbMult / 3.3f) * w * kbScale;
+        dx += (kbMult / 3.3f) * w * kbScale;
     }
     dy = (-kbMult / 5.0f) * w * kbScale;
 
@@ -203,6 +206,8 @@ void Player::breakShield() {
     shieldBreakTimer = SHIELD_BREAK_STUN;
     status = Status::STUNNED;
     stunTimer = SHIELD_BREAK_STUN;
+    dx = 0.0f;
+    dy = 0.0f;
     shieldTimer = 0.0f;
     shieldStunTimer = 0.0f;
     releaseShield();
@@ -403,14 +408,17 @@ void Player::update(const std::vector<Platform>& platforms,
     }
     if (droppingTimer > 0) droppingTimer -= ts;
 
-    
     updateTimers(ts);
 
+    // update rect to match texture size
     if (currentTexture) {
         int w, h;
         SDL_QueryTexture(currentTexture, nullptr, nullptr, &w, &h);
         if (facing == Facing::LEFT && w != rect.w) {
             rect.x -= w - rect.w;
+        }
+        if (h != rect.h) {
+            rect.y -= h - rect.h;
         }
         rect.w = w;
         rect.h = h;
