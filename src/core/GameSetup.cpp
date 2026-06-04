@@ -68,7 +68,7 @@ void Game::setup(const Character* c1, const std::string& n1,
                  const Character* c2, const std::string& n2,
                  const Stage& s)
 {
-    discord.setPresence(n1 + " vs " + n2, "super bert bros ultimate");
+    discord.setPresence(n1 + " vs " + n2, "fighting in " + s.name);
 
     platforms = s.platforms;
     stage = s;

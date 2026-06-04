@@ -250,7 +250,7 @@ void Game::updateGameplay(float ts) {
 
     // death handling
     auto handleDeath = [&](Player& p) {
-        bool voidDeath = (p.rect.y >= SH + 100);
+        bool voidDeath = stage.isOutsideWorld(p);
         bool hpDead    = (p.hp <= 0);
         if (!(voidDeath || hpDead)) return;
         if (p.lives > 0) {
@@ -284,7 +284,7 @@ void Game::respawn(Player& p, bool voidDeath) {
     // reset the player
     p.hp                 = p.character->stats.health;
     p.rect.x             = sp.x;
-    p.rect.y             = sp.y - 2000;
+    p.rect.y             = sp.y;
     p.lives             -= 1;
     p.status             = Status::IDLE;
     p.charge             = 0.0f;

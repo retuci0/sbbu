@@ -10,7 +10,8 @@ Stage classicStage() {
         Platform(640,  250,  200,  30, PlatformSize::SMALL),
         Platform(1080, 250,  200,  30, PlatformSize::SMALL),
     };
-    s.spawnpoints = { {640, 0}, {1080, 0} };
+    s.spawnpoints = { {740, 0}, {1180, 0} };
+    s.deathZones = { -500, SW + 500, SH + 100, -1000 };
     return s;
 }
 
@@ -25,7 +26,8 @@ Stage pillarStage() {
         Platform(500,  200,  200,  30, PlatformSize::SMALL),
         Platform(1220, 200,  200,  30, PlatformSize::SMALL),
     };
-    s.spawnpoints = { {350, 0}, {1370, 0} };
+    s.spawnpoints = { {450, 0}, {1470, 0} };
+    s.deathZones = { -500, SW + 500, SH + 100, -1000 };
     return s;
 }
 
@@ -39,11 +41,27 @@ Stage flatStage() {
         Platform(860, 220,  200,  30, PlatformSize::SMALL),
         Platform(1320,320,  200,  30, PlatformSize::SMALL),
     };
-    s.spawnpoints = { {500, 0}, {1260, 0} };
+    s.spawnpoints = { {500, 0}, {1420, 0} };
+    s.deathZones = { -500, SW + 500, SH + 100, -1000 };
     return s;
 }
 
+Stage dashStage() {
+    Stage s;
+    s.name = "dash";
+    s.bg = "bg_dash";
+    s.platforms = {
+        Platform(410, 550, 1100, 250, PlatformSize::BIG),
+        Platform(340, 380, 200, 30, PlatformSize::SMALL),
+        Platform(340, 220, 200, 30, PlatformSize::SMALL),
+        Platform(1380, 380, 200, 30, PlatformSize::SMALL),
+        Platform(1380, 220, 200, 30, PlatformSize::SMALL),
+    };
+    s.spawnpoints = { {440, 0}, {1480, 0} };
+    s.deathZones = { -500, SW + 500, SH - 200, -1000 };
+    return s;
+}
 
 std::vector<Stage> allStages() {
-    return { classicStage(), pillarStage(), flatStage() };
+    return { classicStage(), pillarStage(), flatStage(), dashStage() };
 }

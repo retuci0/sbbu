@@ -73,6 +73,7 @@ void Resources::load(SDL_Renderer* renderer) {
     registerTexture(renderer, "bg_pillar",       "assets/images/ui/bg_pillar.png");
     registerTexture(renderer, "bg_flat",         "assets/images/ui/bg_flat.png");
     registerTexture(renderer, "bg_flat",         "assets/images/bg_flat.png");
+    registerTexture(renderer, "bg_dash",         "assets/images/ui/bg_dash.png");
 
     registerTexture(renderer, "particle_crit",   "assets/images/particle/critical.png");
     registerTexture(renderer, "particle_damage", "assets/images/particle/damage.png");
