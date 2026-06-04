@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "cmake configure",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["-B", "build", "-DCMAKE_BUILD_TYPE=Debug"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "group": "build"
+    },
+    {
+      "label": "cmake build",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "build", "-j", "${env:nproc}"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "dependsOn": "cmake configure",
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "copy assets",
+      "type": "shell",
+      "command": "cp",
+      "args": ["-r", "assets/", "build/"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "dependsOn": "cmake build"
+    }
+  ]
+}
