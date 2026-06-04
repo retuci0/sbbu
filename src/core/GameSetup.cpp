@@ -56,6 +56,7 @@ void Game::init() {
     Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
 
     discord.init(DISCORD_APP_ID);
+    discord.setPresence("on the title screen", "super bert bros ultimate");
 
     input = Input();
     InputHandler::init();
@@ -81,8 +82,8 @@ void Game::setup(const Character* c1, const std::string& n1,
     player2.init(x2, 0, c2, n2);
     player2.id = 1;
 
-    player1.color = {100, 149, 237, 230};
-    player2.color = {255,  80,  80, 230};
+    player1.color = { 100, 149, 237, 230 };
+    player2.color = { 255,  80,  80, 230 };
 
     remoteInputBits = 0;
     prevRemoteInputBits = 0;

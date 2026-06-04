@@ -92,6 +92,9 @@ void Game::processEvents() {
 }
 
 void Game::update(float ts) {
+    // update discord rpc
+    discord.update();
+
     if (screens) {
         screens.update();
 
@@ -150,9 +153,6 @@ void Game::update(float ts) {
     }
 
     netFrame++;
-
-    // update discord rpc
-    discord.update();
 
     // end game
     if (timer <= 0.0f && timerDuration > 0) {

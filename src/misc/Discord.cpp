@@ -25,8 +25,7 @@ void DiscordManager::update() {
     Discord_RunCallbacks();
 }
 
-void DiscordManager::setPresence(const std::string& details,
-                                 const std::string& state) {
+void DiscordManager::setPresence(const std::string& details, const std::string& state) {
     DiscordRichPresence presence{};
     presence.details = details.c_str();
     presence.state   = state.c_str();
