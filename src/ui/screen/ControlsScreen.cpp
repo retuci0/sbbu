@@ -13,27 +13,37 @@ static constexpr int COL1_X = 250, COL2_X = 1050;
 static constexpr int ROW_Y = 160, ROW_STEP = 70;
 static constexpr int ROW_W = 600, ROW_H = 55;
 
-ControlsScreen::ControlsScreen(Options& o)
+ControlsScreen::ControlsScreen(Options& o, InputHandler& input)
     : selectedRow(0), selectedColumn(0), Screen() 
 {
-    struct Row { const char* name; SDL_KeyCode& key; };
+    struct Row { const char* name; SDL_KeyCode& key; SDL_GameControllerButton btn; };
     Row p1[] = {
-        {"left", o.keyP1Left}, {"right", o.keyP1Right}, {"down", o.keyP1Down},
-        {"jump", o.keyP1Jump}, {"shoot", o.keyP1Shoot}, {"melee", o.keyP1Melee},
-        {"special", o.keyP1Special}, {"shield", o.keyP1Shield}
+        {"left",    o.keyP1Left,    SDL_CONTROLLER_BUTTON_INVALID},
+        {"right",   o.keyP1Right,   SDL_CONTROLLER_BUTTON_INVALID},
+        {"down",    o.keyP1Down,    SDL_CONTROLLER_BUTTON_INVALID},
+        {"jump",    o.keyP1Jump,    SDL_CONTROLLER_BUTTON_A},
+        {"shoot",   o.keyP1Shoot,   SDL_CONTROLLER_BUTTON_B},
+        {"melee",   o.keyP1Melee,   SDL_CONTROLLER_BUTTON_X},
+        {"special", o.keyP1Special, SDL_CONTROLLER_BUTTON_Y},
+        {"shield",  o.keyP1Shield,  SDL_CONTROLLER_BUTTON_LEFTSHOULDER},
     };
     Row p2[] = {
-        {"left", o.keyP2Left}, {"right", o.keyP2Right}, {"down", o.keyP2Down},
-        {"jump", o.keyP2Jump}, {"shoot", o.keyP2Shoot}, {"melee", o.keyP2Melee},
-        {"special", o.keyP2Special}, {"shield", o.keyP2Shield}
+        {"left",    o.keyP2Left,    SDL_CONTROLLER_BUTTON_INVALID},
+        {"right",   o.keyP2Right,   SDL_CONTROLLER_BUTTON_INVALID},
+        {"down",    o.keyP2Down,    SDL_CONTROLLER_BUTTON_INVALID},
+        {"jump",    o.keyP2Jump,    SDL_CONTROLLER_BUTTON_A},
+        {"shoot",   o.keyP2Shoot,   SDL_CONTROLLER_BUTTON_B},
+        {"melee",   o.keyP2Melee,   SDL_CONTROLLER_BUTTON_X},
+        {"special", o.keyP2Special, SDL_CONTROLLER_BUTTON_Y},
+        {"shield",  o.keyP2Shield,  SDL_CONTROLLER_BUTTON_LEFTSHOULDER},
     };
     for (int i = 0; i < 8; ++i) {
         int y = ROW_Y + i * ROW_STEP;
-        addWidget<KeybindWidget>(COL1_X, y, ROW_W, ROW_H, p1[i].name, p1[i].key);
+        addWidget<KeybindWidget>(COL1_X, y, ROW_W, ROW_H, p1[i].name, p1[i].key, input, p1[i].btn);
     }
-    for (int i = 0; i < 8 ; ++i) {
+    for (int i = 0; i < 8; ++i) {
         int y = ROW_Y + i * ROW_STEP;
-        addWidget<KeybindWidget>(COL2_X, y, ROW_W, ROW_H, p2[i].name, p2[i].key);
+        addWidget<KeybindWidget>(COL2_X, y, ROW_W, ROW_H, p2[i].name, p2[i].key, input, p2[i].btn);
     }
     addWidget<Button>(SW/2-100, 780, 200, 60, "done", GREEN, WHITE, [&]{ finished = true; });
 }

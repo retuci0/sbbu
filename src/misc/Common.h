@@ -3,6 +3,7 @@
 #include "misc/Color.h"
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_keyboard.h>
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_ttf.h>
 
@@ -103,4 +104,31 @@ inline void open(const std::string& path) {
     std::string command = "xdg-open \"" + path + "\"";
     std::system(command.c_str());
 #endif
+}
+
+inline std::string getControllerButtonName(SDL_GameControllerButton btn) {
+    switch (btn) {
+        case SDL_CONTROLLER_BUTTON_A:              return "A";
+        case SDL_CONTROLLER_BUTTON_B:              return "B";
+        case SDL_CONTROLLER_BUTTON_X:              return "X";
+        case SDL_CONTROLLER_BUTTON_Y:              return "Y";
+        case SDL_CONTROLLER_BUTTON_BACK:           return "BACK";
+        case SDL_CONTROLLER_BUTTON_GUIDE:          return "GUIDE";
+        case SDL_CONTROLLER_BUTTON_START:          return "START";
+        case SDL_CONTROLLER_BUTTON_LEFTSTICK:      return "L3";
+        case SDL_CONTROLLER_BUTTON_RIGHTSTICK:     return "R3";
+        case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:   return "LB";
+        case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:  return "RB";
+        case SDL_CONTROLLER_BUTTON_DPAD_UP:        return "D-Pad ↑";
+        case SDL_CONTROLLER_BUTTON_DPAD_DOWN:      return "D-Pad ↓";
+        case SDL_CONTROLLER_BUTTON_DPAD_LEFT:      return "D-Pad ←";
+        case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:     return "D-Pad →";
+        case SDL_CONTROLLER_BUTTON_MISC1:          return "MISC1";
+        case SDL_CONTROLLER_BUTTON_PADDLE1:        return "PADDLE1";
+        case SDL_CONTROLLER_BUTTON_PADDLE2:        return "PADDLE2";
+        case SDL_CONTROLLER_BUTTON_PADDLE3:        return "PADDLE3";
+        case SDL_CONTROLLER_BUTTON_PADDLE4:        return "PADDLE4";
+        case SDL_CONTROLLER_BUTTON_TOUCHPAD:       return "TOUCHPAD";
+        default:                                   return "?";
+    }
 }

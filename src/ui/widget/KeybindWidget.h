@@ -2,11 +2,15 @@
 
 #include "ui/Widget.h"
 
+#include "core/InputHandler.h"
+
 #include "misc/Color.h"
 #include "misc/Common.h"
 #include "misc/Renderer.h"
 
 #include <SDL2/SDL.h>
+#include <SDL2/SDL_gamecontroller.h>
+#include <SDL2/SDL_keyboard.h>
 #include <SDL2/SDL_ttf.h>
 
 #include <string>
@@ -14,8 +18,11 @@
 
 class KeybindWidget : public Widget {
 public:
-    KeybindWidget(int x, int y, int w, int h, const std::string& actionName, SDL_KeyCode& binding)
-        : Widget(x, y, w, h), actionName(actionName), binding(binding) {}
+    KeybindWidget(int x, int y, int w, int h,
+                  const std::string& actionName, SDL_KeyCode& binding,
+                  InputHandler& input,
+                  SDL_GameControllerButton controllerButton = SDL_CONTROLLER_BUTTON_INVALID)
+        : Widget(x, y, w, h), actionName(actionName), binding(binding), input(input), controllerButton(controllerButton) {}
 
     bool handle(const SDL_Event& e) override {
         if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
@@ -39,11 +46,26 @@ public:
         // action name on the left
         Renderer::renderText(r, font, actionName, rect.x + 12, rect.y + 10, WHITE);
 
-        // key name on the right
-        std::string keyLabel = listening ? "press a key..." : SDL_GetKeyName(binding);
+        // if a controller is connected and this action has a controller binding, show that instead
+        bool showController = !listening
+            && controllerButton != SDL_CONTROLLER_BUTTON_INVALID
+            && input.isControllerConnected(0);
+
+        std::string keyLabel;
+        Color keyColor;
+        if (listening) {
+            keyLabel = "press a key...";
+            keyColor = {255, 220, 80, 255};
+        } else if (showController) {
+            keyLabel = getControllerButtonName(controllerButton);
+            keyColor = {220, 180, 255, 255};  // soft purple to distinguish controller labels
+        } else {
+            keyLabel = SDL_GetKeyName(binding);
+            keyColor = {180, 220, 180, 255};
+        }
+
         int tw, th;
         TTF_SizeText(font, keyLabel.c_str(), &tw, &th);
-        Color keyColor = listening ? Color{255, 220, 80, 255} : Color{180, 220, 180, 255};
         Renderer::renderText(r, font, keyLabel, rect.x + rect.w - tw - 12, rect.y + 10, keyColor);
     }
 
@@ -52,6 +74,8 @@ public:
 
 private:
     std::string actionName;
-    SDL_KeyCode& binding;  // non-owning
+    SDL_KeyCode& binding;           // non-owning
+    InputHandler& input;            // non-owning
+    SDL_GameControllerButton controllerButton;
     bool listening = false;
 };

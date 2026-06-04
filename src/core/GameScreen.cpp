@@ -195,7 +195,7 @@ void Game::handleScreenTransitions() {
             case PauseActionResult::CHANGE_CONTROLS:
                 ps->resetFinished();
                 screens.push(std::make_unique<ControlsScreen>(
-                    options));
+                    options, *this));
                 break;
             case PauseActionResult::SETTINGS:
                 ps->resetFinished();

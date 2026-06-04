@@ -1,5 +1,6 @@
 #include "core/Game.h"
 #include <SDL2/SDL_gamecontroller.h>
+#include <cmath>
 
 
 ///////////////////////////////////////
@@ -278,27 +279,33 @@ void Game::injectControllerNav(SDL_Event e) {
     if (e.type == SDL_CONTROLLERAXISMOTION) {
         SDL_GameControllerAxis axis = static_cast<SDL_GameControllerAxis>(e.caxis.axis);
         if (axis == SDL_CONTROLLER_AXIS_LEFTX || axis == SDL_CONTROLLER_AXIS_LEFTY) {
-            float n = getNormalizedAxis(axis);
-            SDL_KeyCode navKey = SDLK_UNKNOWN;
+            // read both axes and only act on the dominant one to prevent diagonal
+            // inputs from firing two competing navigation streams at the same time
+            float nx = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX);
+            float ny = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY);
 
-            if (axis == SDL_CONTROLLER_AXIS_LEFTY) {
-                if (n > AXIS_THRESHOLD)       navKey = SDLK_DOWN;
-                else if (n < -AXIS_THRESHOLD) navKey = SDLK_UP;
-            } else if (axis == SDL_CONTROLLER_AXIS_LEFTX) {
-                if (n > AXIS_THRESHOLD)       navKey = SDLK_RIGHT;
-                else if (n < -AXIS_THRESHOLD) navKey = SDLK_LEFT;
+            SDL_KeyCode navKey = SDLK_UNKNOWN;
+            SDL_GameControllerAxis dominantAxis = SDL_CONTROLLER_AXIS_INVALID;
+
+            if (std::abs(nx) >= AXIS_THRESHOLD || std::abs(ny) >= AXIS_THRESHOLD) {
+                if (std::abs(ny) >= std::abs(nx)) {
+                    // vertical dominant
+                    dominantAxis = SDL_CONTROLLER_AXIS_LEFTY;
+                    navKey = (ny > 0) ? SDLK_DOWN : SDLK_UP;
+                } else {
+                    // horizontal dominant
+                    dominantAxis = SDL_CONTROLLER_AXIS_LEFTX;
+                    navKey = (nx > 0) ? SDLK_RIGHT : SDLK_LEFT;
+                }
             }
 
             if (navKey != SDLK_UNKNOWN) {
-                lastActiveNavAxis = axis;
+                lastActiveNavAxis = dominantAxis;
                 injectNavigationKey(navKey);
             } else {
-                // only reset if this axis was the one tracked
-                if (axis == lastActiveNavAxis) {
-                    navRepeat.lastKey = SDLK_UNKNOWN;
-                    navRepeat.repeatActive = false;
-                    lastActiveNavAxis = SDL_CONTROLLER_AXIS_INVALID;
-                }
+                navRepeat.lastKey = SDLK_UNKNOWN;
+                navRepeat.repeatActive = false;
+                lastActiveNavAxis = SDL_CONTROLLER_AXIS_INVALID;
             }
         }
     }
