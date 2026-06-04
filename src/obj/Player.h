@@ -36,7 +36,7 @@ enum class Status {
 class Player {
 public:
     std::string name;
-    const Character* character = nullptr;  // non-owning
+    const Character* character = nullptr;  // non-owning, points to a Character subclass
 
     int id = 0;
 
@@ -48,30 +48,31 @@ public:
     int hp        = 0;
     int lives     = 2;  // remaining (total = 3)
 
-    bool onGround       = false;
-    bool hasAirJumped   = false;
+    bool onGround             = false;
+    bool hasAirJumped         = false;
     bool specialHitboxSpawned = false;
 
-    static constexpr int EDGE_CLIMB_THRESHOLD   = 16;
+    static constexpr int EDGE_CLIMB_THRESHOLD = 16;
 
-    float damagedTimer                          = 0.0f;
-    static constexpr int DAMAGED_DURATION       = 10;
-    float shootTimer                            = 0.0f;
-    static constexpr int SHOOT_DURATION         = 10;
-    float shootCooldown                         = 0.0f;
-    static constexpr int SHOOT_COOLDOWN         = 25;
-    float meleeTimer                            = 0.0f;
-    static constexpr int MELEE_DURATION         = 8; 
-    float meleeCooldown                         = 0.0f;
-    static constexpr int MELEE_COOLDOWN         = 20;
-    float invulnerableTimer                     = 0.0f;
-    static constexpr int INV_DURATION           = 300;
-    float specialCooldown                       = 0.0f;
-    static constexpr int SPECIAL_COOLDOWN       = 60;
-    float specialTimer                          = 0.0f;
-    static constexpr int SPECIAL_DURATION       = 24;
-    float droppingTimer                         = 0.0f;
-    static constexpr int DROP_DURATION          = 15;
+    float damagedTimer                    = 0.0f;
+    static constexpr int DAMAGED_DURATION = 10;
+    float shootTimer                      = 0.0f;
+    static constexpr int SHOOT_DURATION   = 10;
+    float shootCooldown                   = 0.0f;
+    static constexpr int SHOOT_COOLDOWN   = 25;
+    float meleeTimer                      = 0.0f;
+    static constexpr int MELEE_DURATION   = 8;
+    float meleeCooldown                   = 0.0f;
+    static constexpr int MELEE_COOLDOWN   = 20;
+    float invulnerableTimer               = 0.0f;
+    static constexpr int INV_DURATION     = 300;
+    float specialCooldown                 = 0.0f;
+    static constexpr int SPECIAL_COOLDOWN = 60;
+    float specialTimer                    = 0.0f;
+    static constexpr int SPECIAL_DURATION = 24;
+    static constexpr int SPECIAL_HITBOX_DURATION = 5;
+    float droppingTimer                   = 0.0f;
+    static constexpr int DROP_DURATION    = 15;
 
     float charge = 0.0f;
     static constexpr float MAX_CHARGE = 1.0f;
@@ -94,21 +95,21 @@ public:
     static constexpr int   SHIELD_BREAK_STUN    = 180;
     static constexpr int   SHIELD_STUN_DURATION = 14;
     static constexpr float SHIELD_MIN_SIZE      = 0.35f;
-    
-    float shieldTimer       = 0.0f;
-    float shieldHp          = SHIELD_HP_MAX;
-    bool  shieldBroken      = false;
-    float shieldBreakTimer  = 0.0f;
-    float shieldStunTimer   = 0.0f;
-    float stunTimer         = 0.0f;
-    bool shieldHeld         = false;
+
+    float shieldTimer      = 0.0f;
+    float shieldHp         = SHIELD_HP_MAX;
+    bool  shieldBroken     = false;
+    float shieldBreakTimer = 0.0f;
+    float shieldStunTimer  = 0.0f;
+    float stunTimer        = 0.0f;
+    bool  shieldHeld       = false;
 
     // grapple
     Grapple* grapple = nullptr;
     void throwGrapple();
 
     // hitbox
-    SDL_Rect rect = {};
+    SDL_Rect rect     = {};
     SDL_Rect prevRect = {};
 
     // animation
@@ -137,10 +138,10 @@ public:
     bool tryMelee();
     bool trySpecial(Direction dir);
 
-    void update(const std::vector<Platform>& platforms, 
-                    std::vector<Projectile>& projectiles, 
-                    std::vector<Player>& players,
-                    bool downKeyPressed, float ts);
+    void update(const std::vector<Platform>& platforms,
+                std::vector<Projectile>& projectiles,
+                std::vector<Player>& players,
+                bool downKeyPressed, float ts);
     void updateTimers(float ts);
     void resetTimers();
 

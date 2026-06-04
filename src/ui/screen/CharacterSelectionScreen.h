@@ -39,13 +39,13 @@ private:
     int selectedChar1 = 0, selectedChar2 = 0;
     std::string name1, name2;
     Color color1{}, color2{};
-    int activeField = 0;    // 0 = none, 1 = name1, 2 = name2
-    bool nameError = false;
-    bool finished  = false;
+    int activeField = 0;  // 0 = none, 1 = name1, 2 = name2
+    bool nameError  = false;
+    bool finished   = false;
     CharacterSelectionResult result;
 
     int  findIdx(const Character* ch) const;
     void pickColorFor(int player);  // 1 or 2
     void setDefaultColors();
-    void tryStart();  // shared confirm logic
+    void tryStart();
 };

@@ -46,47 +46,27 @@ void Game::updateGameplay(float ts) {
             attacker.status != Status::SPECIAL_UP     &&
             attacker.status != Status::SPECIAL_DOWN)   return;
         if (attacker.specialHitboxSpawned)             return;
-        if (attacker.specialTimer > Player::SPECIAL_DURATION - 5) return;
+        if (attacker.specialTimer > Player::SPECIAL_DURATION - Player::SPECIAL_HITBOX_DURATION) return;
 
         attacker.specialHitboxSpawned = true;
-        int hx, hy, hw, hh;
-        float dmgScale = 3.0f, kbScale = 5.0f;
 
+        SpecialHitboxParams p;
         switch (attacker.status) {
-            case Status::SPECIAL_STATIC:
-                hw = 110; hh = attacker.rect.h + 20;
-                hx = (attacker.facing == Facing::RIGHT) ? attacker.rect.x + attacker.rect.w - 20
-                                                        : attacker.rect.x - hw + 20;
-                hy = attacker.rect.y - 10;
-                break;
-            case Status::SPECIAL_SIDE:
-                hw = 130; hh = attacker.rect.h;
-                hx = (attacker.facing == Facing::RIGHT) ? attacker.rect.x + attacker.rect.w - 30
-                                                        : attacker.rect.x - hw + 30;
-                hy = attacker.rect.y;
-                dmgScale = 2.5f; kbScale = 4.0f;
-                break;
-            case Status::SPECIAL_UP:
-                hw = attacker.rect.w + 20; hh = 90;
-                hx = attacker.rect.x - 10;
-                hy = attacker.rect.y - hh + 20;
-                dmgScale = 3.5f; kbScale = 6.0f;
-                break;
-            case Status::SPECIAL_DOWN:
-                hw = attacker.rect.w + 40; hh = 80;
-                hx = attacker.rect.x - 20;
-                hy = attacker.rect.y + attacker.rect.h - 20;
-                dmgScale = 4.0f; kbScale = 7.0f;
-                if (attacker.onGround)
-                    shockwaves.emplace_back(attacker.rect.x + attacker.rect.w / 2,
-                                           attacker.rect.y + attacker.rect.h - 32, &attacker);
-                break;
-            default: 
-                return;
+            case Status::SPECIAL_STATIC: p = attacker.character->specialStatic(attacker); break;
+            case Status::SPECIAL_SIDE:   p = attacker.character->specialSide(attacker);   break;
+            case Status::SPECIAL_UP:     p = attacker.character->specialUp(attacker);     break;
+            case Status::SPECIAL_DOWN:   p = attacker.character->specialDown(attacker);   break;
+            default: return;
         }
-        auto& cr = specialHitboxes.emplace_back(hx, hy, hw, hh, &attacker, 5);
-        cr.damageScale = dmgScale;
-        cr.kbScale     = kbScale;
+
+        if (p.spawnShockwave && attacker.onGround) {
+            shockwaves.emplace_back(attacker.rect.x + attacker.rect.w / 2,
+                                    attacker.rect.y + attacker.rect.h - 32, &attacker);
+        }
+
+        auto& cr       = specialHitboxes.emplace_back(p.x, p.y, p.w, p.h, &attacker, 5);
+        cr.damageScale = p.damageScale;
+        cr.kbScale     = p.kbScale;
     };
     trySpawnSpecialHitbox(player1);
     trySpawnSpecialHitbox(player2);
@@ -200,9 +180,9 @@ void Game::updateGameplay(float ts) {
             if (target.invulnerableTimer > 0) return;
             auto dir = it->checkCollision(target);
             if (!dir) return;
-            int dmg = static_cast<int>(it->getOwner()->character->stats.damage * 1.5f);
-            float kb = 1.5f;
-            auto hit = rollCriticalHit(*it->getOwner(), dmg, kb);
+            int dmg   = static_cast<int>(it->getOwner()->character->stats.damage * 1.5f);
+            float kb  = 1.5f;
+            auto hit  = rollCriticalHit(*it->getOwner(), dmg, kb);
             if (target.status == Status::SHIELDED && target.shieldTimer > 0 && !target.shieldBroken) {
                 target.blockHit(hit.damage, hit.kbScale);
             } else {
@@ -220,7 +200,7 @@ void Game::updateGameplay(float ts) {
         if (!it->isAlive()) { it = specialHitboxes.erase(it); continue; }
         if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
             if (player2.invulnerableTimer == 0) {
-                int dmg = static_cast<int>(player1.character->stats.damage * it->damageScale);
+                int dmg  = static_cast<int>(player1.character->stats.damage * it->damageScale);
                 auto hit = rollCriticalHit(player1, dmg, it->kbScale);
                 if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
                     player2.blockHit(hit.damage, hit.kbScale);
@@ -233,7 +213,7 @@ void Game::updateGameplay(float ts) {
             }
         } else if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
             if (player1.invulnerableTimer == 0) {
-                int dmg = static_cast<int>(player2.character->stats.damage * it->damageScale);
+                int dmg  = static_cast<int>(player2.character->stats.damage * it->damageScale);
                 auto hit = rollCriticalHit(player2, dmg, it->kbScale);
                 if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
                     player1.blockHit(hit.damage, hit.kbScale);
@@ -270,30 +250,27 @@ void Game::respawn(Player& p, bool voidDeath) {
     const auto& sp = spawns[pick(rng)];
 
     Mix_Chunk* voidDeathSound = Resources::get().getSound("void_death");
-    Mix_Chunk* deathSound = Resources::get().getSound("death");
+    Mix_Chunk* deathSound     = Resources::get().getSound("death");
 
-    // play corresponding death sound
     if (voidDeath && voidDeathSound)
         Mix_PlayChannel(-1, voidDeathSound, 0);
     else if (deathSound)
         Mix_PlayChannel(-1, deathSound, 0);
 
-    // spawn death particles before respawing
     particles.spawnDeath(p.rect.x + p.rect.w / 2, p.rect.y + p.rect.h / 2);
 
-    // reset the player
-    p.hp                 = p.character->stats.health;
-    p.rect.x             = sp.x;
-    p.rect.y             = sp.y;
-    p.lives             -= 1;
-    p.status             = Status::IDLE;
-    p.charge             = 0.0f;
-    p.dx = p.dy          = 0.0f;
-    p.onGround           = false;
-    p.hasAirJumped       = false;
-    p.currentSpriteIndex = 0.0f;
+    p.hp                   = p.character->stats.health;
+    p.rect.x               = sp.x;
+    p.rect.y               = sp.y;
+    p.lives               -= 1;
+    p.status               = Status::IDLE;
+    p.charge               = 0.0f;
+    p.dx = p.dy            = 0.0f;
+    p.onGround             = false;
+    p.hasAirJumped         = false;
+    p.currentSpriteIndex   = 0.0f;
     p.specialHitboxSpawned = false;
     p.resetTimers();
-    p.grapple = nullptr;
-    p.invulnerableTimer  = Player::INV_DURATION;
+    p.grapple              = nullptr;
+    p.invulnerableTimer    = Player::INV_DURATION;
 }

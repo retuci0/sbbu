@@ -111,8 +111,8 @@ void Game::handleScreenTransitions() {
         ss->resetFinished();
         screens.push(std::make_unique<CharacterSelectionScreen>(
             Resources::get().characterList(),
-            "player 1", &Resources::get().BERT,
-            "player 2", &Resources::get().BERT));
+            "player 1", Resources::get().BERT.get(),
+            "player 2", Resources::get().BERT.get()));
         return;
     }
 

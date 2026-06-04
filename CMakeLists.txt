@@ -18,7 +18,7 @@ set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(lib/discord-rpc)
 target_compile_options(discord-rpc PRIVATE -Wno-error -Wno-template-body)
 
-# automatically find all .CPP files
+# automatically find all source files
 file(GLOB_RECURSE SRC
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/inc/*.c"

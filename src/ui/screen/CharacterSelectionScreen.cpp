@@ -8,8 +8,8 @@
 
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_rect.h>
-
 #include <SDL2/SDL_ttf.h>
+
 #include <array>
 
 
@@ -27,7 +27,7 @@ CharacterSelectionScreen::CharacterSelectionScreen(
         const std::array<const Character*, CHARACTER_NUM>& chars,
         const std::string& defaultName1, const Character* defaultChar1,
         const std::string& defaultName2, const Character* defaultChar2)
-    : chars(chars), name1(defaultName1), name2(defaultName2), Screen() 
+    : chars(chars), name1(defaultName1), name2(defaultName2), Screen()
 {
     selectedChar1 = findIdx(defaultChar1);
     selectedChar2 = findIdx(defaultChar2);
@@ -35,7 +35,7 @@ CharacterSelectionScreen::CharacterSelectionScreen(
     addWidget<Button>(START_BTN_X, START_BTN_Y, START_BTN_W, START_BTN_H,
         "start game", GREEN, WHITE,
         [&]{ tryStart(); });
-    addWidget<Button>(4, 4, 64, 64, "<", GREEN, WHITE, 
+    addWidget<Button>(4, 4, 64, 64, "<", GREEN, WHITE,
         [&]{ goBack(); });
 }
 
@@ -55,7 +55,7 @@ void CharacterSelectionScreen::tryStart() {
     std::string n2 = name2.empty() ? "player 2" : name2;
     if (n1 == n2) { nameError = true; return; }
     finished = true;
-    result = { chars[selectedChar1], chars[selectedChar2], n1, n2, color1, color2 };
+    result   = { chars[selectedChar1], chars[selectedChar2], n1, n2, color1, color2 };
 }
 
 void CharacterSelectionScreen::pickColorFor(int player) {
@@ -85,7 +85,6 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
         return;
     }
 
-    // navigation
     if (e.type == SDL_KEYDOWN) {
         switch (e.key.keysym.sym) {
             case SDLK_RETURN:
@@ -119,7 +118,7 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
                     }
                 }
                 if (newIdx < first) newIdx = last;
-                if (newIdx > last) newIdx = first;
+                if (newIdx > last)  newIdx = first;
                 selected = newIdx;
                 break;
             }
@@ -129,17 +128,15 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
         }
     }
 
-    // text input
     if (e.type == SDL_TEXTINPUT) {
         nameError = false;
         if (activeField == 1 && name1.size() < 16) name1 += e.text.text;
         if (activeField == 2 && name2.size() < 16) name2 += e.text.text;
     }
 
-    // mouse
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
         const int mx = e.button.x, my = e.button.y;
-        for (int i = 0; i < (int)chars.size(); ++i) {
+        for (int i = 0; i < static_cast<int>(chars.size()); ++i) {
             if (!chars[i] || !chars[i]->loaded) continue;
             int col = i / 4, row = i % 4;
             int y  = ROW_START_Y + row * ROW_STEP;
@@ -154,8 +151,7 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
             activeField = 1;
         } else if (pointInRect(mx, my, nameField2)) {
             activeField = 2;
-        }
-        else { 
+        } else {
             activeField = 0;
         }
         if (pointInRect(mx, my, SDL_Rect{COL1_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H})) {
@@ -189,7 +185,6 @@ void CharacterSelectionScreen::render(SDL_Renderer* renderer) {
         Renderer::renderButton(renderer, font, charName, x2, y, BOX_W, BOX_H, bg2, WHITE);
     }
 
-    // character icons
     if (chars[selectedChar1] && chars[selectedChar1]->icon) {
         SDL_Rect r = {300, 130, 125, 57};
         Renderer::drawSprite(renderer, chars[selectedChar1]->icon, &r, false);
@@ -199,7 +194,6 @@ void CharacterSelectionScreen::render(SDL_Renderer* renderer) {
         Renderer::drawSprite(renderer, chars[selectedChar2]->icon, &r, false);
     }
 
-    // name fields
     Renderer::renderText(renderer, font, "enter name:", COL1_X, NAME_BOX_Y - 40, WHITE);
     Renderer::renderText(renderer, font, "enter name:", COL2_X, NAME_BOX_Y - 40, WHITE);
     SDL_Color nameBg1 = (activeField == 1) ? SDL_Color{100, 100, 180, 255} : SDL_Color{60, 60, 60, 255};
@@ -207,13 +201,11 @@ void CharacterSelectionScreen::render(SDL_Renderer* renderer) {
     Renderer::renderButton(renderer, font, name1, NAME_BOX_X1, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H, nameBg1, WHITE);
     Renderer::renderButton(renderer, font, name2, NAME_BOX_X2, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H, nameBg2, WHITE);
 
-    // color picker buttons
     Renderer::fillRect(renderer, COL1_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H, color1);
     Renderer::fillRect(renderer, COL2_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H, color2);
     Renderer::renderText(renderer, font, "pick color", COL1_X + 10, COLOR_BTN_Y + 12, BLACK);
     Renderer::renderText(renderer, font, "pick color", COL2_X + 10, COLOR_BTN_Y + 12, BLACK);
 
-    // name conflict error
     if (nameError) {
         Renderer::renderText(renderer, font, "player names must be different!",
             START_BTN_X - 60, START_BTN_Y - 40, {255, 80, 80, 255});
