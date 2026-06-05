@@ -8,6 +8,7 @@
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_keycode.h>
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 
 #include <algorithm>
@@ -139,11 +140,16 @@ void StageSelectionScreen::renderPreview(SDL_Renderer* r, const Stage& stage) co
         SDL_Rect scaled = worldToPreview(plat.rect.x, plat.rect.y,
                                          plat.rect.w, plat.rect.h,
                                          px, py, pw, ph);
-        if (plat.size == PlatformSize::SMALL) {
-            if (!omega) Renderer::drawSprite(r, Resources::get().getTexture("platform_small"), &scaled, false);
-        } else {
-            Renderer::drawSprite(r, Resources::get().getTexture("platform_big"), &scaled, false);
-        }
+
+        Renderer::drawSprite(r, plat.image, &scaled, false);
+    }
+
+    // grapple points
+    for (const auto& gp : stage.grapplePoints) {
+        SDL_Rect scaled = worldToPreview(gp.rect.x, gp.rect.y, 
+                                         gp.rect.w, gp.rect.h,
+                                         px, py, pw, ph);
+        Renderer::drawSprite(r, gp.tex, &scaled, false);
     }
 
     // spawnpoint markers

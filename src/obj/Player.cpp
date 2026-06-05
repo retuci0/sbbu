@@ -47,6 +47,7 @@ void Player::init(int x, int y, const Character* ch, const std::string& playerNa
 void Player::move(int direction) {
     // don't fight the grapple
     if (grapple && grapple->isLatched()) return;
+    if (postGrappleTimer > 0.0f) return;
 
     if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE
         || status == Status::SPECIAL_UP   || status == Status::SPECIAL_DOWN
@@ -334,6 +335,7 @@ bool Player::trySpecial(Direction dir) {
 void Player::update(const std::vector<Platform>& platforms,
                     std::vector<Projectile>& projectiles,
                     std::vector<Player>& players,
+                    std::vector<GrapplePoint>& grapplePoints,
                     bool downKeyPressed, float ts
 ) {
     prevRect = rect;
@@ -359,8 +361,12 @@ void Player::update(const std::vector<Platform>& platforms,
 
     // update grapple
     if (grapple) {
-        bool alive = grapple->update(platforms, players, projectiles, ts);
+        bool alive = grapple->update(platforms, players, projectiles, grapplePoints, ts);
         if (!alive) {
+            // protect momentum if grapple point was blue
+            if (grapple->targetPoint && grapple->targetPoint->type == GrapplePointType::BLUE) {
+                postGrappleTimer = POST_GRAPPLE_DURATION;
+            }
             delete grapple;
             grapple = nullptr;
         }
@@ -523,6 +529,10 @@ void Player::updateTimers(float ts) {
     if (dashCooldown > 0.0f) {
         dashCooldown = std::max(0.0f, dashCooldown - ts);
     }
+
+    if (postGrappleTimer > 0.0f) {
+        postGrappleTimer = std::max(0.0f, postGrappleTimer - ts);
+    }
 }
 
 void Player::resetTimers() {
@@ -608,7 +618,7 @@ void Player::animate(float ts) {
     }
 }
 
-void Player::draw(SDL_Renderer* r, TTF_Font* font, float a) {
+void Player::draw(SDL_Renderer* r, float a) {
     bool flipH = (facing == Facing::LEFT);
     auto drawAnimatedSprite = [&](const std::vector<SDL_Texture*>& frames) {
         if (frames.empty()) return;
@@ -659,9 +669,9 @@ void Player::draw(SDL_Renderer* r, TTF_Font* font, float a) {
     }
 
     drawShield(r, a);
-    drawNametag(r, font, a);
+    drawNametag(r, Resources::get().smallFont, a);
 
-    if (grapple) grapple->draw(r);
+    if (grapple) grapple->draw(r, a);
 }
 
 void Player::drawShield(SDL_Renderer* r, float a) const {

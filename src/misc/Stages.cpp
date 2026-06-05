@@ -1,4 +1,5 @@
 #include "Stages.h"
+#include "obj/GrapplePoint.h"
 
 
 Stage classicStage() {
@@ -43,6 +44,10 @@ Stage flatStage() {
     };
     s.spawnpoints = { {500, 0}, {1420, 0} };
     s.deathZones = { -500, SW + 500, SH + 100, -1000 };
+    s.grapplePoints = { 
+        GrapplePoint(GrapplePointType::GREEN, { 100, 100, 56, 56 }),
+        GrapplePoint(GrapplePointType::GREEN, { SW - 156, 100, 56, 56 })
+    };
     return s;
 }
 
@@ -51,14 +56,17 @@ Stage dashStage() {
     s.name = "dash";
     s.bg = "bg_dash";
     s.platforms = {
-        Platform(410, 550, 1100, 250, PlatformSize::BIG),
-        Platform(340, 380, 200, 30, PlatformSize::SMALL),
-        Platform(340, 220, 200, 30, PlatformSize::SMALL),
+        Platform( 410, 550, 1100, 250, PlatformSize::BIG),
+        Platform( 340, 380, 200, 30, PlatformSize::SMALL),
+        Platform( 340, 220, 200, 30, PlatformSize::SMALL),
         Platform(1380, 380, 200, 30, PlatformSize::SMALL),
         Platform(1380, 220, 200, 30, PlatformSize::SMALL),
     };
     s.spawnpoints = { {440, 0}, {1480, 0} };
     s.deathZones = { -500, SW + 500, SH - 200, -1000 };
+    s.grapplePoints = { 
+        GrapplePoint(GrapplePointType::BLUE, { (SW - 56) / 2, 300, 56, 56 })
+    };
     return s;
 }
 

@@ -204,14 +204,13 @@ void Game::renderGameplay(float ts, float a) {
     SDL_Rect bgRect = { 0, 0, SW, SH };
     Renderer::drawSprite(renderer, bgImage, &bgRect, false);
 
-    for (auto& p : platforms) {
-        p.draw(renderer, a);
-    }
+    for (auto& p : platforms)           p.draw(renderer, a);
+    for (auto& gp : grapplePoints) gp.draw(renderer, a);
 
-    player1.draw(renderer, smallFont, a);
-    player2.draw(renderer, smallFont, a);
-    for (auto& pr : projectiles) pr.draw(renderer, a);
-    for (auto& sw : shockwaves)   sw.draw(renderer, a);
+    player1.draw(renderer, a);
+    player2.draw(renderer, a);
+    for (auto& pr : projectiles)     pr.draw(renderer, a);
+    for (auto& sw : shockwaves)       sw.draw(renderer, a);
     particles.draw(renderer, a);
 
     if (options.debug) renderDebug(a, font);

@@ -6,6 +6,7 @@
 #include "misc/Discord.h"
 #include "misc/ScreenshotManager.h"
 #include "obj/CollisionRect.h"
+#include "obj/GrapplePoint.h"
 #include "obj/Platform.h"
 #include "obj/Player.h"
 #include "obj/Projectile.h"
@@ -94,6 +95,7 @@ private:
     static constexpr int MAX_PROJ = 8;
     std::vector<Projectile> projectiles;
     std::vector<Shockwave> shockwaves;
+    std::vector<GrapplePoint> grapplePoints;
     std::vector<CollisionRect> meleeHitboxes;
     std::vector<CollisionRect> specialHitboxes;
     std::vector<Platform> platforms;

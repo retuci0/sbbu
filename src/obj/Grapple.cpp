@@ -1,11 +1,13 @@
 #include "obj/Grapple.h"
 #include "core/Resources.h"
+#include "obj/GrapplePoint.h"
 #include "obj/Player.h"
 #include "obj/Platform.h"
 #include "obj/Projectile.h"
 #include "misc/Common.h"
 #include "misc/Renderer.h"
 
+#include <SDL2/SDL_log.h>
 #include <SDL2/SDL_rect.h>
 #include <cmath>
 #include <algorithm>
@@ -13,6 +15,7 @@
 
 Grapple::Grapple(Player& player, int startX, int startY, float velX, float velY)
     : rect({ startX, startY, 14, 14 })
+    , prevRect(rect)
     , dx(velX)
     , dy(velY)
     , owner(player)
@@ -36,8 +39,32 @@ bool Grapple::pullOwnerToward(float hx, float hy, float ts) {
     float toDy = hy - py;
     float dist = std::sqrt(toDx * toDx + toDy * toDy);
 
-    if (dist < ARRIVE_DIST) return false;
+    if (dist < ARRIVE_DIST) {
+        if (!targetPoint) return false;
 
+        if (targetPoint->type == GrapplePointType::GREEN) {
+            // green: stop momentum
+            return false;
+        }
+        else if (targetPoint->type == GrapplePointType::BLUE) {
+            // blue: keep momentum
+            float pullSpeed = std::sqrt(owner.dx * owner.dx + owner.dy * owner.dy);
+            float origSpeed = std::sqrt(playerDx0 * playerDx0 + playerDy0 * playerDy0);
+            float launchSpeed = std::max(pullSpeed, origSpeed) + pullSpeed * 0.5f;
+
+            float len = std::sqrt(owner.dx * owner.dx + owner.dy * owner.dy);
+            if (len > 0.0f) {
+                owner.dx = (owner.dx / len) * launchSpeed;
+                owner.dy = (owner.dy / len) * launchSpeed;
+            } else {
+                owner.dx = playerDx0;
+                owner.dy = playerDy0;
+            }
+            return false;
+        }
+    }
+
+    // Normal pull (for all latched states)
     float invDist = 1.0f / dist;
     float speed   = std::max(std::sqrt(owner.dx * owner.dx + owner.dy * owner.dy),
                              PULL_FORCE);
@@ -46,12 +73,17 @@ bool Grapple::pullOwnerToward(float hx, float hy, float ts) {
     return true;
 }
 
-
 bool Grapple::update(const std::vector<Platform>& platforms,
                      std::vector<Player>&         players,
                      std::vector<Projectile>&     projectiles,
+                     std::vector<GrapplePoint>&   points,
                      float ts)
 {
+    prevRect = rect;
+
+    // reset double jump after latching
+    if (isLatched()) owner.hasAirJumped = false;
+
     switch (state) {
 
         case GrappleState::FLYING: {
@@ -59,7 +91,7 @@ bool Grapple::update(const std::vector<Platform>& platforms,
             rect.y += static_cast<int>(dy * ts);
 
             if (distanceFromOrigin() > MAX_RANGE) {
-                state = GrappleState::RETRACTING;
+                retract();
                 break;
             }
 
@@ -93,6 +125,16 @@ bool Grapple::update(const std::vector<Platform>& platforms,
                 }
             }
 
+            // grapple points
+            for (auto& point : points) {
+                if (SDL_HasIntersection(&point.rect, &rect)) {
+                    dx = dy = 0.0f;
+                    targetPoint = &point;
+                    state = GrappleState::LATCHED_POINT;
+                    return true;
+                }
+            }
+
             break;
         }
 
@@ -106,7 +148,7 @@ bool Grapple::update(const std::vector<Platform>& platforms,
         case GrappleState::LATCHED_PLAYER: {
             if (!targetPlayer) {
                 // target was destroyed externally
-                state = GrappleState::RETRACTING;
+                retract();
                 break;
             }
             // hook tracks the target player's center
@@ -121,12 +163,27 @@ bool Grapple::update(const std::vector<Platform>& platforms,
 
         case GrappleState::LATCHED_PROJECTILE: {
             if (!targetProjectile) {
-                state = GrappleState::RETRACTING;
+                retract();
                 break;
             }
             // hook tracks the projectile
             rect.x = targetProjectile->rect.x + (targetProjectile->rect.w - rect.w) / 2;
             rect.y = targetProjectile->rect.y + (targetProjectile->rect.h - rect.h) / 2;
+
+            float hx = rect.x + rect.w * 0.5f;
+            float hy = rect.y + rect.h * 0.5f;
+            if (!pullOwnerToward(hx, hy, ts)) return false;
+            break;
+        }
+
+        case GrappleState::LATCHED_POINT: {
+            // snapshot the player's velocity
+            if (targetPoint->type == GrapplePointType::BLUE
+                    && playerDx0 == 0.0f && playerDy0 == 0.0f
+            ) {
+                playerDx0 = owner.dx;
+                playerDy0 = owner.dy;
+            }
 
             float hx = rect.x + rect.w * 0.5f;
             float hy = rect.y + rect.h * 0.5f;
@@ -157,12 +214,14 @@ bool Grapple::update(const std::vector<Platform>& platforms,
 }
 
 
-void Grapple::draw(SDL_Renderer* r) const {
+void Grapple::draw(SDL_Renderer* r, float a) const {
+    SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
+
     // rope from player center to hook center
     int px = owner.rect.x + owner.rect.w / 2;
     int py = owner.rect.y + owner.rect.h / 2;
-    int hx = rect.x + rect.w / 2;
-    int hy = rect.y + rect.h / 2;
+    int hx = drawRect.x + drawRect.w / 2;
+    int hy = drawRect.y + drawRect.h / 2;
 
     Color c;
     // hook rope color by state
@@ -170,6 +229,7 @@ void Grapple::draw(SDL_Renderer* r) const {
         case GrappleState::LATCHED_PLATFORM:   c = GREEN;  break;
         case GrappleState::LATCHED_PLAYER:     c = RED;    break;
         case GrappleState::LATCHED_PROJECTILE: c = YELLOW; break;
+        case GrappleState::LATCHED_POINT:      c = targetPoint->type == GrapplePointType::BLUE ? BLUE : LIME; break;
         default:                               c = CYAN;   break;
     }
 
@@ -180,7 +240,7 @@ void Grapple::draw(SDL_Renderer* r) const {
     SDL_RenderDrawLine(r, px, py - 1, hx, hy - 1);
     SDL_RenderDrawLine(r, px, py + 1, hx, hy + 1);
 
-    Renderer::drawSprite(r, Resources::get().getTexture("grapple"), &rect, dx < 0);
+    Renderer::drawSprite(r, Resources::get().getTexture("grapple"), &drawRect, dx < 0);
     // Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, hookColor, 2);
 }
 
@@ -188,9 +248,11 @@ void Grapple::draw(SDL_Renderer* r) const {
 bool Grapple::isLatched() const {
     return state == GrappleState::LATCHED_PLATFORM
         || state == GrappleState::LATCHED_PLAYER
-        || state == GrappleState::LATCHED_PROJECTILE;
+        || state == GrappleState::LATCHED_PROJECTILE
+        || state == GrappleState::LATCHED_POINT;
 }
 
 void Grapple::retract() {
+    playerDx0 = playerDy0 = 0;
     state = GrappleState::RETRACTING;
 }

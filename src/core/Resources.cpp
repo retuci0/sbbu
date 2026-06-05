@@ -63,6 +63,9 @@ void Resources::load(SDL_Renderer* renderer) {
     // sprites
     registerTexture(renderer, "platform_big",    "assets/images/platform/platform_big.png");
     registerTexture(renderer, "platform_small",  "assets/images/platform/platform_small.png");
+    registerTexture(renderer, "grapple_point_green", "assets/images/platform/gp_green.png");
+    registerTexture(renderer, "grapple_point_blue", "assets/images/platform/gp_blue.png");
+
 
     registerTexture(renderer, "projectile",      "assets/images/projectile/projectile.png");
     registerTexture(renderer, "shockwave",       "assets/images/projectile/shockwave.png");

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "obj/GrapplePoint.h"
 #include "obj/Platform.h"
 #include "obj/Player.h"
 
@@ -22,6 +23,7 @@ struct Stage {
     std::string name;
     std::string bg;  // key into Resources::getTexture()
     std::vector<Platform> platforms;
+    std::vector<GrapplePoint> grapplePoints;
     std::vector<Spawnpoint> spawnpoints;
     DeathZones deathZones;
 

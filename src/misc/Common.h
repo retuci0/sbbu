@@ -35,6 +35,7 @@ constexpr Color DARK_RED        = {  45,   0,   0, 255 };
 constexpr Color MAGENTA         = { 255,   0, 255, 255 };
 constexpr Color YELLOW          = { 255, 255,   0, 255 };
 constexpr Color CYAN            = {   0, 255, 255, 255 };
+constexpr Color LIME            = {   0, 255,   0, 255 };
 
 
 // for network transmission

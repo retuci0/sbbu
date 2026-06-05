@@ -123,7 +123,7 @@ FlanCharacter::FlanCharacter() {
 static SDL_Texture* loadTex(SDL_Renderer* r, const std::string& path) {
     SDL_Texture* t = IMG_LoadTexture(r, path.c_str());
     if (!t) {
-        SDL_Log("loadCharacterAssets: failed to load '%s': %s", path.c_str(), IMG_GetError());
+        SDL_Log("loadCharacterAssets: failed to load \"%s\": %s", path.c_str(), IMG_GetError());
     }
     return t;
 }

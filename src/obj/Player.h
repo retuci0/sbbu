@@ -3,6 +3,7 @@
 #include "misc/Characters.h"
 #include "misc/Common.h"
 #include "misc/Color.h"
+#include "obj/GrapplePoint.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
@@ -128,10 +129,12 @@ public:
     void move(int direction);  // -1 left, 0 stop, +1 right
     void jump();
     void dash();
-    float dashTimer = 0.0f;
+    float dashTimer         = 0.0f;
     static constexpr int DASH_DURATION = 10;
-    float dashCooldown = 0.0f;
+    float dashCooldown      = 0.0f;
     static constexpr int DASH_COOLDOWN = 60;
+    float postGrappleTimer  = 0.0f;
+    static constexpr int POST_GRAPPLE_DURATION = 30;
 
     void getHit(Facing side, int damage, float kbScale = 1.0f);
     bool tryShoot();
@@ -141,11 +144,12 @@ public:
     void update(const std::vector<Platform>& platforms,
                 std::vector<Projectile>& projectiles,
                 std::vector<Player>& players,
+                std::vector<GrapplePoint>& grapplePoints,
                 bool downKeyPressed, float ts);
     void updateTimers(float ts);
     void resetTimers();
 
-    void draw(SDL_Renderer* r, TTF_Font* font, float a);
+    void draw(SDL_Renderer* r, float a);
     void drawShield(SDL_Renderer* r, float a) const;
     void drawNametag(SDL_Renderer* r, TTF_Font* font, float a) const;
     void drawHitbox(SDL_Renderer* r, float a) const;
