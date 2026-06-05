@@ -9,6 +9,7 @@
 
 #include <SDL2/SDL_log.h>
 #include <SDL2/SDL_rect.h>
+#include <SDL2/SDL_render.h>
 #include <cmath>
 #include <algorithm>
 
@@ -241,7 +242,11 @@ void Grapple::draw(SDL_Renderer* r, float a) const {
     SDL_RenderDrawLine(r, px, py + 1, hx, hy + 1);
 
     Renderer::drawSprite(r, Resources::get().getTexture("grapple"), &drawRect, dx < 0);
-    // Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, hookColor, 2);
+}
+
+void Grapple::drawHitbox(SDL_Renderer* r, float a) const {
+    SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
+    Renderer::outlineRect(r, drawRect.x, drawRect.y, drawRect.w, drawRect.h, LIME, 2);
 }
 
 

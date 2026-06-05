@@ -37,6 +37,7 @@ void Shockwave::draw(SDL_Renderer* r, float a) {
     Renderer::drawSprite(r, img, &drawRect2, false);
 }
 
+// replace with raw pointer to match rest of codebase perhaps?
 std::optional<Facing> Shockwave::checkCollision(const Player& player) {
     if (rects.first.active  && SDL_HasIntersection(&player.rect, &rects.first.rect)) {
         rects.first.active = false;
@@ -52,6 +53,6 @@ std::optional<Facing> Shockwave::checkCollision(const Player& player) {
 void Shockwave::drawHitboxes(SDL_Renderer* renderer, float a) {
     SDL_Rect drawRect1 = interpolatedRect(rects.first.prevRect, rects.first.rect, a);
     SDL_Rect drawRect2 = interpolatedRect(rects.second.prevRect, rects.second.rect, a);
-    Renderer::outlineRect(renderer, drawRect1.x, drawRect1.y, drawRect1.w, drawRect1.h, GREEN, 2);
-    Renderer::outlineRect(renderer, drawRect2.x, drawRect2.y, drawRect2.w, drawRect2.h, GREEN, 2);
+    Renderer::outlineRect(renderer, drawRect1.x, drawRect1.y, drawRect1.w, drawRect1.h, LIME, 2);
+    Renderer::outlineRect(renderer, drawRect2.x, drawRect2.y, drawRect2.w, drawRect2.h, LIME, 2);
 }

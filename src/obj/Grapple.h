@@ -50,6 +50,8 @@ struct Grapple {
                 float ts);
 
     void draw(SDL_Renderer* r, float a) const;
+    void drawHitbox(SDL_Renderer* r, float a) const;
+    
 
     bool isLatched() const;
     void retract();

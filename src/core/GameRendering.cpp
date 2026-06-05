@@ -175,6 +175,7 @@ void Game::renderDebug(float a, TTF_Font* font) {
     for (auto& pr : projectiles)           pr.drawHitbox(renderer, a);
     for (auto& cr : meleeHitboxes)      cr.drawHitbox(renderer, a);
     for (auto& cr : specialHitboxes)    cr.drawHitbox(renderer, a);
+    for (auto& gp : grapplePoints)       gp.drawHitbox(renderer, a);
     for (auto& sw : shockwaves)             sw.drawHitboxes(renderer, a);
 
     Renderer::renderText(renderer, font,

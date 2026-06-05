@@ -50,5 +50,5 @@ void Projectile::draw(SDL_Renderer* r, float a) {
 
 void Projectile::drawHitbox(SDL_Renderer* r, float a) const {
     SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
-    Renderer::outlineRect(r, drawRect.x, drawRect.y, drawRect.w, drawRect.h, GREEN, 2);
+    Renderer::outlineRect(r, drawRect.x, drawRect.y, drawRect.w, drawRect.h, LIME, 2);
 }

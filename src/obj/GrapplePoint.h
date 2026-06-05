@@ -31,4 +31,8 @@ public:
     void draw(SDL_Renderer* r, float /*a*/) {
         Renderer::drawSprite(r, tex, &rect, false);
     }
+
+    void drawHitbox(SDL_Renderer* r, float /*a*/) {
+        Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, BLUE, 2);
+    }
 };

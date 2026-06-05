@@ -80,9 +80,9 @@ void Player::jump() {
     if (grapple && grapple->isLatched()) grapple->retract();
 
     if (status == Status::SPECIAL_STATIC || status == Status::SPECIAL_SIDE
-        || status == Status::SPECIAL_UP   || status == Status::SPECIAL_DOWN
-        || status == Status::SHOOTING     || status == Status::SHIELDED
-        || status == Status::STUNNED      || status == Status::DASHING
+            || status == Status::SPECIAL_UP  || status == Status::SPECIAL_DOWN
+            || status == Status::SHOOTING    || status == Status::SHIELDED
+            || status == Status::STUNNED     || status == Status::DASHING
     ) {
         return;
     }
@@ -702,6 +702,7 @@ void Player::drawNametag(SDL_Renderer* r, TTF_Font* font, float a) const {
 void Player::drawHitbox(SDL_Renderer* r, float a) const {
     SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
     Renderer::outlineRect(r, drawRect.x, drawRect.y, drawRect.w, drawRect.h, RED, 2);
+    if (grapple) grapple->drawHitbox(r, a);
 }
 
 

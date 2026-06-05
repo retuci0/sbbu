@@ -7,6 +7,7 @@
 #include "ui/widget/Button.h"
 
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_gamecontroller.h>
 #include <SDL2/SDL_keycode.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
@@ -46,12 +47,13 @@ void StageSelectionScreen::confirm() {
 
     Stage chosen = stages[selectedIdx];
 
-    // omega: strip all SMALL platforms
+    // omega: strip all SMALL platforms and grapple points
     if (omega) {
         chosen.platforms.erase(
             std::remove_if(chosen.platforms.begin(), chosen.platforms.end(),
                 [](const Platform& p) { return p.size == PlatformSize::SMALL; }),
             chosen.platforms.end());
+        chosen.grapplePoints = {};
     }
 
     result   = { chosen, omega, timeLimit };
@@ -103,6 +105,10 @@ void StageSelectionScreen::handle(const SDL_Event& e) {
         ) {
             navigate(+1);
         }
+    } else if (e.type == SDL_CONTROLLERBUTTONDOWN) {
+        if (e.cbutton.button == SDL_CONTROLLER_BUTTON_X) {
+            omega = !omega;
+        }
     }
 }
 
@@ -141,15 +147,18 @@ void StageSelectionScreen::renderPreview(SDL_Renderer* r, const Stage& stage) co
                                          plat.rect.w, plat.rect.h,
                                          px, py, pw, ph);
 
+        if (omega && plat.size == PlatformSize::SMALL) continue;
         Renderer::drawSprite(r, plat.image, &scaled, false);
     }
 
     // grapple points
-    for (const auto& gp : stage.grapplePoints) {
-        SDL_Rect scaled = worldToPreview(gp.rect.x, gp.rect.y, 
-                                         gp.rect.w, gp.rect.h,
-                                         px, py, pw, ph);
-        Renderer::drawSprite(r, gp.tex, &scaled, false);
+    if (!omega) {
+        for (const auto& gp : stage.grapplePoints) {
+            SDL_Rect scaled = worldToPreview(gp.rect.x, gp.rect.y, 
+                                             gp.rect.w, gp.rect.h,
+                                             px, py, pw, ph);
+            Renderer::drawSprite(r, gp.tex, &scaled, false);
+        }
     }
 
     // spawnpoint markers
