@@ -21,6 +21,9 @@ struct CharacterStats {
     float gravity          = 0.5f;
     float terminalVelocity = 20.0f;
     float weight           = 1.0f;  // lower = less knockback
+    float friction         = 0.82f; // ground friction multiplier per frame (0–1, lower = slippier)
+    float airDrag          = 0.97f; // air drag multiplier per frame
+    float acceleration     = 1.8f;  // horizontal acceleration added per frame when moving
 };
 
 struct SpecialHitboxParams {

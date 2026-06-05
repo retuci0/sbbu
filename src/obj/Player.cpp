@@ -58,21 +58,14 @@ void Player::move(int direction) {
         return;
     }
 
-    if (status == Status::ATTACKING || status == Status::DAMAGED) {
-        dx = direction * character->stats.velocity;
-        return;
-    }
+    if (direction == 0) return;  // no input — friction handles deceleration
 
-    if (direction > 0) {
-        facing = Facing::RIGHT;
-        status = Status::WALKING;
-    } else if (direction < 0) {
-        facing = Facing::LEFT;
-        status = Status::WALKING;
-    } else {
-        status = Status::IDLE;
-    }
-    dx = direction * character->stats.velocity;
+    if (direction > 0) facing = Facing::RIGHT;
+    else               facing = Facing::LEFT;
+
+    float maxSpeed = character->stats.velocity;
+    dx += direction * character->stats.acceleration;
+    dx  = std::clamp(dx, -maxSpeed, maxSpeed);
 }
 
 void Player::jump() {
@@ -114,8 +107,8 @@ void Player::dash() {
     dashCooldown = static_cast<float>(DASH_DURATION + DASH_COOLDOWN);
 
     float speed = character->stats.velocity * 2.8f;
-    dx = (facing == Facing::RIGHT) ? speed : -speed;
-    dy = 0.0f;  // cancel vertical momentum
+    dx  = (facing == Facing::RIGHT) ? speed : -speed;  // hard override — dash is an intentional burst
+    dy  = 0.0f;  // cancel vertical momentum
 
     // small invulnerability window at the start
     invulnerableTimer = std::max(invulnerableTimer, 8.0f);
@@ -349,6 +342,13 @@ void Player::update(const std::vector<Platform>& platforms,
     // reduce gravity when dashing
     if (status == Status::DASHING) dy *= 0.3f;
 
+    // friction / air drag
+    if (status != Status::DASHING && status != Status::DAMAGED) {
+        float drag = onGround ? character->stats.friction : character->stats.airDrag;
+        dx *= drag;
+        if (std::abs(dx) < 0.05f) dx = 0.0f;  // snap to rest
+    }
+
     // horizontal move
     rect.x += static_cast<int>(dx * ts);
 
@@ -428,9 +428,9 @@ void Player::update(const std::vector<Platform>& platforms,
         && status != Status::SPECIAL_UP     && status != Status::SPECIAL_DOWN
         && status != Status::STUNNED        && status != Status::DASHING
     ) {
-        if (!onGround)    status = Status::JUMPING;
-        else if (dx != 0) status = Status::WALKING;
-        else              status = Status::IDLE;
+        if (!onGround)              status = Status::JUMPING;
+        else if (std::abs(dx) > 0.3f) status = Status::WALKING;
+        else                        status = Status::IDLE;
     }
 
     animate(ts);

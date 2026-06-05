@@ -44,11 +44,13 @@ bool Grapple::pullOwnerToward(float hx, float hy, float ts) {
         if (!targetPoint) return false;
 
         if (targetPoint->type == GrapplePointType::GREEN) {
-            // green: stop momentum
+            // green: kill momentum
+            owner.dx = 0.0f;
+            owner.dy = 0.0f;
             return false;
         }
         else if (targetPoint->type == GrapplePointType::BLUE) {
-            // blue: keep momentum
+            // blue: slingshot
             float pullSpeed = std::sqrt(owner.dx * owner.dx + owner.dy * owner.dy);
             float origSpeed = std::sqrt(playerDx0 * playerDx0 + playerDy0 * playerDy0);
             float launchSpeed = std::max(pullSpeed, origSpeed) + pullSpeed * 0.5f;
