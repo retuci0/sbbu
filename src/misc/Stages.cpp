@@ -1,5 +1,6 @@
 #include "Stages.h"
 #include "obj/GrapplePoint.h"
+#include "obj/Platform.h"
 
 
 Stage classicStage() {
@@ -70,6 +71,24 @@ Stage dashStage() {
     return s;
 }
 
+Stage hellStage() {
+    Stage s;
+    s.name = "hell";
+    s.bg = "bg_hell";
+    s.platforms = {
+        Platform( 410, 200, 1100, 250, PlatformSize::BIG),
+        Platform( 340, 550, 200,   30, PlatformSize::SMALL),
+        Platform(1380, 550, 200,   30, PlatformSize::SMALL)
+    };
+    s.spawnpoints = {{ 440, 500 }, { 1480, 500 }};
+    s.deathZones = { -500, SW + 500, SH + 300, -2000 };
+    s.grapplePoints = {
+        GrapplePoint(GrapplePointType::BLUE, { (SW - 56) / 2, 600, 56, 56 }),
+        GrapplePoint(GrapplePointType::BLUE, { (SW - 56) / 2, 500, 56, 56 })
+    };
+    return s;
+}
+
 std::vector<Stage> allStages() {
-    return { classicStage(), pillarStage(), flatStage(), dashStage() };
+    return { classicStage(), pillarStage(), flatStage(), dashStage(), hellStage() };
 }

@@ -39,5 +39,6 @@ extern Stage classicStage();
 extern Stage pillarStage();
 extern Stage flatStage();
 extern Stage dashStage();
+extern Stage hellStage();
 
 extern std::vector<Stage> allStages();
