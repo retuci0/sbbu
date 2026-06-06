@@ -93,7 +93,7 @@ class JordiCharacter : public Character {
     public: JordiCharacter(); 
 };
 
-class BarcosCharacter   : public Character { 
+class BarcosCharacter : public Character { 
 public: 
     BarcosCharacter(); 
 };
@@ -103,7 +103,7 @@ public:
     AlsexitoCharacter(); 
 };
 
-class FlanCharacter     : public Character { 
+class FlanCharacter : public Character { 
 public: 
     FlanCharacter(); 
 };

@@ -75,7 +75,9 @@ void Game::processEvents() {
         if (screens) {
             screens.handle(e);
             injectControllerNav(e);
+            PauseManager::paused = true;
         } else {
+            PauseManager::paused = false;
             // ingame pause handling
             if (e.type == SDL_KEYDOWN && e.key.keysym.sym == options.keyPause) {
                 showPauseScreen();

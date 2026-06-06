@@ -16,6 +16,10 @@
     #include <cstdlib>
 #endif
 
+// common pause manager
+struct PauseManager {
+    inline static bool paused = false;
+};
 
 // amount of characters
 constexpr int CHARACTER_NUM = 9;
@@ -89,6 +93,7 @@ inline bool pointInRect(int px, int py, const SDL_Rect& r) {
 }
 
 inline SDL_Rect interpolatedRect(SDL_Rect prevRect, SDL_Rect rect, float alpha) {
+    if (PauseManager::paused) return rect;
     return {
         static_cast<int>(prevRect.x + (rect.x - prevRect.x) * alpha),
         static_cast<int>(prevRect.y + (rect.y - prevRect.y) * alpha),
