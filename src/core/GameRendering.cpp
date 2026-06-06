@@ -172,6 +172,7 @@ void Game::renderDebug(float a, TTF_Font* font) {
     player1.drawHitbox(renderer, a);
     player2.drawHitbox(renderer, a);
     for (auto& p : platforms)                 p.drawHitbox(renderer, a);
+    for (auto& i : items)            i->drawHitbox(renderer, a);
     for (auto& pr : projectiles)           pr.drawHitbox(renderer, a);
     for (auto& cr : meleeHitboxes)      cr.drawHitbox(renderer, a);
     for (auto& cr : specialHitboxes)    cr.drawHitbox(renderer, a);
@@ -212,6 +213,7 @@ void Game::renderGameplay(float ts, float a) {
     player2.draw(renderer, a);
     for (auto& pr : projectiles)     pr.draw(renderer, a);
     for (auto& sw : shockwaves)       sw.draw(renderer, a);
+    for (auto& i : items)      i->draw(renderer, a);
     particles.draw(renderer, a);
 
     if (options.debug) renderDebug(a, font);

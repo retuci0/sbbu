@@ -44,7 +44,7 @@ struct Grapple {
     float originY = 0.0f;
 
     bool update(const std::vector<Platform>& platforms,
-                std::vector<Player>&         players,
+                std::vector<Player*>&         players,
                 std::vector<Projectile>&     projectiles,
                 std::vector<GrapplePoint>&   points,
                 float ts);

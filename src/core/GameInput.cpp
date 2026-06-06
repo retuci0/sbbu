@@ -41,7 +41,7 @@ void Game::handleGameplayInput() {
     }
     if (input.meleeP1) {
         if (player1.tryMelee()) {
-            const int hw = 86, hh = 76;
+            const int hw = 86 * player1.scale, hh = 76 * player1.scale;
             int hx = (player1.facing == Facing::RIGHT) ? player1.rect.x + player1.rect.w - 36 : player1.rect.x - hw + 36;
             int hy = player1.rect.y + (player1.rect.h - hh) / 2;
             meleeHitboxes.emplace_back(hx, hy, hw, hh, &player1, 6);
@@ -125,7 +125,7 @@ void Game::handleGameplayInput() {
     }
     if (p2MeleePr) {
         if (player2.tryMelee()) {
-            const int hw = 86, hh = 76;
+            const int hw = 86 * player2.scale, hh = 76 * player2.scale;
             int hx = (player2.facing == Facing::RIGHT) ? player2.rect.x + player2.rect.w - 36 : player2.rect.x - hw + 36;
             int hy = player2.rect.y + (player2.rect.h - hh) / 2;
             meleeHitboxes.emplace_back(hx, hy, hw, hh, &player2, 6);

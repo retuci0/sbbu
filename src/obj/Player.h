@@ -4,6 +4,7 @@
 #include "misc/Common.h"
 #include "misc/Color.h"
 #include "obj/GrapplePoint.h"
+#include "obj/Items.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
@@ -74,9 +75,12 @@ public:
     static constexpr int SPECIAL_HITBOX_DURATION = 5;
     float droppingTimer                   = 0.0f;
     static constexpr int DROP_DURATION    = 15;
+    float shitAuraTimer                   = 0.0f;
 
     float charge = 0.0f;
     static constexpr float MAX_CHARGE = 1.0f;
+
+    float scale = 1.0f;
 
 
     // shield
@@ -125,6 +129,10 @@ public:
     Player() = default;
     void init(int x, int y, const Character* ch, const std::string& playerName);
 
+    // item
+    Item* item;
+    bool dontResize = false;
+
     // movement
     void move(int direction);  // -1 left, 0 stop, +1 right
     void jump();
@@ -136,14 +144,14 @@ public:
     float postGrappleTimer  = 0.0f;
     static constexpr int POST_GRAPPLE_DURATION = 30;
 
-    void getHit(Facing side, int damage, float kbScale = 1.0f);
+    void getHit(Player* attacker, Facing side, int damage, float kbScale = 1.0f);
     bool tryShoot();
     bool tryMelee();
     bool trySpecial(Direction dir);
 
     void update(const std::vector<Platform>& platforms,
                 std::vector<Projectile>& projectiles,
-                std::vector<Player>& players,
+                std::vector<Player*>& players,
                 std::vector<GrapplePoint>& grapplePoints,
                 bool downKeyPressed, float ts);
     void updateTimers(float ts);
@@ -152,6 +160,7 @@ public:
     void draw(SDL_Renderer* r, float a);
     void drawShield(SDL_Renderer* r, float a) const;
     void drawNametag(SDL_Renderer* r, TTF_Font* font, float a) const;
+    void drawShitAura(SDL_Renderer* r, float a) const;
     void drawHitbox(SDL_Renderer* r, float a) const;
     void animate(float ts);
 

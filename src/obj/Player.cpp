@@ -1,5 +1,6 @@
 #include "obj/Player.h"
 
+#include "obj/Items.h"
 #include "obj/Platform.h"
 #include "obj/Grapple.h"
 #include "core/Resources.h"
@@ -141,7 +142,7 @@ void Player::throwGrapple() {
 /*             DEFENCE             */
 /////////////////////////////////////
 
-void Player::getHit(Facing side, int damage, float kbScale) {
+void Player::getHit(Player* attacker, Facing side, int damage, float kbScale) {
     if (invulnerableTimer > 0) return;
 
     Mix_Chunk* dmgSound = Resources::get().getSound("damage");
@@ -166,6 +167,11 @@ void Player::getHit(Facing side, int damage, float kbScale) {
 
     // decrement charge when taking damage
     charge = std::max(0.0f, charge - damage * 0.05f);
+
+    // thorns
+    if (shitAuraTimer > 0.0f) {
+        attacker->getHit(this, facing, damage, kbScale);
+    }
 }
 
 void Player::setShieldHeld(bool held) {
@@ -327,7 +333,7 @@ bool Player::trySpecial(Direction dir) {
 
 void Player::update(const std::vector<Platform>& platforms,
                     std::vector<Projectile>& projectiles,
-                    std::vector<Player>& players,
+                    std::vector<Player*>& players,
                     std::vector<GrapplePoint>& grapplePoints,
                     bool downKeyPressed, float ts
 ) {
@@ -406,8 +412,7 @@ void Player::update(const std::vector<Platform>& platforms,
 
     updateTimers(ts);
 
-    // update rect to match texture size
-    if (currentTexture) {
+    if (currentTexture && !dontResize) {
         int w, h;
         SDL_QueryTexture(currentTexture, nullptr, nullptr, &w, &h);
         if (facing == Facing::LEFT && w != rect.w) {
@@ -533,6 +538,10 @@ void Player::updateTimers(float ts) {
     if (postGrappleTimer > 0.0f) {
         postGrappleTimer = std::max(0.0f, postGrappleTimer - ts);
     }
+
+    if (shitAuraTimer > 0.0f) {
+        shitAuraTimer -= ts;
+    }
 }
 
 void Player::resetTimers() {
@@ -552,6 +561,7 @@ void Player::resetTimers() {
     specialHitboxSpawned = false;
     dashTimer            = 0.0f;
     dashCooldown         = 0.0f;
+    shitAuraTimer        = 0.0f;
 }
 
 
@@ -669,6 +679,7 @@ void Player::draw(SDL_Renderer* r, float a) {
     }
 
     drawShield(r, a);
+    drawShitAura(r, a);
     drawNametag(r, Resources::get().smallFont, a);
 
     if (grapple) grapple->draw(r, a);
@@ -703,6 +714,18 @@ void Player::drawHitbox(SDL_Renderer* r, float a) const {
     SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
     Renderer::outlineRect(r, drawRect.x, drawRect.y, drawRect.w, drawRect.h, RED, 2);
     if (grapple) grapple->drawHitbox(r, a);
+}
+
+void Player::drawShitAura(SDL_Renderer* r, float a) const {
+    if (shitAuraTimer <= 0.0f) return;
+
+    SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
+    int cx     = drawRect.x + drawRect.w / 2;
+    int cy     = drawRect.y + drawRect.h / 2;
+    float s = shitAuraTimer / SHIT_AURA_DURATION;
+    int radius = static_cast<int>((drawRect.w / 2.0f + drawRect.h / 2.0f) / 2 * s);
+    Color c = GREEN; c.a = 128;
+    Renderer::fillCircle(r, cx, cy, radius, c);
 }
 
 

@@ -1,9 +1,11 @@
 #pragma once
 
 #include "obj/GrapplePoint.h"
+#include "obj/Items.h"
 #include "obj/Platform.h"
 #include "obj/Player.h"
 
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 
 #include <string>
@@ -27,11 +29,11 @@ struct Stage {
     std::vector<Spawnpoint> spawnpoints;
     DeathZones deathZones;
 
-    bool isOutsideWorld(const Player& p) const {
-        return p.rect.x >= deathZones.rightX
-            || p.rect.x <= deathZones.leftX
-            || p.rect.y >= deathZones.bottomY
-            || p.rect.y <= deathZones.topY;
+    bool isOutsideWorld(SDL_Rect r) const {
+        return r.x >= deathZones.rightX
+            || r.x <= deathZones.leftX
+            || r.y >= deathZones.bottomY
+            || r.y <= deathZones.topY;
     }
 };
 

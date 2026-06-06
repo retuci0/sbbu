@@ -13,32 +13,36 @@
 //////////////////////////////////////
 
 SpecialHitboxParams Character::specialStatic(Player& player) const {
-    int hw = 110, hh = player.rect.h + 20;
-    int hx = (player.facing == Facing::RIGHT) ? player.rect.x + player.rect.w - 20
-                                              : player.rect.x - hw + 20;
-    int hy = player.rect.y - 10;
+    int hw = static_cast<int>(110 * player.scale);
+    int hh = player.rect.h + static_cast<int>(20 * player.scale);
+    int hx = (player.facing == Facing::RIGHT) ? player.rect.x + player.rect.w - static_cast<int>(20 * player.scale)
+                                              : player.rect.x - hw + static_cast<int>(20 * player.scale);
+    int hy = player.rect.y - static_cast<int>(10 * player.scale);
     return { hx, hy, hw, hh, 3.0f, 5.0f };
 }
 
 SpecialHitboxParams Character::specialSide(Player& player) const {
-    int hw = 130, hh = player.rect.h;
-    int hx = (player.facing == Facing::RIGHT) ? player.rect.x + player.rect.w - 30
-                                              : player.rect.x - hw + 30;
+    int hw = static_cast<int>(130 * player.scale);
+    int hh = player.rect.h;
+    int hx = (player.facing == Facing::RIGHT) ? player.rect.x + player.rect.w - static_cast<int>(30 * player.scale)
+                                              : player.rect.x - hw + static_cast<int>(30 * player.scale);
     int hy = player.rect.y;
     return { hx, hy, hw, hh, 2.5f, 4.0f };
 }
 
 SpecialHitboxParams Character::specialUp(Player& player) const {
-    int hw = player.rect.w + 20, hh = 90;
-    int hx = player.rect.x - 10;
-    int hy = player.rect.y - hh + 20;
+    int hw = player.rect.w + static_cast<int>(20 * player.scale);
+    int hh = static_cast<int>(90 * player.scale);
+    int hx = player.rect.x - static_cast<int>(10 * player.scale);
+    int hy = player.rect.y - hh + static_cast<int>(20 * player.scale);
     return { hx, hy, hw, hh, 3.5f, 6.0f };
 }
 
 SpecialHitboxParams Character::specialDown(Player& player) const {
-    int hw = player.rect.w + 40, hh = 80;
-    int hx = player.rect.x - 20;
-    int hy = player.rect.y + player.rect.h - 20;
+    int hw = player.rect.w + static_cast<int>(40 * player.scale);
+    int hh = static_cast<int>(80 * player.scale);
+    int hx = player.rect.x - static_cast<int>(20 * player.scale);
+    int hy = player.rect.y + player.rect.h - static_cast<int>(20 * player.scale);
     return { hx, hy, hw, hh, 4.0f, 7.0f, true };
 }
 
@@ -84,15 +88,16 @@ LorcCharacter::LorcCharacter() {
 
 // lorc slams harder and wider
 SpecialHitboxParams LorcCharacter::specialDown(Player& player) const {
-    int hw = player.rect.w + 80, hh = 100;
-    int hx = player.rect.x - 40;
-    int hy = player.rect.y + player.rect.h - 20;
+    int hw = player.rect.w + static_cast<int>(80 * player.scale);
+    int hh = static_cast<int>(100 * player.scale);
+    int hx = player.rect.x - static_cast<int>(40 * player.scale);
+    int hy = player.rect.y + player.rect.h - static_cast<int>(20 * player.scale);
     return { hx, hy, hw, hh, 6.0f, 10.0f, true };
 }
 
 void LorcCharacter::onSpecialDown(Player& player) const {
     player.dx = 0.0f;
-    player.dy = 22.0f;  // slams faster than default
+    player.dy = 22.0f;  // slams faster
 }
 
 JordiCharacter::JordiCharacter() {

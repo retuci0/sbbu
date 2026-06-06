@@ -12,7 +12,7 @@ Projectile::Projectile(int x, int y, Facing dir, Player* owner)
     : direction(dir), owner(owner)
 {
     img = Resources::get().getTexture("projectile");
-    rect = {x, y, 64, 64};
+    rect = {x, y, static_cast<int>(64 * owner->scale), static_cast<int>(64 * owner->scale)};
 }
 
 void Projectile::update(float ts) {

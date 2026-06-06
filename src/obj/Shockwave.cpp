@@ -17,12 +17,12 @@ void ShockwaveRect::update(float ts)  {
 
 Shockwave::Shockwave(int spawnX, int spawnY, Player* owner)
     : owner(owner),
-    rects(ShockwaveRect(spawnX, spawnY, 32, 32, owner),
-          ShockwaveRect(spawnX, spawnY, 32, 32, owner)
+    rects(ShockwaveRect(spawnX, spawnY, SHOCKWAVE_SIZE * owner->scale, SHOCKWAVE_SIZE * owner->scale, owner),
+          ShockwaveRect(spawnX, spawnY, SHOCKWAVE_SIZE * owner->scale, SHOCKWAVE_SIZE * owner->scale, owner)
 ) {
     img = Resources::get().getTexture("shockwave");
-    rects.first.dx  = -7.0f;   // travels left
-    rects.second.dx =  7.0f;   // travels right
+    rects.first.dx  = -SHOCKWAVE_SPEED;   // travels left
+    rects.second.dx =  SHOCKWAVE_SPEED;   // travels right
 }
 
 void Shockwave::update(float ts) {

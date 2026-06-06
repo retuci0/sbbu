@@ -7,6 +7,7 @@
 #include "misc/ScreenshotManager.h"
 #include "obj/CollisionRect.h"
 #include "obj/GrapplePoint.h"
+#include "obj/Items.h"
 #include "obj/Platform.h"
 #include "obj/Player.h"
 #include "obj/Projectile.h"
@@ -101,6 +102,17 @@ private:
     std::vector<Platform> platforms;
     ParticleManager particles = ParticleManager(&options.particles);
     Player player1, player2;
+    
+    // items
+    bool itemsEnabled = true;
+    std::vector<std::unique_ptr<Item>> items;
+    float itemSpawnTimer = 0.0f;
+    void resetItemSpawnTimer();
+    void trySpawnItem();
+
+    static constexpr float ITEM_SPAWN_MIN = 600.0f;
+    static constexpr float ITEM_SPAWN_MAX = 1200.0f;
+    static constexpr int   MAX_LIVE_ITEMS = 3;
 
     // countdown and timer
     float countdownTimer = 0.0f;

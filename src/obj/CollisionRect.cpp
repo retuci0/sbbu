@@ -12,5 +12,5 @@ void CollisionRect::update(float ts) {
 }
 
 void CollisionRect::drawHitbox(SDL_Renderer* r, float /*a*/) {
-    Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, GREEN, 2);
+    Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, LIME, 2);
 }

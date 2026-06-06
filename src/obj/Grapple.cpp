@@ -1,15 +1,18 @@
 #include "obj/Grapple.h"
-#include "core/Resources.h"
+
 #include "obj/GrapplePoint.h"
 #include "obj/Player.h"
 #include "obj/Platform.h"
 #include "obj/Projectile.h"
+
+#include "core/Resources.h"
 #include "misc/Common.h"
 #include "misc/Renderer.h"
 
 #include <SDL2/SDL_log.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
+
 #include <cmath>
 #include <algorithm>
 
@@ -77,7 +80,7 @@ bool Grapple::pullOwnerToward(float hx, float hy, float ts) {
 }
 
 bool Grapple::update(const std::vector<Platform>& platforms,
-                     std::vector<Player>&         players,
+                     std::vector<Player*>&         players,
                      std::vector<Projectile>&     projectiles,
                      std::vector<GrapplePoint>&   points,
                      float ts)
@@ -109,10 +112,10 @@ bool Grapple::update(const std::vector<Platform>& platforms,
 
             // players (skip self)
             for (auto& p : players) {
-                if (&p == &owner) continue;
-                if (SDL_HasIntersection(&p.rect, &rect)) {
+                if (p == &owner) continue;
+                if (SDL_HasIntersection(&p->rect, &rect)) {
                     dx = dy = 0.0f;
-                    targetPlayer = &p;
+                    targetPlayer = p;
                     state = GrappleState::LATCHED_PLAYER;
                     return true;
                 }

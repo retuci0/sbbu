@@ -56,7 +56,7 @@ void StageSelectionScreen::confirm() {
         chosen.grapplePoints = {};
     }
 
-    result   = { chosen, omega, timeLimit };
+    result   = { chosen, omega, timeLimit, items };
     finished = true;
 }
 
@@ -78,6 +78,11 @@ void StageSelectionScreen::handle(const SDL_Event& e) {
             // tab toggles omega
             case SDLK_TAB:
                 omega = !omega;
+                break;
+            
+            // "`" toggles items
+            case SDLK_BACKQUOTE:
+                items = !items;
                 break;
 
             // adjust time limit
@@ -108,6 +113,9 @@ void StageSelectionScreen::handle(const SDL_Event& e) {
     } else if (e.type == SDL_CONTROLLERBUTTONDOWN) {
         if (e.cbutton.button == SDL_CONTROLLER_BUTTON_X) {
             omega = !omega;
+        }
+        if (e.cbutton.button == SDL_CONTROLLER_BUTTON_Y) {
+            items = !items;
         }
     }
 }
@@ -205,9 +213,12 @@ void StageSelectionScreen::render(SDL_Renderer* r) {
 
     // options row
     int optY = dotY + 50;
-    Color omegaColor = omega ? Color{100, 255, 100, 255} : GRAY;
+    Color omegaColor = omega ? Color{ 100, 255, 100, 255 } : GRAY;
     Renderer::renderText(r, font, "[TAB] omega: " + std::string(omega ? "on" : "off"),
                          SW / 2 - 280, optY, omegaColor);
+    Color itemsColor = items ? Color{ 100, 255, 100, 255 } : GRAY;
+    Renderer::renderText(r, font, "[`] items: " + std::string(items ? "on" : "off"),
+                         SW / 2 - 280, optY + 30, itemsColor);
 
     std::string timeStr = (timeLimit == -1)
                         ? "off"

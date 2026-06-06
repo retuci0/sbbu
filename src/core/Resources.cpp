@@ -66,10 +66,12 @@ void Resources::load(SDL_Renderer* renderer) {
     registerTexture(renderer, "grapple_point_green", "assets/images/platform/gp_green.png");
     registerTexture(renderer, "grapple_point_blue", "assets/images/platform/gp_blue.png");
 
-
     registerTexture(renderer, "projectile",      "assets/images/projectile/projectile.png");
     registerTexture(renderer, "shockwave",       "assets/images/projectile/shockwave.png");
     registerTexture(renderer, "grapple",         "assets/images/projectile/grapple.png");
+
+    registerTexture(renderer, "item_mushroom", "assets/images/item/mushroom.png");
+    registerTexture(renderer, "item_shit",     "assets/images/item/shit.png");
 
     registerTexture(renderer, "heart",           "assets/images/ui/heart.png");
     registerTexture(renderer, "settings",        "assets/images/ui/settings.png");
@@ -94,9 +96,12 @@ void Resources::load(SDL_Renderer* renderer) {
     registerTexture(renderer, "particle_death",  "assets/images/particle/death.png");
 
     // sound effects
-    registerSound("click",         "assets/sound/click.wav");
-    registerSound("select",        "assets/sound/select.wav");
-    registerSound("screenshot",    "assets/sound/screenshot.wav");
+    registerSound("click",         "assets/sound/ui/click.wav");
+    registerSound("select",        "assets/sound/ui/select.wav");
+    registerSound("screenshot",    "assets/sound/ui/screenshot.wav");
+
+    registerSound("countdown",     "assets/sound/ui/countdown.wav");
+    registerSound("game_end",      "assets/sound/ui/game_end.wav");
 
     registerSound("jump",          "assets/sound/jump.wav");
     registerSound("jump2",         "assets/sound/jump2.wav");
@@ -114,12 +119,13 @@ void Resources::load(SDL_Renderer* renderer) {
     registerSound("death",         "assets/sound/death.wav");
     registerSound("void_death",    "assets/sound/void_death.wav");
 
-    registerSound("countdown",     "assets/sound/countdown.wav");
-    registerSound("game_end",      "assets/sound/game_end.wav");
+    registerSound("spawn_item",    "assets/sound/item/spawn_item.wav");
+    registerSound("item_mushroom", "assets/sound/item/mushroom.wav");
+    registerSound("item_shit",     "assets/sound/item/shit.wav");
 
     // music
-    gameMusic        = Mix_LoadMUS("assets/sound/music.mp3");
-    titleScreenMusic = Mix_LoadMUS("assets/sound/titlescreenmusic.mp3");
+    gameMusic        = Mix_LoadMUS("assets/sound/music/music.mp3");
+    titleScreenMusic = Mix_LoadMUS("assets/sound/music/titlescreenmusic.mp3");
 
     // fonts
     titleFont = findFont(50);
@@ -135,8 +141,6 @@ void Resources::load(SDL_Renderer* renderer) {
     LORC     = std::unique_ptr<Character>(makeAndLoad<LorcCharacter>    (renderer, "assets/images/characters/lorc"));
     BARCOS   = std::unique_ptr<Character>(makeAndLoad<BarcosCharacter>  (renderer, "assets/images/characters/barcos"));
     ALSEXITO = std::unique_ptr<Character>(makeAndLoad<AlsexitoCharacter>(renderer, "assets/images/characters/alsexito"));
-    // SHASHA, OSCAR, FLAN: uncomment when asset folders are ready
-    // FLAN  = std::unique_ptr<Character>(makeAndLoad<FlanCharacter>(renderer, "assets/images/characters/flan"));
 }
 
 void Resources::applySfxVolume(float multiplier) {

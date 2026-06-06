@@ -11,6 +11,7 @@ super bert bros is a local (and now remote too) multiplayer brawler game, heavil
 - **special moves** - once you get a full charge, you'll be able to do more powerful moves
 - **hand drawn sprites** - see credits section
 - **goofy ahh sfx** - will make you want to ditch your eardrums
+- **items!** - make your battles less fair with crappy abilities!
 
 
 ## controls (now with controller)

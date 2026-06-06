@@ -70,9 +70,14 @@ void Game::setup(const Character* c1, const std::string& n1,
 {
     discord.setPresence(n1 + " vs " + n2, "fighting in " + s.name);
 
-    platforms = s.platforms;
+    platforms     = s.platforms;
     grapplePoints = s.grapplePoints;
-    stage = s;
+    stage         = s;
+
+    itemsEnabled = pendingStageResult.items;
+
+    items.clear();
+    resetItemSpawnTimer();
 
     int x1 = s.spawnpoints.size() > 0 ? s.spawnpoints[0].x : 640;
     int x2 = s.spawnpoints.size() > 1 ? s.spawnpoints[1].x : 1080;

@@ -12,6 +12,9 @@
 #include <utility>
 
 
+constexpr int SHOCKWAVE_SIZE = 32;
+constexpr float SHOCKWAVE_SPEED = 7.0f;
+
 class ShockwaveRect : public CollisionRect {
 public:
     float dx = 0.0f, dy = 0.0f;
