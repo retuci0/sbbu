@@ -215,10 +215,10 @@ void StageSelectionScreen::render(SDL_Renderer* r) {
     int optY = dotY + 50;
     Color omegaColor = omega ? Color{ 100, 255, 100, 255 } : GRAY;
     Renderer::renderText(r, font, "[TAB] omega: " + std::string(omega ? "on" : "off"),
-                         SW / 2 - 280, optY, omegaColor);
+                         SW / 2 - 280, optY - 15, omegaColor);
     Color itemsColor = items ? Color{ 100, 255, 100, 255 } : GRAY;
     Renderer::renderText(r, font, "[`] items: " + std::string(items ? "on" : "off"),
-                         SW / 2 - 280, optY + 30, itemsColor);
+                         SW / 2 - 280, optY + 15, itemsColor);
 
     std::string timeStr = (timeLimit == -1)
                         ? "off"

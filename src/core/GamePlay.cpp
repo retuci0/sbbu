@@ -187,7 +187,7 @@ void Game::updateGameplay(float ts) {
 
         if (it->owner != &player1 && SDL_HasIntersection(&it->rect, &player1.rect)) {
             if (player1.invulnerableTimer > 0) { ++it; continue; }
-            auto hit = rollCriticalHit(*it->owner, it->owner->character->stats.projectileDamage, 1.0f);
+            auto hit = rollCriticalHit(*it->owner, it->owner->projDamage, 1.0f);
             if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
                 player1.blockHit(hit.damage, hit.kbScale);
                 it = projectiles.erase(it);
@@ -202,7 +202,7 @@ void Game::updateGameplay(float ts) {
         }
         if (it->owner != &player2 && SDL_HasIntersection(&it->rect, &player2.rect)) {
             if (player2.invulnerableTimer > 0) { ++it; continue; }
-            auto hit = rollCriticalHit(*it->owner, it->owner->character->stats.projectileDamage, 1.0f);
+            auto hit = rollCriticalHit(*it->owner, it->owner->projDamage, 1.0f);
             if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
                 player2.blockHit(hit.damage, hit.kbScale);
                 it = projectiles.erase(it);
@@ -238,7 +238,7 @@ void Game::updateGameplay(float ts) {
         }
 
         if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
-            auto hit = rollCriticalHit(*it->owner, it->owner->character->stats.damage, it->kbScale);
+            auto hit = rollCriticalHit(*it->owner, it->owner->damage, it->kbScale);
             if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
                 player2.blockHit(hit.damage, hit.kbScale);
             } else {
@@ -250,7 +250,7 @@ void Game::updateGameplay(float ts) {
             continue;
         }
         if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
-            auto hit = rollCriticalHit(*it->owner, it->owner->character->stats.damage, it->kbScale);
+            auto hit = rollCriticalHit(*it->owner, it->owner->damage, it->kbScale);
             if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
                 player1.blockHit(hit.damage, hit.kbScale);
             } else {
@@ -285,7 +285,7 @@ void Game::updateGameplay(float ts) {
             if (target.invulnerableTimer > 0) return;
             auto dir = it->checkCollision(target);
             if (!dir) return;
-            int dmg   = static_cast<int>(it->getOwner()->character->stats.damage * 1.5f);
+            int dmg   = static_cast<int>(it->getOwner()->damage * 1.5f);
             float kb  = 1.5f;
             auto hit  = rollCriticalHit(*it->getOwner(), dmg, kb);
             if (target.status == Status::SHIELDED && target.shieldTimer > 0 && !target.shieldBroken) {
@@ -308,13 +308,13 @@ void Game::updateGameplay(float ts) {
         for (auto& item : items) {
             if (!item->isActive() || !item->isAlive()) continue;
             if (!SDL_HasIntersection(&it->rect, &item->rect)) continue;
-            int dmg = static_cast<int>(it->owner->character->stats.damage * it->damageScale);
+            int dmg = static_cast<int>(it->owner->damage * it->damageScale);
             item->takeDamage(dmg, it->owner->facing, it->kbScale);
         }
 
         if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
             if (player2.invulnerableTimer == 0) {
-                int dmg  = static_cast<int>(player1.character->stats.damage * it->damageScale);
+                int dmg  = static_cast<int>(player1.damage * it->damageScale);
                 auto hit = rollCriticalHit(player1, dmg, it->kbScale);
                 if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
                     player2.blockHit(hit.damage, hit.kbScale);
@@ -327,7 +327,7 @@ void Game::updateGameplay(float ts) {
             }
         } else if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
             if (player1.invulnerableTimer == 0) {
-                int dmg  = static_cast<int>(player2.character->stats.damage * it->damageScale);
+                int dmg  = static_cast<int>(player2.damage * it->damageScale);
                 auto hit = rollCriticalHit(player2, dmg, it->kbScale);
                 if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
                     player1.blockHit(hit.damage, hit.kbScale);

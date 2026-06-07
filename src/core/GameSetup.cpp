@@ -91,6 +91,11 @@ void Game::setup(const Character* c1, const std::string& n1,
     player1.color = { 100, 149, 237, 230 };
     player2.color = { 255,  80,  80, 230 };
 
+    player1.damage = player1.character->stats.damage;
+    player2.damage = player2.character->stats.damage;
+    player1.projDamage = player1.character->stats.projectileDamage;
+    player2.projDamage = player2.character->stats.projectileDamage;
+
     remoteInputBits = 0;
     prevRemoteInputBits = 0;
     lastSentInputs = 0;

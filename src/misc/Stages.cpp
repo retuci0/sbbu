@@ -80,7 +80,7 @@ Stage hellStage() {
         Platform( 340, 550, 200,   30, PlatformSize::SMALL),
         Platform(1380, 550, 200,   30, PlatformSize::SMALL)
     };
-    s.spawnpoints = {{ 440, 500 }, { 1480, 500 }};
+    s.spawnpoints = {{ 440, 400 }, { 1480, 400 }};
     s.deathZones = { -500, SW + 500, SH + 300, -2000 };
     s.grapplePoints = {
         GrapplePoint(GrapplePointType::BLUE, { (SW - 56) / 2, 600, 56, 56 }),

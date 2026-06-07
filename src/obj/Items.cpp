@@ -119,9 +119,9 @@ void MushroomItem::onPickup() {
     scalePlayer(consumer, 2.0f);
     consumer->dontResize = true;
 
-    // damage buff, cast away const
-    const_cast<CharacterStats&>(consumer->character->stats).damage           *= 2;
-    const_cast<CharacterStats&>(consumer->character->stats).projectileDamage *= 2;
+    //damage buff
+    consumer->damage     *= 2;
+    consumer->projDamage *= 2;
 
     Item::onPickup();
 }
@@ -132,9 +132,8 @@ void MushroomItem::onEffectEnd() {
     scalePlayer(consumer, 0.5f);
     consumer->dontResize = false;
 
-    // cast away const
-    const_cast<CharacterStats&>(consumer->character->stats).damage = prevDmg;
-    const_cast<CharacterStats&>(consumer->character->stats).projectileDamage = prevProjDmg;
+    consumer->damage     = prevDmg;
+    consumer->projDamage = prevProjDmg;
 
     consumer = nullptr;
 }

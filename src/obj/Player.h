@@ -82,6 +82,10 @@ public:
 
     float scale = 1.0f;
 
+    // for when the player sizes up, so that damage buffs
+    // only affect the player and not every player with the same character
+    int damage, projDamage; 
+
 
     // shield
 
