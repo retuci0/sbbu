@@ -82,19 +82,14 @@ void Game::setup(const Character* c1, const std::string& n1,
     int x1 = s.spawnpoints.size() > 0 ? s.spawnpoints[0].x : 640;
     int x2 = s.spawnpoints.size() > 1 ? s.spawnpoints[1].x : 1080;
 
-    player1.init(x1, 0, c1, n1);
+    player1.init(x1, 0, *c1, n1);
     player1.id = 0;
 
-    player2.init(x2, 0, c2, n2);
+    player2.init(x2, 0, *c2, n2);
     player2.id = 1;
 
     player1.color = { 100, 149, 237, 230 };
     player2.color = { 255,  80,  80, 230 };
-
-    player1.damage = player1.character->stats.damage;
-    player2.damage = player2.character->stats.damage;
-    player1.projDamage = player1.character->stats.projectileDamage;
-    player2.projDamage = player2.character->stats.projectileDamage;
 
     remoteInputBits = 0;
     prevRemoteInputBits = 0;

@@ -172,11 +172,11 @@ void Game::update(float ts) {
     if (player1.lives == -1 && player2.lives == -1) {
         showEndScreen("both players died", "what a skill issue");
     } else if (player1.lives == -1) {
-        showEndScreen("gg!", "1st: " + player2.name + " (" + player2.character->stats.name + ")   "
-                            "2nd: " + player1.name + " (" + player1.character->stats.name + ")");
+        showEndScreen("gg!", "1st: " + player2.name + " (" + player2.character.stats.name + ")   "
+                            "2nd: " + player1.name + " (" + player1.character.stats.name + ")");
     } else if (player2.lives == -1) {
-        showEndScreen("gg!", "1st: " + player1.name + " (" + player1.character->stats.name + ")   "
-                            "2nd: " + player2.name + " (" + player2.character->stats.name + ")");
+        showEndScreen("gg!", "1st: " + player1.name + " (" + player1.character.stats.name + ")   "
+                            "2nd: " + player2.name + " (" + player2.character.stats.name + ")");
     }
 }
 

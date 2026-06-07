@@ -34,8 +34,8 @@ void Game::renderPlayerHud(const Player& player) const {
     int x = (player == player1) ? 480 : 1315;
 
     SDL_Texture* icon = (player.invulnerableTimer > 0 && player.damagedTimer == 0)
-                      ? player.character->deadIcon
-                      : player.character->icon;
+                      ? player.character.deadIcon
+                      : player.character.icon;
     int w2, h2;
     SDL_QueryTexture(icon, nullptr, nullptr, &w2, &h2);
     SDL_Rect iconRect = { x, SH - 183 - h2, w2, h2 };
@@ -211,9 +211,16 @@ void Game::renderGameplay(float ts, float a) {
 
     player1.draw(renderer, a);
     player2.draw(renderer, a);
+
     for (auto& pr : projectiles)     pr.draw(renderer, a);
     for (auto& sw : shockwaves)       sw.draw(renderer, a);
-    for (auto& i : items)      i->draw(renderer, a);
+    for (auto& i : items) {
+        if (i->isAffecting()) {
+            i->drawEffect(renderer, a);
+        }
+        i->draw(renderer, a);
+    }
+
     particles.draw(renderer, a);
 
     if (options.debug) renderDebug(a, font);

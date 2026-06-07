@@ -72,6 +72,11 @@ void Resources::load(SDL_Renderer* renderer) {
 
     registerTexture(renderer, "item_mushroom", "assets/images/item/mushroom.png");
     registerTexture(renderer, "item_shit",     "assets/images/item/shit.png");
+    registerTexture(renderer, "item_cocaine",  "assets/images/item/cocaine.png");
+    registerTexture(renderer, "item_spring",   "assets/images/item/spring.png");
+
+    registerTexture(renderer, "high_overlay",  "assets/images/characters/high_overlay.png");
+    registerTexture(renderer, "spring_overlay","assets/images/characters/springs_overlay.png");
 
     registerTexture(renderer, "heart",           "assets/images/ui/heart.png");
     registerTexture(renderer, "settings",        "assets/images/ui/settings.png");
@@ -86,7 +91,7 @@ void Resources::load(SDL_Renderer* renderer) {
     registerTexture(renderer, "bg_classic",      "assets/images/ui/bg_classic.png");
     registerTexture(renderer, "bg_pillar",       "assets/images/ui/bg_pillar.png");
     registerTexture(renderer, "bg_flat",         "assets/images/ui/bg_flat.png");
-    registerTexture(renderer, "bg_flat",         "assets/images/bg_flat.png");
+    registerTexture(renderer, "bg_flat",         "assets/images/ui/bg_flat.png");
     registerTexture(renderer, "bg_dash",         "assets/images/ui/bg_dash.png");
     registerTexture(renderer, "bg_hell",         "assets/images/ui/bg_hell.png");
 
@@ -122,6 +127,8 @@ void Resources::load(SDL_Renderer* renderer) {
     registerSound("spawn_item",    "assets/sound/item/spawn_item.wav");
     registerSound("item_mushroom", "assets/sound/item/mushroom.wav");
     registerSound("item_shit",     "assets/sound/item/shit.wav");
+    registerSound("item_cocaine",  "assets/sound/item/cocaine.wav");
+    registerSound("item_spring",   "assets/sound/item/spring.wav");
 
     // music
     gameMusic        = Mix_LoadMUS("assets/sound/music/music.mp3");

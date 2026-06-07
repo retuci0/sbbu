@@ -56,6 +56,16 @@ void Item::update(std::vector<Player*>& players,
                   const std::vector<Projectile>& /*projectiles*/,
                   float ts)
 {
+    // --- effect countdown ---
+    if (effectTimer > 0.0f) {
+        effectTimer -= ts;
+        if (effectTimer <= 0.0f) {
+            effectTimer = 0.0f;
+            onEffectEnd();
+        }
+        return;
+    }
+
     if (!active) return;
 
     prevRect = rect;
@@ -82,16 +92,6 @@ void Item::update(std::vector<Player*>& players,
         onGround = true;
         break;
     }
-
-    // --- effect countdown ---
-    if (effectTimer > 0.0f) {
-        effectTimer -= ts;
-        if (effectTimer <= 0.0f) {
-            effectTimer = 0.0f;
-            onEffectEnd();
-        }
-        return;
-    }
 }
 
 void Item::onPickup() {
@@ -102,6 +102,9 @@ void Item::onPickup() {
     }
 }
 
+void Item::onEffectEnd() {
+    consumer = nullptr;
+}
 
 
 /////////////////////////////////////////
@@ -111,17 +114,13 @@ void Item::onPickup() {
 void MushroomItem::onPickup() {
     if (!consumer) return;
 
-    // save current stats to restore them later
-    prevDmg     = consumer->character->stats.damage;
-    prevProjDmg = consumer->character->stats.projectileDamage;
-
     // size up
     scalePlayer(consumer, 2.0f);
     consumer->dontResize = true;
 
-    //damage buff
-    consumer->damage     *= 2;
-    consumer->projDamage *= 2;
+    // damage buff
+    consumer->character.stats.damage           *= 2;
+    consumer->character.stats.projectileDamage *= 2;
 
     Item::onPickup();
 }
@@ -132,10 +131,10 @@ void MushroomItem::onEffectEnd() {
     scalePlayer(consumer, 0.5f);
     consumer->dontResize = false;
 
-    consumer->damage     = prevDmg;
-    consumer->projDamage = prevProjDmg;
+    consumer->character.stats.damage           /= 2;
+    consumer->character.stats.projectileDamage /= 2;
 
-    consumer = nullptr;
+    Item::onEffectEnd();
 }
 
 void MushroomItem::scalePlayer(Player* player, float k) {
@@ -167,5 +166,77 @@ void ShitItem::onEffectEnd() {
 
     consumer->shitAuraTimer = 0.0f;
 
-    consumer = nullptr;
+    Item::onEffectEnd();
+}
+
+void ShitItem::drawEffect(SDL_Renderer* r, float a) const {
+    if (!consumer) return;
+
+    int x  = static_cast<int>(consumer->rect.x + (consumer->rect.w - rect.w) / 2);
+    int xo = static_cast<int>(consumer->prevRect.x + (consumer->prevRect.w - rect.w) / 2);
+    int y  = consumer->rect.y - rect.h;
+    int yo = consumer->prevRect.y - rect.h;
+    SDL_Rect drawRect = interpolatedRect({ x, y, rect.w, rect.h }, { xo, yo, rect.w, rect.h }, a);
+    
+    Renderer::drawSprite(r, tex, &drawRect, false);
+}
+
+
+//////////////////////////////////////////////
+/*               COCAINE ITEM               */
+//////////////////////////////////////////////
+
+void CocaineItem::onPickup() {
+    if (!consumer) return;
+
+    consumer->character.stats.velocity     *= 3;
+    consumer->character.stats.acceleration *= 3;
+
+    Item::onPickup();
+}
+
+void CocaineItem::onEffectEnd() {
+    if (!consumer) return;
+
+    consumer->character.stats.velocity     /= 3;
+    consumer->character.stats.acceleration /= 3;
+
+    Item::onEffectEnd();
+}
+
+void CocaineItem::drawEffect(SDL_Renderer* r, float a) const {
+    if (!consumer) return;
+
+    SDL_Rect drawRect = interpolatedRect(consumer->rect, consumer->prevRect, a);
+
+    Renderer::drawSprite(r, overlay, &drawRect, consumer->facing == Facing::LEFT);
+}
+
+
+/////////////////////////////////////////////
+/*               SPRING ITEM               */
+/////////////////////////////////////////////
+
+void SpringItem::onPickup() {
+    if (!consumer) return;
+
+    consumer->character.stats.jumpVelocity *= 1.5;
+
+    Item::onPickup();
+}
+
+void SpringItem::onEffectEnd() {
+    if (!consumer) return;
+    
+    consumer->character.stats.jumpVelocity /= 1.5;
+
+    Item::onEffectEnd();
+}
+
+void SpringItem::drawEffect(SDL_Renderer* r, float a) const {
+    if (!consumer) return;
+
+    SDL_Rect drawRect = interpolatedRect(consumer->rect, consumer->prevRect, a);
+    
+    Renderer::drawSprite(r, overlay, &drawRect, consumer->facing == Facing::LEFT);
 }

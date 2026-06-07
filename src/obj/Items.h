@@ -14,7 +14,10 @@ class Player;
 class Platform;
 class Projectile;
 
-constexpr int SHIT_AURA_DURATION = 600.0f;
+constexpr float SHIT_ITEM_DURATION      = 600.0f;
+constexpr float MUSHROOM_ITEM_DURATION  = 600.0f;
+constexpr float COCAINE_ITEM_DURATION   = 500.0f;
+constexpr float SPRING_ITEM_DURATION    = 500.0f;
 
 class Item {
 public:
@@ -23,17 +26,21 @@ public:
     virtual ~Item() = default;
 
     virtual void onPickup();
-    virtual void onEffectEnd() {}
+    virtual void onEffectEnd();
+    
     virtual void update(std::vector<Player*>& players,
                         const std::vector<Platform>& platforms,
                         const std::vector<Projectile>& projectiles,
                         float ts);
     virtual void draw(SDL_Renderer* r, float a) const;
+    virtual void drawEffect(SDL_Renderer* r, float a) const {}
     virtual void drawHitbox(SDL_Renderer* r, float a) const;
 
     void takeDamage(int damage, Facing side, float kbScale = 1.0f);
+    void kill() { hp = 0; active = false; }
     bool isAlive()  const { return hp > 0; }
     bool isActive() const { return active; }
+    bool isAffecting() const { return effectTimer > 0.0f; }
 
     SDL_Rect rect     = {};
     SDL_Rect prevRect = {};
@@ -51,12 +58,13 @@ protected:
     int      hp             = 30;
     float    dx             = 0.0f;
     bool     onGround       = false;
+    
+    SDL_Texture* tex        = nullptr;
+    Mix_Chunk*   sfx        = nullptr;
 
 private:
     std::string  name;
     SDL_Rect     spawnRect  = {};
-    SDL_Texture* tex        = nullptr;
-    Mix_Chunk*   sfx        = nullptr;
     float        dy         = 0.0f;
 
     static constexpr float GRAVITY      = 0.5f;
@@ -65,6 +73,10 @@ private:
 };
 
 
+/////////////////////////////////////////
+/*                ITEMS                */
+/////////////////////////////////////////
+
 class MushroomItem : public Item {
 public:
     MushroomItem(int x, int y)
@@ -72,7 +84,7 @@ public:
            { x, y, 56, 56 },
            Resources::get().getTexture("item_mushroom"),
            Resources::get().getSound("item_mushroom"),
-           600.0f,
+           MUSHROOM_ITEM_DURATION,
            0.0f)
     {}
 
@@ -80,8 +92,6 @@ public:
     void onEffectEnd() override;
 
 private:
-    int  prevDmg = 0;
-    int  prevProjDmg = 0;
     void scalePlayer(Player* player, float k);
 };
 
@@ -92,10 +102,51 @@ public:
            { x, y, 56, 56 },
            Resources::get().getTexture("item_shit"),
            Resources::get().getSound("item_shit"),
-           SHIT_AURA_DURATION,
+           SHIT_ITEM_DURATION,
            0.0f)
     {}
 
     void onPickup()    override;
     void onEffectEnd() override;
+    void drawEffect(SDL_Renderer* r, float a) const override;
+};
+
+class CocaineItem : public Item {
+public:
+    CocaineItem(int x, int y)
+    : Item("cocaine",
+    { x, y, 56, 56 },
+    Resources::get().getTexture("item_cocaine"),
+    Resources::get().getSound("item_cocaine"),
+    COCAINE_ITEM_DURATION,
+    0.0f)
+    , overlay(Resources::get().getTexture("high_overlay"))
+    {}
+
+    void onPickup()    override;
+    void onEffectEnd() override;
+    void drawEffect(SDL_Renderer* r, float a) const override;
+
+private:
+    SDL_Texture* overlay = nullptr;
+};
+
+class SpringItem : public Item {
+public:
+    SpringItem(int x, int y)
+    : Item("spring",
+    { x, y, 56, 56 },
+    Resources::get().getTexture("item_spring"),
+    Resources::get().getSound("item_spring"),
+    SPRING_ITEM_DURATION,
+    0.0f)
+    , overlay(Resources::get().getTexture("spring_overlay"))
+    {}
+
+    void onPickup()    override;
+    void onEffectEnd() override;
+    void drawEffect(SDL_Renderer* r, float a) const override;
+
+private:
+    SDL_Texture* overlay = nullptr;
 };

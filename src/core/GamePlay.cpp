@@ -20,7 +20,7 @@ namespace {
         static std::mt19937 rng(std::random_device{}());
         static std::uniform_real_distribution<float> chance(0.0f, 1.0f);
 
-        if (chance(rng) >= attacker.character->stats.critChance) {
+        if (chance(rng) >= attacker.character.stats.critChance) {
             return {damage, kbScale, false};
         }
         return {std::max(1, damage * 2), kbScale * 1.5f, true};
@@ -40,16 +40,29 @@ void Game::resetItemSpawnTimer() {
 
 void Game::trySpawnItem() {
     if (!itemsEnabled) return;
+
     int liveCount = 0;
     for (const auto& item : items) {
         if (item->isActive()) ++liveCount;
     }
     if (liveCount >= MAX_LIVE_ITEMS) return;
 
+    if (platforms.empty()) return;
+
     static std::mt19937 rng(std::random_device{}());
 
-    // pick a random platform to spawn on
-    if (platforms.empty()) return;
+    struct ItemEntry {
+        int weight;
+        std::function<std::unique_ptr<Item>(int, int)> make;
+    };
+    static const std::vector<ItemEntry> itemTable = {
+        { 10, [](int x, int y) { return std::make_unique<MushroomItem>(x, y); }},
+        { 10, [](int x, int y) { return std::make_unique<ShitItem>(x, y); }},
+        { 6,  [](int x, int y) { return std::make_unique<CocaineItem>(x, y); }},
+        { 4,  [](int x, int y) { return std::make_unique<SpringItem>(x, y); } },
+    };
+
+    // pick a random platform
     std::uniform_int_distribution<int> platPick(0, static_cast<int>(platforms.size()) - 1);
     const Platform& plat = platforms[platPick(rng)];
 
@@ -64,16 +77,20 @@ void Game::trySpawnItem() {
     }
     int spawnY = plat.rect.y - ITEM_H;
 
-    std::uniform_int_distribution<int> itemPick(0, 1);
-    if (itemPick(rng) == 0) {
-        items.push_back(std::make_unique<MushroomItem>(spawnX, spawnY));
-    } else {
-        items.push_back(std::make_unique<ShitItem>(spawnX, spawnY));
+    int totalWeight = 0;
+    for (const auto& e : itemTable) totalWeight += e.weight;
+    std::uniform_int_distribution<int> weightPick(0, totalWeight - 1);
+    int roll = weightPick(rng);
+    const ItemEntry* chosen = nullptr;
+    for (const auto& e : itemTable) {
+        roll -= e.weight;
+        if (roll < 0) { chosen = &e; break; }
     }
 
+    items.push_back(chosen->make(spawnX, spawnY));
+
     Mix_Chunk* sound = Resources::get().getSound("spawn_item");
-    if (!sound) return;
-    Mix_PlayChannel(-1, sound, 0);
+    if (sound) Mix_PlayChannel(-1, sound, 0);
 }
 
 void Game::updateGameplay(float ts) {
@@ -108,10 +125,10 @@ void Game::updateGameplay(float ts) {
 
         SpecialHitboxParams p;
         switch (attacker.status) {
-            case Status::SPECIAL_STATIC: p = attacker.character->specialStatic(attacker); break;
-            case Status::SPECIAL_SIDE:   p = attacker.character->specialSide(attacker);   break;
-            case Status::SPECIAL_UP:     p = attacker.character->specialUp(attacker);     break;
-            case Status::SPECIAL_DOWN:   p = attacker.character->specialDown(attacker);   break;
+            case Status::SPECIAL_STATIC: p = attacker.character.specialStatic(attacker); break;
+            case Status::SPECIAL_SIDE:   p = attacker.character.specialSide(attacker);   break;
+            case Status::SPECIAL_UP:     p = attacker.character.specialUp(attacker);     break;
+            case Status::SPECIAL_DOWN:   p = attacker.character.specialDown(attacker);   break;
             default: return;
         }
 
@@ -170,7 +187,7 @@ void Game::updateGameplay(float ts) {
         for (auto& item : items) {
             if (!item->isActive() || !item->isAlive()) continue;
             if (!SDL_HasIntersection(&it->rect, &item->rect)) continue;
-            int dmg = it->owner->character->stats.projectileDamage;
+            int dmg = it->owner->character.stats.projectileDamage;
             item->takeDamage(dmg, it->direction, 1.0f);
             if (!item->isAlive()) {
                 Player* beneficiary = it->owner;
@@ -187,7 +204,7 @@ void Game::updateGameplay(float ts) {
 
         if (it->owner != &player1 && SDL_HasIntersection(&it->rect, &player1.rect)) {
             if (player1.invulnerableTimer > 0) { ++it; continue; }
-            auto hit = rollCriticalHit(*it->owner, it->owner->projDamage, 1.0f);
+            auto hit = rollCriticalHit(*it->owner, it->owner->character.stats.projectileDamage, 1.0f);
             if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
                 player1.blockHit(hit.damage, hit.kbScale);
                 it = projectiles.erase(it);
@@ -202,7 +219,7 @@ void Game::updateGameplay(float ts) {
         }
         if (it->owner != &player2 && SDL_HasIntersection(&it->rect, &player2.rect)) {
             if (player2.invulnerableTimer > 0) { ++it; continue; }
-            auto hit = rollCriticalHit(*it->owner, it->owner->projDamage, 1.0f);
+            auto hit = rollCriticalHit(*it->owner, it->owner->character.stats.projectileDamage, 1.0f);
             if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
                 player2.blockHit(hit.damage, hit.kbScale);
                 it = projectiles.erase(it);
@@ -227,7 +244,7 @@ void Game::updateGameplay(float ts) {
         for (auto& item : items) {
             if (!item->isActive() || !item->isAlive()) continue;
             if (!SDL_HasIntersection(&it->rect, &item->rect)) continue;
-            item->takeDamage(it->owner->character->stats.damage, it->owner->facing, it->kbScale);
+            item->takeDamage(it->owner->character.stats.damage, it->owner->facing, it->kbScale);
             if (!item->isAlive()) {
                 Player* beneficiary = it->owner;
                 item->consumer = beneficiary;
@@ -238,7 +255,7 @@ void Game::updateGameplay(float ts) {
         }
 
         if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
-            auto hit = rollCriticalHit(*it->owner, it->owner->damage, it->kbScale);
+            auto hit = rollCriticalHit(*it->owner, it->owner->character.stats.damage, it->kbScale);
             if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
                 player2.blockHit(hit.damage, hit.kbScale);
             } else {
@@ -250,7 +267,7 @@ void Game::updateGameplay(float ts) {
             continue;
         }
         if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
-            auto hit = rollCriticalHit(*it->owner, it->owner->damage, it->kbScale);
+            auto hit = rollCriticalHit(*it->owner, it->owner->character.stats.damage, it->kbScale);
             if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
                 player1.blockHit(hit.damage, hit.kbScale);
             } else {
@@ -268,7 +285,7 @@ void Game::updateGameplay(float ts) {
     for (auto& item : items) {
         item->update(players, platforms, projectiles, ts);
         // kill items outside of the stage
-        if (stage.isOutsideWorld(item->rect)) item->takeDamage(10000, Facing::LEFT, 0);
+        if (stage.isOutsideWorld(item->rect)) item->kill();
     }
     items.erase(
         std::remove_if(items.begin(), items.end(), [](const std::unique_ptr<Item>& i) {
@@ -285,7 +302,7 @@ void Game::updateGameplay(float ts) {
             if (target.invulnerableTimer > 0) return;
             auto dir = it->checkCollision(target);
             if (!dir) return;
-            int dmg   = static_cast<int>(it->getOwner()->damage * 1.5f);
+            int dmg   = static_cast<int>(it->getOwner()->character.stats.damage * 1.5f);
             float kb  = 1.5f;
             auto hit  = rollCriticalHit(*it->getOwner(), dmg, kb);
             if (target.status == Status::SHIELDED && target.shieldTimer > 0 && !target.shieldBroken) {
@@ -308,13 +325,13 @@ void Game::updateGameplay(float ts) {
         for (auto& item : items) {
             if (!item->isActive() || !item->isAlive()) continue;
             if (!SDL_HasIntersection(&it->rect, &item->rect)) continue;
-            int dmg = static_cast<int>(it->owner->damage * it->damageScale);
+            int dmg = static_cast<int>(it->owner->character.stats.damage * it->damageScale);
             item->takeDamage(dmg, it->owner->facing, it->kbScale);
         }
 
         if (it->owner == &player1 && SDL_HasIntersection(&it->rect, &player2.rect)) {
             if (player2.invulnerableTimer == 0) {
-                int dmg  = static_cast<int>(player1.damage * it->damageScale);
+                int dmg  = static_cast<int>(player1.character.stats.damage * it->damageScale);
                 auto hit = rollCriticalHit(player1, dmg, it->kbScale);
                 if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
                     player2.blockHit(hit.damage, hit.kbScale);
@@ -327,7 +344,7 @@ void Game::updateGameplay(float ts) {
             }
         } else if (it->owner == &player2 && SDL_HasIntersection(&it->rect, &player1.rect)) {
             if (player1.invulnerableTimer == 0) {
-                int dmg  = static_cast<int>(player2.damage * it->damageScale);
+                int dmg  = static_cast<int>(player2.character.stats.damage * it->damageScale);
                 auto hit = rollCriticalHit(player2, dmg, it->kbScale);
                 if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
                     player1.blockHit(hit.damage, hit.kbScale);
@@ -373,7 +390,7 @@ void Game::respawn(Player& p, bool voidDeath) {
 
     particles.spawnDeath(p.rect.x + p.rect.w / 2, p.rect.y + p.rect.h / 2);
 
-    p.hp                   = p.character->stats.health;
+    p.hp                   = p.character.stats.health;
     p.rect.x               = sp.x;
     p.rect.y               = sp.y;
     p.lives               -= 1;

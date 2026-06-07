@@ -21,20 +21,20 @@
 /*             INIT             */
 //////////////////////////////////
 
-void Player::init(int x, int y, const Character* ch, const std::string& playerName) {
+void Player::init(int x, int y, const Character ch, const std::string& playerName) {
     character           = ch;
     name                = playerName;
-    hp                  = ch->stats.health;
+    hp                  = ch.stats.health;
     lives               = 2;
     dx = dy             = 0.0f;
     status              = Status::IDLE;
     facing              = Facing::RIGHT;
-    currentTexture      = character->idle;
+    currentTexture      = character.idle;
     currentSpriteIndex  = 0.0f;
 
     int w = 125, h = 89;
-    if (ch->idle) {
-        SDL_QueryTexture(ch->idle, nullptr, nullptr, &w, &h);
+    if (ch.idle) {
+        SDL_QueryTexture(ch.idle, nullptr, nullptr, &w, &h);
     }
     rect = {x, y, w, h};
     prevRect = rect;
@@ -59,13 +59,13 @@ void Player::move(int direction) {
         return;
     }
 
-    if (direction == 0) return;  // no input — friction handles deceleration
+    if (direction == 0) return;
 
     if (direction > 0) facing = Facing::RIGHT;
-    else               facing = Facing::LEFT;
+    else facing = Facing::LEFT;
 
-    float maxSpeed = character->stats.velocity;
-    dx += direction * character->stats.acceleration;
+    float maxSpeed = character.stats.velocity;
+    dx += direction * character.stats.acceleration;
     dx  = std::clamp(dx, -maxSpeed, maxSpeed);
 }
 
@@ -82,13 +82,13 @@ void Player::jump() {
     }
 
     if (onGround) {
-        dy = -character->stats.jumpVelocity;
+        dy = -character.stats.jumpVelocity;
         status = Status::JUMPING;
         onGround = false;
         return;
     }
     if (!hasAirJumped) {
-        dy = -character->stats.jumpVelocity;
+        dy = -character.stats.jumpVelocity;
         status = Status::JUMPING;
         hasAirJumped = true;
     }
@@ -107,7 +107,7 @@ void Player::dash() {
     dashTimer    = static_cast<float>(DASH_DURATION);
     dashCooldown = static_cast<float>(DASH_DURATION + DASH_COOLDOWN);
 
-    float speed = character->stats.velocity * 2.8f;
+    float speed = character.stats.velocity * 2.8f;
     dx  = (facing == Facing::RIGHT) ? speed : -speed;  // hard override — dash is an intentional burst
     dy  = 0.0f;  // cancel vertical momentum
 
@@ -155,8 +155,8 @@ void Player::getHit(Player* attacker, Facing side, int damage, float kbScale) {
 
     hp -= damage;
 
-    float kbMult = static_cast<float>(character->stats.health - hp);
-    float w = character->stats.weight;
+    float kbMult = static_cast<float>(character.stats.health - hp);
+    float w = character.stats.weight;
 
     if (side == Facing::LEFT) {
         dx += (-kbMult / 3.3f) * w * kbScale;
@@ -291,24 +291,24 @@ bool Player::trySpecial(Direction dir) {
     const char* snd;
     switch (dir) {
         case Direction::NONE:
-            character->onSpecialStatic(*this);
+            character.onSpecialStatic(*this);
             status = Status::SPECIAL_STATIC;
             snd    = "special_static";
             break;
         case Direction::LEFT:
             // fallthrough
         case Direction::RIGHT:
-            character->onSpecialSide(*this);
+            character.onSpecialSide(*this);
             status = Status::SPECIAL_SIDE;
             snd    = "special_side";
             break;
         case Direction::UP:
-            character->onSpecialUp(*this);
+            character.onSpecialUp(*this);
             status = Status::SPECIAL_UP;
             snd    = "special_up";
             break;
         case Direction::DOWN:
-            character->onSpecialDown(*this);
+            character.onSpecialDown(*this);
             status = Status::SPECIAL_DOWN;
             snd    = "special_down";
             break;
@@ -343,14 +343,14 @@ void Player::update(const std::vector<Platform>& platforms,
 
     // gravity
     if (!(grapple && grapple->isLatched())) {
-        dy = std::min(character->stats.terminalVelocity, dy + character->stats.gravity * ts);
+        dy = std::min(character.stats.terminalVelocity, dy + character.stats.gravity * ts);
     }
     // reduce gravity when dashing
     if (status == Status::DASHING) dy *= 0.3f;
 
     // friction / air drag
     if (status != Status::DASHING && status != Status::DAMAGED) {
-        float drag = onGround ? character->stats.friction : character->stats.airDrag;
+        float drag = onGround ? character.stats.friction : character.stats.airDrag;
         dx *= drag;
         if (std::abs(dx) < 0.05f) dx = 0.0f;  // snap to rest
     }
@@ -596,31 +596,31 @@ void Player::animate(float ts) {
 
     switch (status) {
         case Status::WALKING:
-            advanceFrame(character->walkFrames, 0.2f);
+            advanceFrame(character.walkFrames, 0.2f);
             break;
         case Status::JUMPING:
-            advanceFrame(character->jumpFrames, 0.15f);
+            advanceFrame(character.jumpFrames, 0.15f);
             break;
         case Status::ATTACKING:
-            advanceFrame(character->attackFrames, 0.6f);
+            advanceFrame(character.attackFrames, 0.6f);
             break;
         case Status::SPECIAL_STATIC:
-            advanceFrame(character->specialStaticFrames, 0.3f);
+            advanceFrame(character.specialStaticFrames, 0.3f);
             break;
         case Status::SPECIAL_SIDE:
-            advanceFrame(character->specialSideFrames, 0.5f);
+            advanceFrame(character.specialSideFrames, 0.5f);
             break;
         case Status::SPECIAL_UP:
-            advanceFrame(character->specialUpFrames, 0.5f);
+            advanceFrame(character.specialUpFrames, 0.5f);
             break;
         case Status::SPECIAL_DOWN:
-            advanceFrame(character->specialDownFrames, 0.21f);
+            advanceFrame(character.specialDownFrames, 0.21f);
             break;
         case Status::STUNNED:
-            advanceFrame(character->stunnedFrames, 0.21f);
+            advanceFrame(character.stunnedFrames, 0.21f);
             break;
         case Status::DASHING:
-            advanceFrame(character->walkFrames, 0.45f);
+            advanceFrame(character.walkFrames, 0.45f);
             break;
         default:
             currentSpriteIndex = 0.0f;
@@ -638,43 +638,43 @@ void Player::draw(SDL_Renderer* r, float a) {
 
     switch (status) {
         case Status::WALKING:
-            drawAnimatedSprite(character->walkFrames);
+            drawAnimatedSprite(character.walkFrames);
             break;
         case Status::JUMPING:
-            drawAnimatedSprite(character->jumpFrames);
+            drawAnimatedSprite(character.jumpFrames);
             break;
         case Status::ATTACKING:
-            drawAnimatedSprite(character->attackFrames);
+            drawAnimatedSprite(character.attackFrames);
             break;
         case Status::SPECIAL_STATIC:
-            drawAnimatedSprite(character->specialStaticFrames);
+            drawAnimatedSprite(character.specialStaticFrames);
             break;
         case Status::SPECIAL_SIDE:
-            drawAnimatedSprite(character->specialSideFrames);
+            drawAnimatedSprite(character.specialSideFrames);
             break;
         case Status::SPECIAL_UP:
-            drawAnimatedSprite(character->specialUpFrames);
+            drawAnimatedSprite(character.specialUpFrames);
             break;
         case Status::SPECIAL_DOWN:
-            drawAnimatedSprite(character->specialDownFrames);
+            drawAnimatedSprite(character.specialDownFrames);
             break;
         case Status::STUNNED:
-            drawAnimatedSprite(character->stunnedFrames);
+            drawAnimatedSprite(character.stunnedFrames);
             break;
         case Status::DASHING:
-            drawAnimatedSprite(character->walkFrames);
+            drawAnimatedSprite(character.walkFrames);
             break;
         case Status::SHOOTING:
-            drawSprite(r, character->shoot, flipH, a);
+            drawSprite(r, character.shoot, flipH, a);
             break;
         case Status::DAMAGED:
-            drawSprite(r, character->damage, flipH, a);
+            drawSprite(r, character.damage, flipH, a);
             break;
         case Status::SHIELDED:
-            drawSprite(r, character->shielded, flipH, a);
+            drawSprite(r, character.shielded, flipH, a);
             break;
         default:
-            drawSprite(r, character->idle, flipH, a);
+            drawSprite(r, character.idle, flipH, a);
             break;
     }
 
@@ -722,7 +722,7 @@ void Player::drawShitAura(SDL_Renderer* r, float a) const {
     SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
     int cx     = drawRect.x + drawRect.w / 2;
     int cy     = drawRect.y + drawRect.h / 2;
-    float s = shitAuraTimer / SHIT_AURA_DURATION;
+    float s = shitAuraTimer / SHIT_ITEM_DURATION;
     int radius = static_cast<int>((drawRect.w / 2.0f + drawRect.h / 2.0f) / 2 * s);
     Color c = GREEN; c.a = 128;
     Renderer::fillCircle(r, cx, cy, radius, c);

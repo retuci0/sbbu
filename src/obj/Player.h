@@ -38,7 +38,7 @@ enum class Status {
 class Player {
 public:
     std::string name;
-    const Character* character = nullptr;  // non-owning, points to a Character subclass
+    Character character; 
 
     int id = 0;
 
@@ -81,10 +81,6 @@ public:
     static constexpr float MAX_CHARGE = 1.0f;
 
     float scale = 1.0f;
-
-    // for when the player sizes up, so that damage buffs
-    // only affect the player and not every player with the same character
-    int damage, projDamage; 
 
 
     // shield
@@ -131,7 +127,7 @@ public:
     SDL_Texture* currentTexture = nullptr;
 
     Player() = default;
-    void init(int x, int y, const Character* ch, const std::string& playerName);
+    void init(int x, int y, const Character ch, const std::string& playerName);
 
     // item
     Item* item;
