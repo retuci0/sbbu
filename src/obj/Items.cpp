@@ -176,7 +176,7 @@ void ShitItem::drawEffect(SDL_Renderer* r, float a) const {
     int xo = static_cast<int>(consumer->prevRect.x + (consumer->prevRect.w - rect.w) / 2);
     int y  = consumer->rect.y - rect.h;
     int yo = consumer->prevRect.y - rect.h;
-    SDL_Rect drawRect = interpolatedRect({ x, y, rect.w, rect.h }, { xo, yo, rect.w, rect.h }, a);
+    SDL_Rect drawRect = interpolatedRect({ xo, yo, rect.w, rect.h }, { x, y, rect.w, rect.h }, a);
     
     Renderer::drawSprite(r, tex, &drawRect, false);
 }
@@ -207,7 +207,7 @@ void CocaineItem::onEffectEnd() {
 void CocaineItem::drawEffect(SDL_Renderer* r, float a) const {
     if (!consumer) return;
 
-    SDL_Rect drawRect = interpolatedRect(consumer->rect, consumer->prevRect, a);
+    SDL_Rect drawRect = interpolatedRect(consumer->prevRect, consumer->rect, a);
 
     Renderer::drawSprite(r, overlay, &drawRect, consumer->facing == Facing::LEFT);
 }
@@ -236,7 +236,7 @@ void SpringItem::onEffectEnd() {
 void SpringItem::drawEffect(SDL_Renderer* r, float a) const {
     if (!consumer) return;
 
-    SDL_Rect drawRect = interpolatedRect(consumer->rect, consumer->prevRect, a);
+    SDL_Rect drawRect = interpolatedRect(consumer->prevRect, consumer->rect, a);
     
     Renderer::drawSprite(r, overlay, &drawRect, consumer->facing == Facing::LEFT);
 }
