@@ -2,8 +2,8 @@
 
 #include "ui/Screen.h"
 
-#include "ui/widget/Button.h"
-#include "ui/widget/Slider.h"
+#include "ui/widget/ButtonWidget.h"
+#include "ui/widget/SliderWidget.h"
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_render.h>
@@ -30,12 +30,12 @@ public:
     OptionsResult getResult() const { return result; }
 
 private:
-    Slider* fpsCapSlider     = nullptr;
-    Button* fullscreenButton = nullptr;
-    Button* vsyncButton      = nullptr;
-    Button* debugButton      = nullptr;
-    Button* particlesButton  = nullptr;
-    Button* okButton         = nullptr;
+    SliderWidget* fpsCapSlider     = nullptr;
+    ButtonWidget* fullscreenButton = nullptr;
+    ButtonWidget* vsyncButton      = nullptr;
+    ButtonWidget* debugButton      = nullptr;
+    ButtonWidget* particlesButton  = nullptr;
+    ButtonWidget* okButton         = nullptr;
     bool finished = false;
 
     OptionsResult result{};

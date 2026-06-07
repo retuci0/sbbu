@@ -56,6 +56,10 @@ public:
     void init();
     void run();
     void cleanup();
+    
+    Player player1, player2;
+
+    void trySpawnItem();
 
 private:
     // more game stuff
@@ -101,14 +105,12 @@ private:
     std::vector<CollisionRect> specialHitboxes;
     std::vector<Platform> platforms;
     ParticleManager particles = ParticleManager(&options.particles);
-    Player player1, player2;
     
     // items
     bool itemsEnabled = true;
     std::vector<std::unique_ptr<Item>> items;
     float itemSpawnTimer = 0.0f;
     void resetItemSpawnTimer();
-    void trySpawnItem();
 
     static constexpr float ITEM_SPAWN_MIN = 600.0f;
     static constexpr float ITEM_SPAWN_MAX = 1200.0f;

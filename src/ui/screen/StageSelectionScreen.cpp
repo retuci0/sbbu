@@ -4,7 +4,7 @@
 #include "misc/Common.h"
 #include "misc/Renderer.h"
 #include "obj/Platform.h"
-#include "ui/widget/Button.h"
+#include "ui/widget/ButtonWidget.h"
 
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_gamecontroller.h>
@@ -29,11 +29,11 @@ StageSelectionScreen::StageSelectionScreen(const Stage& defaultStage, const std:
         }
     }
 
-    addWidget<Button>(START_BTN_X, START_BTN_Y, START_BTN_W, START_BTN_H,
+    addWidget<ButtonWidget>(START_BTN_X, START_BTN_Y, START_BTN_W, START_BTN_H,
         "select characters", GREEN, WHITE,
         [&]{ confirm(); });
 
-    addWidget<Button>(4, 4, 64, 64, "<", GREEN, WHITE, 
+    addWidget<ButtonWidget>(4, 4, 64, 64, "<", GREEN, WHITE, 
         [&]{ goBack(); });
 }
 

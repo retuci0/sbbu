@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ui/Screen.h"
+#include "ui/widget/FieldWidget.h"
 #include "net/Network.h"
 
 #include <memory>
@@ -24,17 +25,17 @@ public:
     bool isFinished() const { return finished; }
     RemoteSetupResult takeResult() { return std::move(result); }
     void resetFinished();
-    
+
 private:
-    bool finished = false;
-    RemoteSetupResult result;
-    std::string ipInput = "127.0.0.1";
-    std::string portInput = "60789";
-    int activeField = 0;
-    bool isHost = true;
+    bool finished  = false;
+    bool isHost    = true;
     bool connecting = false;
+    int  selectedWidget = 0;
     std::string statusMsg;
-    int selectedWidget = 0;
+    RemoteSetupResult result;
+
+    FieldWidget* ipField   = nullptr;
+    FieldWidget* portField = nullptr;
 
     void tryConnect();
 };

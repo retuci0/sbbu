@@ -1,7 +1,7 @@
 #include "ui/screen/SettingsScreen.h"
 
-#include "ui/widget/Button.h"
-#include "ui/widget/Slider.h"
+#include "ui/widget/ButtonWidget.h"
+#include "ui/widget/SliderWidget.h"
 #include "misc/Color.h"
 
 #include <SDL2/SDL_render.h>
@@ -17,29 +17,29 @@ static constexpr int OK_X = (SW - BTN_W) / 2, OK_Y = 750;
 SettingsScreen::SettingsScreen(int maxFps, bool vsync, bool fullscreen, bool debug, bool particles) : Screen() {
     result = { maxFps, vsync, fullscreen, debug, particles };
 
-    fpsCapSlider = addWidget<Slider>(SL_X, SL_Y, SL_W, SL_H, -1, 360, maxFps, "fps cap", false, false);
+    fpsCapSlider = addWidget<SliderWidget>(SL_X, SL_Y, SL_W, SL_H, -1, 360, maxFps, "fps cap", false, false);
 
-    fullscreenButton = addWidget<Button>(ROW_1, COL_1, BTN_W, BTN_H, "fullscreen", 
+    fullscreenButton = addWidget<ButtonWidget>(ROW_1, COL_1, BTN_W, BTN_H, "fullscreen", 
         result.fullscreen ? BTN_YES_C : BTN_NO_C, WHITE,
         [&]{ result.fullscreen = !result.fullscreen; fullscreenButton->setColors(result.fullscreen ? BTN_YES_C : BTN_NO_C, WHITE); }
     );
 
-    vsyncButton = addWidget<Button>(ROW_1, COL_2, BTN_W, BTN_H, "vsync", 
+    vsyncButton = addWidget<ButtonWidget>(ROW_1, COL_2, BTN_W, BTN_H, "vsync", 
         result.vsync ? BTN_YES_C : BTN_NO_C, WHITE,
         [&]{ result.vsync = !result.vsync; vsyncButton->setColors(result.vsync ? BTN_YES_C : BTN_NO_C, WHITE); }
     );
 
-    debugButton = addWidget<Button>(ROW_2, COL_1, BTN_W, BTN_H, "debug",
+    debugButton = addWidget<ButtonWidget>(ROW_2, COL_1, BTN_W, BTN_H, "debug",
         result.debug ? BTN_YES_C : BTN_NO_C, WHITE,
         [&]{ result.debug = !result.debug; debugButton->setColors(result.debug ? BTN_YES_C : BTN_NO_C, WHITE); }
     );
 
-    particlesButton = addWidget<Button>(ROW_2, COL_2, BTN_W, BTN_H, "particles",
+    particlesButton = addWidget<ButtonWidget>(ROW_2, COL_2, BTN_W, BTN_H, "particles",
         result.particles ? BTN_YES_C : BTN_NO_C, WHITE,
         [&]{ result.particles = !result.particles; particlesButton->setColors(result.particles ? BTN_YES_C : BTN_NO_C, WHITE); }
     );
 
-    okButton = addWidget<Button>(OK_X, OK_Y, BTN_W, BTN_H, "ok.",
+    okButton = addWidget<ButtonWidget>(OK_X, OK_Y, BTN_W, BTN_H, "ok.",
         Color{ 50, 180, 50, 255 }, WHITE,
         [&]{ result.fpsCap = fpsCapSlider->getValue(); finished = true; }
     );
@@ -64,12 +64,12 @@ void SettingsScreen::handle(const SDL_Event& e) {
             selectedIndex = (selectedIndex + 1) % WIDGET_COUNT;
             break;
         case SDLK_LEFT:
-            if (auto* sl = dynamic_cast<Slider*>(active)) {
+            if (auto* sl = dynamic_cast<SliderWidget*>(active)) {
                 sl->setValue(sl->getValue() - 10);
             }
             break;
         case SDLK_RIGHT:
-            if (auto* sl = dynamic_cast<Slider*>(active)) {
+            if (auto* sl = dynamic_cast<SliderWidget*>(active)) {
                 sl->setValue(sl->getValue() + 10);
             }
             break;

@@ -15,9 +15,9 @@
 #include <string>
 
 
-class Button : public Widget {
+class ButtonWidget : public Widget {
 public:
-Button(int x, int y, int w, int h, const std::string& label, Color bg, Color fg, std::function<void()> action, SDL_Texture* texture = nullptr)
+ButtonWidget(int x, int y, int w, int h, const std::string& label, Color bg, Color fg, std::function<void()> action, SDL_Texture* texture = nullptr)
     : Widget(x, y, w, h), label(label), bg(bg), fg(fg), action(action), texture(texture) 
     {
         clickSound = Resources::get().getSound("click");

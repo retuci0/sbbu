@@ -1,6 +1,8 @@
 #include "ui/screen/CharacterSelectionScreen.h"
 
-#include "ui/widget/Button.h"
+#include "ui/widget/ButtonWidget.h"
+#include "ui/widget/FieldWidget.h"
+
 #include "misc/Common.h"
 #include "misc/Renderer.h"
 
@@ -27,16 +29,18 @@ CharacterSelectionScreen::CharacterSelectionScreen(
         const std::array<const Character*, CHARACTER_NUM>& chars,
         const std::string& defaultName1, const Character* defaultChar1,
         const std::string& defaultName2, const Character* defaultChar2)
-    : chars(chars), name1(defaultName1), name2(defaultName2), Screen()
+    : chars(chars), Screen()
 {
     selectedChar1 = findIdx(defaultChar1);
     selectedChar2 = findIdx(defaultChar2);
     setDefaultColors();
-    addWidget<Button>(START_BTN_X, START_BTN_Y, START_BTN_W, START_BTN_H,
+    addWidget<ButtonWidget>(START_BTN_X, START_BTN_Y, START_BTN_W, START_BTN_H,
         "start game", GREEN, WHITE,
         [&]{ tryStart(); });
-    addWidget<Button>(4, 4, 64, 64, "<", GREEN, WHITE,
+    addWidget<ButtonWidget>(4, 4, 64, 64, "<", GREEN, WHITE,
         [&]{ goBack(); });
+    nameField1 = addWidget<FieldWidget>(NAME_BOX_X1, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H, font, defaultName1);
+    nameField2 = addWidget<FieldWidget>(NAME_BOX_X2, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H, font, defaultName2);
 }
 
 int CharacterSelectionScreen::findIdx(const Character* ch) const {
@@ -51,8 +55,8 @@ void CharacterSelectionScreen::setDefaultColors() {
 }
 
 void CharacterSelectionScreen::tryStart() {
-    std::string n1 = name1.empty() ? "player 1" : name1;
-    std::string n2 = name2.empty() ? "player 2" : name2;
+    std::string n1 = nameField1->getText().empty() ? "player 1" : nameField1->getText();
+    std::string n2 = nameField2->getText().empty() ? "player 2" : nameField2->getText();
     if (n1 == n2) { nameError = true; return; }
     finished = true;
     result   = { chars[selectedChar1], chars[selectedChar2], n1, n2, color1, color2 };
@@ -90,26 +94,10 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
             case SDLK_RETURN:
                 tryStart();
                 break;
-            case SDLK_BACKSPACE:
-                nameError = false;
-                if (activeField == 1 && !name1.empty()) name1.pop_back();
-                if (activeField == 2 && !name2.empty()) name2.pop_back();
-                break;
-            case SDLK_LEFT:
-                if (activeField == 0) activeField = 1;
-                else if (activeField == 1) activeField = 2;
-                else if (activeField == 2) activeField = 1;
-                break;
-            case SDLK_RIGHT:
-                if (activeField == 0) activeField = 2;
-                else if (activeField == 1) activeField = 2;
-                else if (activeField == 2) activeField = 1;
-                break;
             case SDLK_UP:
             case SDLK_DOWN: {
                 int delta = (e.key.keysym.sym == SDLK_UP) ? -1 : 1;
-                int& selected = (activeField == 1) ? selectedChar1 : selectedChar2;
-                int newIdx = selected + delta;
+                int& selected = selectedChar1;  // default to p1
                 int first = -1, last = -1;
                 for (int i = 0; i < CHARACTER_NUM; ++i) {
                     if (chars[i] && chars[i]->loaded) {
@@ -117,6 +105,7 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
                         last = i;
                     }
                 }
+                int newIdx = selected + delta;
                 if (newIdx < first) newIdx = last;
                 if (newIdx > last)  newIdx = first;
                 selected = newIdx;
@@ -126,12 +115,6 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
                 goBack();
                 break;
         }
-    }
-
-    if (e.type == SDL_TEXTINPUT) {
-        nameError = false;
-        if (activeField == 1 && name1.size() < 16) name1 += e.text.text;
-        if (activeField == 2 && name2.size() < 16) name2 += e.text.text;
     }
 
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
@@ -145,21 +128,13 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
             if (pointInRect(mx, my, SDL_Rect{x1, y, BOX_W, BOX_H})) selectedChar1 = i;
             if (pointInRect(mx, my, SDL_Rect{x2, y, BOX_W, BOX_H})) selectedChar2 = i;
         }
-        const SDL_Rect nameField1 = {NAME_BOX_X1, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H};
-        const SDL_Rect nameField2 = {NAME_BOX_X2, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H};
-        if (pointInRect(mx, my, nameField1)) {
-            activeField = 1;
-        } else if (pointInRect(mx, my, nameField2)) {
-            activeField = 2;
-        } else {
-            activeField = 0;
-        }
         if (pointInRect(mx, my, SDL_Rect{COL1_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H})) {
             pickColorFor(1);
         }
         if (pointInRect(mx, my, SDL_Rect{COL2_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H})) {
             pickColorFor(2);
         }
+        nameError = false;
     }
 }
 
@@ -196,10 +171,6 @@ void CharacterSelectionScreen::render(SDL_Renderer* renderer) {
 
     Renderer::renderText(renderer, font, "enter name:", COL1_X, NAME_BOX_Y - 40, WHITE);
     Renderer::renderText(renderer, font, "enter name:", COL2_X, NAME_BOX_Y - 40, WHITE);
-    SDL_Color nameBg1 = (activeField == 1) ? SDL_Color{100, 100, 180, 255} : SDL_Color{60, 60, 60, 255};
-    SDL_Color nameBg2 = (activeField == 2) ? SDL_Color{100, 100, 180, 255} : SDL_Color{60, 60, 60, 255};
-    Renderer::renderButton(renderer, font, name1, NAME_BOX_X1, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H, nameBg1, WHITE);
-    Renderer::renderButton(renderer, font, name2, NAME_BOX_X2, NAME_BOX_Y, NAME_BOX_W, NAME_BOX_H, nameBg2, WHITE);
 
     Renderer::fillRect(renderer, COL1_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H, color1);
     Renderer::fillRect(renderer, COL2_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H, color2);

@@ -2,7 +2,7 @@
 
 #include "core/Options.h"
 #include "core/Resources.h"
-#include "ui/widget/Button.h"
+#include "ui/widget/ButtonWidget.h"
 #include "misc/Common.h"
 #include "misc/Renderer.h"
 
@@ -25,14 +25,14 @@ PauseScreen::PauseScreen(const Options& options)
     int startX = SW / 2 - btnW;
     int startY = SH / 3 + 100;
 
-    addWidget<Button>(startX, startY, btnW, btnH, "resume", WHITE, BLACK, [&]{ result = PauseActionResult::RESUME; finished = true; });
-    addWidget<Button>(startX+btnW+colGap, startY, btnW, btnH, "quit", WHITE, BLACK, [&]{ result = PauseActionResult::QUIT; finished = true; });
-    addWidget<Button>(startX, startY+btnH+gap, btnW, btnH, "restart", WHITE, BLACK, [&]{ result = PauseActionResult::RESTART; finished = true; });
-    addWidget<Button>(startX+btnW+colGap, startY+btnH+gap, btnW, btnH, "change volume", WHITE, BLACK, [&]{ result = PauseActionResult::CHANGE_VOLUME; finished = true; });
-    addWidget<Button>(startX, startY+2*(btnH+gap), btnW, btnH, "controls", WHITE, BLACK, [&]{ result = PauseActionResult::CHANGE_CONTROLS; finished = true; });
-    addWidget<Button>(startX+btnW+colGap, startY+2*(btnH+gap), btnW, btnH, "assets folder", WHITE, BLACK,  openAssetsFolder);
-    addWidget<Button>(SW - 128 - 24, SH - 64 - 12, 64, 64, "", WHITE, BLACK, [&]{ result = PauseActionResult::SCREENSHOTS; finished = true; }, Resources::get().getTexture("screenshots"));
-    addWidget<Button>(SW - 64 - 12, SH - 64 - 12, 64, 64, "", WHITE, BLACK, [&]{ result = PauseActionResult::SETTINGS; finished = true; }, Resources::get().getTexture("settings"));
+    addWidget<ButtonWidget>(startX, startY, btnW, btnH, "resume", WHITE, BLACK, [&]{ result = PauseActionResult::RESUME; finished = true; });
+    addWidget<ButtonWidget>(startX+btnW+colGap, startY, btnW, btnH, "quit", WHITE, BLACK, [&]{ result = PauseActionResult::QUIT; finished = true; });
+    addWidget<ButtonWidget>(startX, startY+btnH+gap, btnW, btnH, "restart", WHITE, BLACK, [&]{ result = PauseActionResult::RESTART; finished = true; });
+    addWidget<ButtonWidget>(startX+btnW+colGap, startY+btnH+gap, btnW, btnH, "change volume", WHITE, BLACK, [&]{ result = PauseActionResult::CHANGE_VOLUME; finished = true; });
+    addWidget<ButtonWidget>(startX, startY+2*(btnH+gap), btnW, btnH, "controls", WHITE, BLACK, [&]{ result = PauseActionResult::CHANGE_CONTROLS; finished = true; });
+    addWidget<ButtonWidget>(startX+btnW+colGap, startY+2*(btnH+gap), btnW, btnH, "assets folder", WHITE, BLACK,  openAssetsFolder);
+    addWidget<ButtonWidget>(SW - 128 - 24, SH - 64 - 12, 64, 64, "", WHITE, BLACK, [&]{ result = PauseActionResult::SCREENSHOTS; finished = true; }, Resources::get().getTexture("screenshots"));
+    addWidget<ButtonWidget>(SW - 64 - 12, SH - 64 - 12, 64, 64, "", WHITE, BLACK, [&]{ result = PauseActionResult::SETTINGS; finished = true; }, Resources::get().getTexture("settings"));
 }
 
 void PauseScreen::render(SDL_Renderer* renderer) {
@@ -40,7 +40,7 @@ void PauseScreen::render(SDL_Renderer* renderer) {
     Renderer::fillRect(renderer, 200, 150, 1500, 150, GRAY);
     Renderer::renderText(renderer, titleFont, "game paused.", 750, 190, WHITE);
     for (size_t i = 0; i < widgets.size(); ++i) {
-        auto* btn = dynamic_cast<Button*>(widgets[i].get());
+        auto* btn = dynamic_cast<ButtonWidget*>(widgets[i].get());
         if (btn) {
             btn->draw(renderer, font);
             if (i == (size_t) selectedIndex) {
@@ -69,7 +69,7 @@ void PauseScreen::handle(const SDL_Event& event) {
                 if (selectedIndex % 2 == 0 && selectedIndex + 1 < (int)widgets.size()) selectedIndex++;
                 break;
             case SDLK_RETURN: {
-                auto* btn = dynamic_cast<Button*>(widgets[selectedIndex].get());
+                auto* btn = dynamic_cast<ButtonWidget*>(widgets[selectedIndex].get());
                 if (btn) btn->activate();
                 return;
             }

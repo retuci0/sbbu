@@ -1,7 +1,7 @@
 #include "ui/screen/TitleScreen.h"
 
 #include "ui/Screen.h"
-#include "ui/widget/Button.h"
+#include "ui/widget/ButtonWidget.h"
 #include "misc/Common.h"
 #include "misc/Renderer.h"
 
@@ -10,11 +10,11 @@
 
 TitleScreen::TitleScreen() : Screen() {
     bg = Resources::get().getTexture("title_bg");
-    addWidget<Button>(SW/2-200, SH/2, 400, 80, "local play",
+    addWidget<ButtonWidget>(SW/2-200, SH/2, 400, 80, "local play",
                       Color{60,60,60}, WHITE, [&]{ result = TitleScreenResult::LOCAL;  finished=true; });
-    addWidget<Button>(SW/2-200, SH/2+120, 400, 80, "online play",
+    addWidget<ButtonWidget>(SW/2-200, SH/2+120, 400, 80, "online play",
                       Color{60,60,60}, WHITE, [&]{ result = TitleScreenResult::ONLINE; finished=true; });
-    addWidget<Button>(SW/2-200, SH/2+240, 400, 80, "quit",
+    addWidget<ButtonWidget>(SW/2-200, SH/2+240, 400, 80, "quit",
                       Color{60,60,60}, WHITE, [&]{ result = TitleScreenResult::QUIT;   finished=true; });
 }
 
@@ -48,7 +48,7 @@ void TitleScreen::render(SDL_Renderer* r) {
     SDL_Rect bgRect = { 0, 0, SW, SH };
     Renderer::drawSprite(r, bg, &bgRect, false);
     for (size_t i = 0; i < widgets.size(); ++i) {
-        auto* btn = dynamic_cast<Button*>(widgets[i].get());
+        auto* btn = dynamic_cast<ButtonWidget*>(widgets[i].get());
         if (btn) {
             btn->draw(r, font);
             if (i == selectedIndex) {

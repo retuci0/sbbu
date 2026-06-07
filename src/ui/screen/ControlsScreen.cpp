@@ -1,6 +1,6 @@
 #include "ui/screen/ControlsScreen.h"
 
-#include "ui/widget/Button.h"
+#include "ui/widget/ButtonWidget.h"
 #include "ui/widget/KeybindWidget.h"
 
 #include "misc/Common.h"
@@ -45,7 +45,7 @@ ControlsScreen::ControlsScreen(Options& o, InputHandler& input)
         int y = ROW_Y + i * ROW_STEP;
         addWidget<KeybindWidget>(COL2_X, y, ROW_W, ROW_H, p2[i].name, p2[i].key, input, p2[i].btn);
     }
-    addWidget<Button>(SW/2-100, 780, 200, 60, "done", GREEN, WHITE, [&]{ finished = true; });
+    addWidget<ButtonWidget>(SW/2-100, 780, 200, 60, "done", GREEN, WHITE, [&]{ finished = true; });
 }
 
 void ControlsScreen::handle(const SDL_Event& e) {

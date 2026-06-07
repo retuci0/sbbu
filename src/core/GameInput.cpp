@@ -1,6 +1,12 @@
 #include "core/Game.h"
+
+#include "ui/screen/CheatMenuScreen.h"
+
 #include <SDL2/SDL_gamecontroller.h>
+
+#include <SDL2/SDL_log.h>
 #include <cmath>
+#include <memory>
 
 
 ///////////////////////////////////////
@@ -8,6 +14,15 @@
 ///////////////////////////////////////
 
 void Game::handleGameplayInput() {
+    // open cheat menu
+    if (isDown(options.keyCheats)) { 
+        if (screens.currentAs<CheatMenuScreen>()) {
+            screens.pop();
+        } else {
+            screens.push(std::make_unique<CheatMenuScreen>(this)); 
+        }
+    }
+
     if (!screens.empty()) return;
 
     // player 1 - always local (ctrl 0)

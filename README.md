@@ -47,7 +47,8 @@ super bert bros is a local (and now remote too) multiplayer brawler game, heavil
 | `B`           | toggle debug rendering |
 | `F11`         | toggle fullscreen      |
 | `ESC`         | pause game             |
-| `0`           | rage quit              |
+| `F7`          | rage quit              |
+| `F6`          | cheat menu             |
 
 > *special moves are directional:* hold a movement key and press the special key to perform a directional special attack, or don't to perform a static special attack (stronger punch)
 > *parries are a thing now!:* melee attack a projectile to reflect it back at double speed

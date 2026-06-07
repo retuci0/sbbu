@@ -12,9 +12,9 @@
 #include <string>
 
 
-class Slider : public Widget {
+class SliderWidget : public Widget {
 public:
-    Slider(int x, int y, int w, int h, float minVal, float maxVal, float initialVal, const std::string& label, bool percentage = true, bool floats = true)
+    SliderWidget(int x, int y, int w, int h, float minVal, float maxVal, float initialVal, const std::string& label, bool percentage = true, bool floats = true)
     :  Widget(x, y, w, h), minVal(minVal), maxVal(maxVal), value(initialVal), label(label), showPercentage(percentage), floats(floats) {}
 
     void draw(SDL_Renderer* renderer, TTF_Font* font) override {

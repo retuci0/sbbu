@@ -2,7 +2,7 @@
 
 #include "ui/Screen.h"
 
-#include "ui/widget/Slider.h"
+#include "ui/widget/SliderWidget.h"
 
 #include <SDL2/SDL_ttf.h>
 
@@ -24,8 +24,8 @@ public:
     VolumeResult getResult() const { return result; }
 
 private:
-    Slider* sfxSlider   = nullptr;
-    Slider* musicSlider = nullptr;
+    SliderWidget* sfxSlider   = nullptr;
+    SliderWidget* musicSlider = nullptr;
 
     bool finished = false;
     VolumeResult result{};

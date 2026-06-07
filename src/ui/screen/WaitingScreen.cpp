@@ -1,6 +1,6 @@
 #include "ui/screen/WaitingScreen.h"
 
-#include "ui/widget/Button.h"
+#include "ui/widget/ButtonWidget.h"
 #include "misc/Renderer.h"
 #include "misc/Common.h"
 
@@ -8,7 +8,7 @@
 WaitingScreen::WaitingScreen()
     : startTime(SDL_GetTicks()), Screen()  
 {
-    addWidget<Button>(4, 4, 64, 64, "<", GREEN, WHITE, [&]{ goBack(); });
+    addWidget<ButtonWidget>(4, 4, 64, 64, "<", GREEN, WHITE, [&]{ goBack(); });
 }
 
 void WaitingScreen::handle(const SDL_Event& e) {

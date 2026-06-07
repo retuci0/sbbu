@@ -1,6 +1,6 @@
 #include "ui/screen/GameEndScreen.h"
 
-#include "ui/widget/Button.h"
+#include "ui/widget/ButtonWidget.h"
 #include "misc/Common.h"
 #include "misc/Renderer.h"
 
@@ -16,11 +16,11 @@ GameEndScreen::GameEndScreen(const std::string& title, const std::string& detail
     const int x = (SW - w) / 2;
     const int y = 700;
 
-    addWidget<Button>(x, y, BTN_W, BTN_H, "title screen", WHITE, BLACK, [&] {
+    addWidget<ButtonWidget>(x, y, BTN_W, BTN_H, "title screen", WHITE, BLACK, [&] {
         result = GameEndActionResult::TITLE;
         finished = true;
     });
-    addWidget<Button>(x + BTN_W + GAP, y, BTN_W, BTN_H, "quit", WHITE, BLACK, [&] {
+    addWidget<ButtonWidget>(x + BTN_W + GAP, y, BTN_W, BTN_H, "quit", WHITE, BLACK, [&] {
         result = GameEndActionResult::QUIT;
         finished = true;
     });
@@ -61,7 +61,7 @@ void GameEndScreen::render(SDL_Renderer* renderer) {
     drawWidgets(renderer, font);
 
     if (selectedIndex >= 0 && selectedIndex < (int)widgets.size()) {
-        auto* btn = dynamic_cast<Button*>(widgets[selectedIndex].get());
+        auto* btn = dynamic_cast<ButtonWidget*>(widgets[selectedIndex].get());
         if (btn) {
             Renderer::outlineRect(renderer, btn->getX(), btn->getY(),
                     btn->getW(), btn->getH(), {255,255,255,255}, 3);

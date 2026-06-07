@@ -9,7 +9,7 @@
 
 static const char* CRASH_TEXT =
     "something went wrong!\n"
-    "please report this crash log at https://github.com/retuci0/super-bert-bros-ultimate\n";
+    "please report this crash log at https://github.com/retuci0/sbbu\n";
 
 int main(int argc, char** argv) {
     try {

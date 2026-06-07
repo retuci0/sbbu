@@ -1,6 +1,6 @@
 #include "ui/screen/VolumeScreen.h"
 
-#include "ui/widget/Button.h"
+#include "ui/widget/ButtonWidget.h"
 #include "misc/Common.h"
 #include "misc/Renderer.h"
 
@@ -12,10 +12,10 @@ static constexpr int SL_SFX_Y = 420, SL_MUSIC_Y = 600;
 static constexpr int OK_X = 860, OK_Y = 750, OK_W = 200, OK_H = 70;
 
 VolumeScreen::VolumeScreen(float currentSfx, float currentMusic) : Screen() {
-    sfxSlider   = addWidget<Slider>(SL_X, SL_SFX_Y,   SL_W, SL_H, 0.0f, 2.0f, currentSfx,   "SFX Volume");
-    musicSlider = addWidget<Slider>(SL_X, SL_MUSIC_Y, SL_W, SL_H, 0.0f, 2.0f, currentMusic, "music Volume");
+    sfxSlider   = addWidget<SliderWidget>(SL_X, SL_SFX_Y,   SL_W, SL_H, 0.0f, 2.0f, currentSfx,   "SFX Volume");
+    musicSlider = addWidget<SliderWidget>(SL_X, SL_MUSIC_Y, SL_W, SL_H, 0.0f, 2.0f, currentMusic, "music Volume");
 
-    addWidget<Button>(OK_X, OK_Y, OK_W, OK_H, "ok.",
+    addWidget<ButtonWidget>(OK_X, OK_Y, OK_W, OK_H, "ok.",
         Color{50, 180, 50, 255}, WHITE,
         [&]{ finished = true; result = { sfxSlider->getValue(), musicSlider->getValue() }; }
     );
@@ -26,7 +26,7 @@ void VolumeScreen::handle(const SDL_Event& e) {
 
     if (e.type != SDL_KEYDOWN) return;
 
-    Slider* active = (selectedSlider == 0) ? sfxSlider : musicSlider;
+    SliderWidget* active = (selectedSlider == 0) ? sfxSlider : musicSlider;
 
     switch (e.key.keysym.sym) {
         case SDLK_UP:
@@ -56,7 +56,7 @@ void VolumeScreen::render(SDL_Renderer* renderer) {
     Renderer::renderText(renderer, titleFont, "volume settings", 750, 200, WHITE);
     drawWidgets(renderer, font);
 
-    Slider* active = (selectedSlider == 0) ? sfxSlider : musicSlider;
+    SliderWidget* active = (selectedSlider == 0) ? sfxSlider : musicSlider;
     if (active) {
         Renderer::outlineRect(renderer,
             active->getX() - 4, active->getY() - 4,

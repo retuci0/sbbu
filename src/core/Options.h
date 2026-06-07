@@ -30,10 +30,11 @@ public:
     SDL_KeyCode keyP2Grapple    = SDLK_QUOTE;
 
     SDL_KeyCode keyPause        = SDLK_ESCAPE;
-    SDL_KeyCode keyQuit         = SDLK_0;
+    SDL_KeyCode keyQuit         = SDLK_F7;
     SDL_KeyCode keyDebug        = SDLK_F3;
     SDL_KeyCode keyFullscreen   = SDLK_F11;
     SDL_KeyCode keyScreenshot   = SDLK_F2;
+    SDL_KeyCode keyCheats       = SDLK_F6;
 
     float sfxVolume             = 1.0f;
     float musVolume             = 1.0f;
@@ -47,6 +48,6 @@ public:
 
     bool particles              = true;
 
-    void saveToFile  (const std::string& filename = "config.cfg") const;
+    void saveToFile(const std::string& filename = "config.cfg") const;
     void loadFromFile(const std::string& filename = "config.cfg");
 };

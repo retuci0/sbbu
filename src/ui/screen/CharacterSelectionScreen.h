@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ui/Screen.h"
+#include "ui/widget/FieldWidget.h"
 
 #include "misc/Characters.h"
 #include "misc/Color.h"
@@ -37,15 +38,16 @@ private:
     std::array<const Character*, CHARACTER_NUM> chars;
 
     int selectedChar1 = 0, selectedChar2 = 0;
-    std::string name1, name2;
     Color color1{}, color2{};
-    int activeField = 0;  // 0 = none, 1 = name1, 2 = name2
-    bool nameError  = false;
-    bool finished   = false;
+    bool nameError = false;
+    bool finished  = false;
     CharacterSelectionResult result;
 
+    FieldWidget* nameField1 = nullptr;
+    FieldWidget* nameField2 = nullptr;
+
     int  findIdx(const Character* ch) const;
-    void pickColorFor(int player);  // 1 or 2
+    void pickColorFor(int player);
     void setDefaultColors();
     void tryStart();
 };

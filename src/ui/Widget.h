@@ -1,5 +1,6 @@
 #pragma once
 
+#include "misc/Common.h"
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
@@ -21,6 +22,10 @@ public:
     int getY() const { return rect.y; }
     int getW() const { return rect.w; }
     int getH() const { return rect.h; }
+
+    bool isHovered(int mx, int my) const {
+        return pointInRect(mx, my, rect);
+    }
     
 protected:
     SDL_Rect rect;

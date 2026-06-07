@@ -39,6 +39,7 @@ void Options::saveToFile(const std::string& filename) const {
     writeKey("keyDebug",      keyDebug);
     writeKey("keyFullscreen", keyFullscreen);
     writeKey("keyScreenshot", keyScreenshot);
+    writeKey("keyCheats",     keyCheats);
 
     file << "sfxVolume="   << sfxVolume   << "\n";
     file << "musVolume="   << musVolume   << "\n";
@@ -102,6 +103,7 @@ void Options::loadFromFile(const std::string& filename) {
         parseKey(keyDebug,      "keyDebug");
         parseKey(keyFullscreen, "keyFullscreen");
         parseKey(keyScreenshot, "keyScreenshot");
+        parseKey(keyCheats,     "keyCheats");
 
         auto getFloatValue = [=](float& v) {
             try {
