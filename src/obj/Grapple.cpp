@@ -17,11 +17,8 @@
 #include <algorithm>
 
 
-Grapple::Grapple(Player& player, int startX, int startY, float velX, float velY)
-    : rect({ startX, startY, 14, 14 })
-    , prevRect(rect)
-    , dx(velX)
-    , dy(velY)
+Grapple::Grapple(Player& player, int startX, int startY, float dx, float dy)
+    : Entity({ startX, startY, 14, 14 }, dx, dy)
     , owner(player)
     , originX(static_cast<float>(startX))
     , originY(static_cast<float>(startY))
@@ -102,14 +99,14 @@ bool Grapple::pullItemTowardOwner(Item* item, float ts) {
     return true;
 }
 
-bool Grapple::update(const std::vector<Platform>& platforms,
-                     std::vector<Player*>&        players,
-                     std::vector<Projectile>&     projectiles,
-                     std::vector<GrapplePoint>&   points,
-                     std::vector<std::unique_ptr<Item>>& items,
-                     float ts)
-{
-    prevRect = rect;
+void Grapple::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
+    Entity::update(entities, ts);
+
+    if (dx > 0) {
+        facing = Facing::RIGHT;
+    } else if (dx < 0) {
+        facing = Facing::LEFT;
+    }
 
     // reset double jump after latching
     if (isLatched()) owner.hasAirJumped = false;
@@ -125,53 +122,60 @@ bool Grapple::update(const std::vector<Platform>& platforms,
                 break;
             }
 
-            // platforms first
-            for (const auto& p : platforms) {
-                if (SDL_HasIntersection(&p.rect, &rect)) {
-                    dx = dy = 0.0f;
-                    state = GrappleState::LATCHED_PLATFORM;
-                    return true;
+            for (auto& e : entities) {
+                // platforms
+                if (Platform* plat = dynamic_cast<Platform*>(e.get())) {
+                    if (intersectsWith(*plat)) {
+                        dx = dy = 0.0f;
+                        state = GrappleState::LATCHED_PLATFORM;
+                        alive = true;
+                        return;
+                    }
                 }
-            }
 
-            // players (skip self)
-            for (auto& p : players) {
-                if (p == &owner) continue;
-                if (SDL_HasIntersection(&p->rect, &rect)) {
-                    dx = dy = 0.0f;
-                    targetPlayer = p;
-                    state = GrappleState::LATCHED_PLAYER;
-                    return true;
+                // players (skip self)
+                if (Player* player = dynamic_cast<Player*>(e.get())) {                
+                    if (player == &owner) continue;
+                    if (intersectsWith(*player)) {
+                        dx = dy = 0.0f;
+                        targetPlayer = player;
+                        state = GrappleState::LATCHED_PLAYER;
+                        alive = true;
+                        return;
+                    }
                 }
-            }
 
-            // projectiles
-            for (auto& proj : projectiles) {
-                if (SDL_HasIntersection(&proj.rect, &rect)) {
-                    dx = dy = 0.0f;
-                    targetProjectile = &proj;
-                    state = GrappleState::LATCHED_PROJECTILE;
-                    return true;
+                // projectiles
+                if (Projectile* proj = dynamic_cast<Projectile*>(e.get())) {
+                    if (intersectsWith(*proj)) {
+                        dx = dy = 0.0f;
+                        targetProjectile = proj;
+                        state = GrappleState::LATCHED_PROJECTILE;
+                        alive = true;
+                        return;
+                    }
                 }
-            }
 
-            // grapple points
-            for (auto& point : points) {
-                if (SDL_HasIntersection(&point.rect, &rect)) {
-                    dx = dy = 0.0f;
-                    targetPoint = &point;
-                    state = GrappleState::LATCHED_POINT;
-                    return true;
+                // grapple points
+                if (GrapplePoint* point = dynamic_cast<GrapplePoint*>(e.get())) {
+                    if (intersectsWith(*point)) {
+                        dx = dy = 0.0f;
+                        targetPoint = point;
+                        state = GrappleState::LATCHED_POINT;
+                        alive = true;
+                        return;
+                    }
                 }
-            }
 
-            // items
-            for (auto& item : items) {
-                if (SDL_HasIntersection(&item->rect, &rect)) {
-                    dx = dy = 0.0f;
-                    targetItem = item.get();
-                    state = GrappleState::LATCHED_ITEM;
-                    return true;
+                // items (grab towards owner)
+                if (Item* item = dynamic_cast<Item*>(e.get())) {
+                    if (intersectsWith(*item)) {
+                        dx = dy = 0.0f;
+                        targetItem = item;
+                        state = GrappleState::LATCHED_ITEM;
+                        alive = true;
+                        return;
+                    }
                 }
             }
 
@@ -181,13 +185,16 @@ bool Grapple::update(const std::vector<Platform>& platforms,
         case GrappleState::LATCHED_PLATFORM: {
             float hx = rect.x + rect.w * 0.5f;
             float hy = rect.y + rect.h * 0.5f;
-            if (!pullOwnerToward(hx, hy, ts)) return false;
+            if (!pullOwnerToward(hx, hy, ts)) {
+                alive = false;
+                return;
+            }
             break;
         }
 
         case GrappleState::LATCHED_PLAYER: {
+            // target was destroyed externally
             if (!targetPlayer) {
-                // target was destroyed externally
                 retract();
                 break;
             }
@@ -197,7 +204,10 @@ bool Grapple::update(const std::vector<Platform>& platforms,
 
             float hx = rect.x + rect.w * 0.5f;
             float hy = rect.y + rect.h * 0.5f;
-            if (!pullOwnerToward(hx, hy, ts)) return false;
+            if (!pullOwnerToward(hx, hy, ts)) {
+                alive = false;
+                return;
+            }
             break;
         }
 
@@ -212,7 +222,10 @@ bool Grapple::update(const std::vector<Platform>& platforms,
 
             float hx = rect.x + rect.w * 0.5f;
             float hy = rect.y + rect.h * 0.5f;
-            if (!pullOwnerToward(hx, hy, ts)) return false;
+            if (!pullOwnerToward(hx, hy, ts)) {
+                alive = false;
+                return;
+            }
             break;
         }
 
@@ -227,7 +240,10 @@ bool Grapple::update(const std::vector<Platform>& platforms,
 
             float hx = rect.x + rect.w * 0.5f;
             float hy = rect.y + rect.h * 0.5f;
-            if (!pullOwnerToward(hx, hy, ts)) return false;
+            if (!pullOwnerToward(hx, hy, ts)) {
+                alive = false;
+                return;
+            }
             break;
         }
 
@@ -240,7 +256,10 @@ bool Grapple::update(const std::vector<Platform>& platforms,
             rect.x = targetItem->rect.x + (targetItem->rect.w - rect.w) / 2;
             rect.y = targetItem->rect.y + (targetItem->rect.h - rect.h) / 2;
 
-            if (!pullItemTowardOwner(targetItem, ts)) return false;
+            if (!pullItemTowardOwner(targetItem, ts)) {
+                alive = false;
+                return;
+            }
             break;
         }
 
@@ -254,7 +273,10 @@ bool Grapple::update(const std::vector<Platform>& platforms,
             float toDy = py - hy;
             float dist = std::sqrt(toDx * toDx + toDy * toDy);
 
-            if (dist < RETRACT_SPEED * ts) return false;
+            if (dist < RETRACT_SPEED * ts) {
+                alive = false;
+                return;
+            }
 
             float invDist = 1.0f / dist;
             rect.x += static_cast<int>(toDx * invDist * RETRACT_SPEED * ts);
@@ -262,12 +284,10 @@ bool Grapple::update(const std::vector<Platform>& platforms,
             break;
         }
     }
-
-    return true;
 }
 
 
-void Grapple::draw(SDL_Renderer* r, float a) const {
+void Grapple::draw(SDL_Renderer* r, float a) {
     SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
 
     // rope from player center to hook center
@@ -294,12 +314,11 @@ void Grapple::draw(SDL_Renderer* r, float a) const {
     SDL_RenderDrawLine(r, px, py - 1, hx, hy - 1);
     SDL_RenderDrawLine(r, px, py + 1, hx, hy + 1);
 
-    Renderer::drawSprite(r, Resources::get().getTexture("grapple"), &drawRect, dx < 0);
+    Renderer::drawSprite(r, Resources::get().getTexture("grapple"), &drawRect, facing == Facing::LEFT);
 }
 
 void Grapple::drawHitbox(SDL_Renderer* r, float a) const {
-    SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
-    Renderer::outlineRect(r, drawRect.x, drawRect.y, drawRect.w, drawRect.h, LIME, 2);
+    Renderer::drawHitbox(r, this, a);
 }
 
 

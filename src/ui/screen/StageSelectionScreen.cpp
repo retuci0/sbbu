@@ -19,7 +19,8 @@
 static constexpr int START_BTN_X = 760, START_BTN_Y = 870;
 static constexpr int START_BTN_W = 400, START_BTN_H = 80;
 
-StageSelectionScreen::StageSelectionScreen(const Stage& defaultStage, const std::vector<Stage>& stages) : stages(stages)
+StageSelectionScreen::StageSelectionScreen(const Stage& defaultStage, const std::vector<Stage>& stages) 
+    : stages(stages)
 {
     // find defaultStage in the list, fall back to 0
     for (int i = 0; i < static_cast<int>(stages.size()); ++i) {
@@ -156,7 +157,7 @@ void StageSelectionScreen::renderPreview(SDL_Renderer* r, const Stage& stage) co
                                          px, py, pw, ph);
 
         if (omega && plat.size == PlatformSize::SMALL) continue;
-        Renderer::drawSprite(r, plat.image, &scaled, false);
+        Renderer::drawSprite(r, plat.tex, &scaled, false);
     }
 
     // grapple points

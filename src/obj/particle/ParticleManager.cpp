@@ -30,9 +30,9 @@ namespace {
     }
 }
 
-void ParticleManager::update(float ts) {
+void ParticleManager::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
     for (auto& particle : particles) {
-        particle->update(ts);
+        particle->update(entities, ts);
     }
 
     particles.erase(

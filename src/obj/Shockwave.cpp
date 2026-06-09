@@ -6,11 +6,9 @@
 #include <SDL2/SDL_render.h>
 
 
-void ShockwaveRect::update(float ts)  {
+void ShockwaveRect::update(std::vector<std::unique_ptr<Entity>>& entities, float ts)  {
     if (!active) return;
-    prevRect = rect;
-    rect.x += static_cast<int>(dx * ts);
-    rect.y += static_cast<int>(dy * ts);
+    Entity::update(entities, ts);
     // deactivate once the rect leaves the screen
     if (rect.x + rect.w < 0 || rect.x > SW) active = false;
 }
@@ -20,21 +18,19 @@ Shockwave::Shockwave(int spawnX, int spawnY, Player* owner)
     rects(ShockwaveRect(spawnX, spawnY, SHOCKWAVE_SIZE * owner->scale, SHOCKWAVE_SIZE * owner->scale, owner),
           ShockwaveRect(spawnX, spawnY, SHOCKWAVE_SIZE * owner->scale, SHOCKWAVE_SIZE * owner->scale, owner)
 ) {
-    img = Resources::get().getTexture("shockwave");
+    tex = Resources::get().getTexture("shockwave");
     rects.first.dx  = -SHOCKWAVE_SPEED;   // travels left
     rects.second.dx =  SHOCKWAVE_SPEED;   // travels right
 }
 
-void Shockwave::update(float ts) {
-    rects.first.update(ts);
-    rects.second.update(ts);
+void Shockwave::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
+    rects.first.update(entities, ts);
+    rects.second.update(entities, ts);
 }
 
 void Shockwave::draw(SDL_Renderer* r, float a) {
-    SDL_Rect drawRect1 = interpolatedRect(rects.first.prevRect, rects.first.rect, a);
-    SDL_Rect drawRect2 = interpolatedRect(rects.second.prevRect, rects.second.rect, a);
-    Renderer::drawSprite(r, img, &drawRect1, false);
-    Renderer::drawSprite(r, img, &drawRect2, false);
+    Renderer::drawEntity(r, &rects.first, a);
+    Renderer::drawEntity(r, &rects.second, a);
 }
 
 // replace with raw pointer to match rest of codebase perhaps?
@@ -50,9 +46,7 @@ std::optional<Facing> Shockwave::checkCollision(const Player& player) {
     return std::nullopt;
 }
 
-void Shockwave::drawHitboxes(SDL_Renderer* renderer, float a) {
-    SDL_Rect drawRect1 = interpolatedRect(rects.first.prevRect, rects.first.rect, a);
-    SDL_Rect drawRect2 = interpolatedRect(rects.second.prevRect, rects.second.rect, a);
-    Renderer::outlineRect(renderer, drawRect1.x, drawRect1.y, drawRect1.w, drawRect1.h, LIME, 2);
-    Renderer::outlineRect(renderer, drawRect2.x, drawRect2.y, drawRect2.w, drawRect2.h, LIME, 2);
+void Shockwave::drawHitbox(SDL_Renderer* r, float a) const {
+    Renderer::drawHitbox(r, &rects.first, a);
+    Renderer::drawHitbox(r, &rects.second, a);
 }

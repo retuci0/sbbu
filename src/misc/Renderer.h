@@ -2,7 +2,9 @@
 
 #include "misc/Color.h"
 #include "misc/Common.h"
+#include "obj/Entity.h"
 
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 #include <SDL2/SDL_ttf.h>
 
@@ -88,4 +90,20 @@ namespace Renderer {
      * @param dir direction to point towards
     */
     void renderArrow(SDL_Renderer* r, int cx, int cy, Facing dir);
+
+    /**
+     * draws an entity's texture
+     @author retucio
+     @param r pointer to SDL_Renderer object
+     @param e pointer to entity object, so as to pass `this` as arg here
+    */
+    void drawEntity(SDL_Renderer* r, Entity* e, float a);
+
+    /**
+     * draws an entity's hitbox outline
+     * @author retucio
+     * @param r pointer to SDL_Renderer object
+     * @param e pointer to entity object, so as to pass `this` as arg here
+    */
+    void drawHitbox(SDL_Renderer* r, const Entity* e, float a);
 };

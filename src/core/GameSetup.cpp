@@ -3,7 +3,9 @@
 #include "core/Resources.h"
 #include "core/InputHandler.h"
 #include "misc/ScreenshotManager.h"
+#include "obj/GrapplePoint.h"
 #include <SDL2/SDL_mixer.h>
+#include <memory>
 
 
 ///////////////////////////////////////
@@ -70,9 +72,13 @@ void Game::setup(const Character* c1, const std::string& n1,
 {
     discord.setPresence(n1 + " vs " + n2, "fighting in " + s.name);
 
-    platforms     = s.platforms;
-    grapplePoints = s.grapplePoints;
-    stage         = s;
+    for (const Platform& plat : s.platforms) {
+        platforms.push_back(std::make_unique<Platform>(plat));
+    }
+    for (const GrapplePoint& gp : s.grapplePoints) {
+        grapplePoints.push_back(std::make_unique<GrapplePoint>(gp));
+    }
+    stage         = std::move(s);
 
     itemsEnabled = pendingStageResult.items;
 

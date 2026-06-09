@@ -1,9 +1,10 @@
 #pragma once
 
+#include "obj/Entity.h"
+
 #include "misc/Characters.h"
 #include "misc/Common.h"
 #include "misc/Color.h"
-#include "obj/GrapplePoint.h"
 #include "obj/Items.h"
 
 #include <SDL2/SDL.h>
@@ -35,18 +36,18 @@ enum class Status {
     DASHING
 };
 
-class Player {
+class Player : public Entity {
 public:
+    Player() = default;
+    void init(int x, int y, const Character ch, const std::string& playerName);
+
     std::string name;
     Character character; 
 
     int id = 0;
 
-    float dx = 0.0f, dy = 0.0f;
-
     // state
     Status status = Status::IDLE;
-    Facing facing = Facing::RIGHT;
     int hp        = 0;
     int lives     = 2;  // remaining (total = 3)
 
@@ -112,22 +113,13 @@ public:
     // grapple
     Grapple* grapple = nullptr;
     void throwGrapple();
-
-    // hitbox
-    SDL_Rect rect     = {};
-    SDL_Rect prevRect = {};
+    void ungrapple();
 
     // animation
     float currentSpriteIndex = 0.0f;
 
     // player color indicator (drawn above head)
     Color color = WHITE;
-
-    // sprite in use
-    SDL_Texture* currentTexture = nullptr;
-
-    Player() = default;
-    void init(int x, int y, const Character ch, const std::string& playerName);
 
     // item
     Item* item;
@@ -149,26 +141,31 @@ public:
     bool tryMelee();
     bool trySpecial(Direction dir);
 
-    void update(const std::vector<Platform>& platforms,
-                std::vector<Projectile>& projectiles,
-                std::vector<Player*>& players,
-                std::vector<GrapplePoint>& grapplePoints,
-                std::vector<std::unique_ptr<Item>>& items,
-                bool downKeyPressed, float ts);
+    void update(std::vector<std::unique_ptr<Entity>>& entities,
+                float ts) override;
     void updateTimers(float ts);
     void resetTimers();
 
-    void draw(SDL_Renderer* r, float a);
+    bool downKeyPressed = false;
+    void setDownKeyPressed(bool pressed) {
+        downKeyPressed = pressed;
+    }
+
+    void draw(SDL_Renderer* r, float a) override;
     void drawShield(SDL_Renderer* r, float a) const;
     void drawNametag(SDL_Renderer* r, TTF_Font* font, float a) const;
     void drawShitAura(SDL_Renderer* r, float a) const;
-    void drawHitbox(SDL_Renderer* r, float a) const;
+    void drawHitbox(SDL_Renderer* r, float a) const override;
     void animate(float ts);
 
     std::string getStatusName() const;
 
     bool operator==(const Player& other) const {
         return id == other.id;
+    }
+
+    EntityType getType() const override {
+        return EntityType::PLAYER;
     }
 
 private:

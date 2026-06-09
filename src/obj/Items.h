@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/Resources.h"
+#include "obj/Entity.h"
 
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_rect.h>
@@ -19,7 +20,7 @@ constexpr float MUSHROOM_ITEM_DURATION  = 600.0f;
 constexpr float COCAINE_ITEM_DURATION   = 500.0f;
 constexpr float SPRING_ITEM_DURATION    = 500.0f;
 
-class Item {
+class Item : public Entity {
 public:
     Item(const std::string& name, SDL_Rect spawnRect, SDL_Texture* tex, Mix_Chunk* sfx,
          float effectDuration = 0.0f, float respawnDelay = 0.0f);
@@ -28,25 +29,16 @@ public:
     virtual void onPickup();
     virtual void onEffectEnd();
     
-    virtual void update(std::vector<Player*>& players,
-                        const std::vector<Platform>& platforms,
-                        const std::vector<Projectile>& projectiles,
-                        float ts);
-    virtual void draw(SDL_Renderer* r, float a) const;
+    virtual void update(std::vector<std::unique_ptr<Entity>>& entities, float ts) override;
+    virtual void draw(SDL_Renderer* r, float a) override;
     virtual void drawEffect(SDL_Renderer* r, float a) const {}
-    virtual void drawHitbox(SDL_Renderer* r, float a) const;
+    virtual void drawHitbox(SDL_Renderer* r, float a) const override;
 
     void takeDamage(int damage, Facing side, float kbScale = 1.0f);
     void kill() { hp = 0; active = false; }
     bool isAlive()  const { return hp > 0; }
     bool isActive() const { return active; }
     bool isAffecting() const { return effectTimer > 0.0f; }
-
-    SDL_Rect rect     = {};
-    SDL_Rect prevRect = {};
-
-    float dx = 0.0f;
-    float dy = 0.0f;
 
     Player*  consumer = nullptr;
     
@@ -61,7 +53,6 @@ protected:
     int      hp             = 30;
     bool     onGround       = false;
     
-    SDL_Texture* tex        = nullptr;
     Mix_Chunk*   sfx        = nullptr;
 
 private:

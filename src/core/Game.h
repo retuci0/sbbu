@@ -3,22 +3,23 @@
 #include "InputHandler.h"
 #include "Options.h"
 
+#include "obj/Entity.h"
+#include "obj/Player.h"
+#include "obj/CollisionRect.h"
+#include "obj/Items.h"
+
 #include "misc/Discord.h"
 #include "misc/ScreenshotManager.h"
-#include "obj/CollisionRect.h"
-#include "obj/GrapplePoint.h"
-#include "obj/Items.h"
-#include "obj/Platform.h"
-#include "obj/Player.h"
+
 #include "obj/Projectile.h"
 #include "obj/Shockwave.h"
-
 #include "obj/particle/ParticleManager.h"
 
 #include "misc/Stages.h"
 #include "misc/Characters.h"
 
 #include "ui/ScreenStack.h"
+#include "ui/screen/CheatMenuScreen.h"
 #include "ui/screen/StageSelectionScreen.h"
 
 #include "net/Network.h"
@@ -38,6 +39,7 @@
 
 // forward declare screen classes
 class CharacterSelectionScreen;
+class CheatMenuScreen;
 class GameEndScreen;
 class PauseScreen;
 class RemoteSetupScreen;
@@ -96,19 +98,20 @@ private:
     StageSelectionResult pendingStageResult;
     bool hasPendingStageResult = false;
 
-    // game objects
-    static constexpr int MAX_PROJ = 8;
-    std::vector<Projectile> projectiles;
-    std::vector<Shockwave> shockwaves;
-    std::vector<GrapplePoint> grapplePoints;
-    std::vector<CollisionRect> meleeHitboxes;
-    std::vector<CollisionRect> specialHitboxes;
-    std::vector<Platform> platforms;
+    // game entities
+    std::vector<std::unique_ptr<Entity>>        entities        = {};
+    std::vector<std::unique_ptr<Item>>          items           = {};
+    std::vector<std::unique_ptr<Platform>>      platforms       = {};
+    std::vector<std::unique_ptr<GrapplePoint>>  grapplePoints   = {};
+    std::vector<std::unique_ptr<Projectile>>    projectiles     = {};
+    std::vector<std::unique_ptr<CollisionRect>> meleeHitboxes   = {};
+    std::vector<std::unique_ptr<CollisionRect>> specialHitboxes = {};
+    std::vector<std::unique_ptr<Shockwave>>     shockwaves      = {};
     ParticleManager particles = ParticleManager(&options.particles);
+    static constexpr int MAX_PROJ = 8;
     
     // items
     bool itemsEnabled = true;
-    std::vector<std::unique_ptr<Item>> items;
     float itemSpawnTimer = 0.0f;
     void resetItemSpawnTimer();
 

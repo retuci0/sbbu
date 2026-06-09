@@ -78,7 +78,7 @@ void Game::renderMinimap() const {
 
     // platforms
     for (const auto& p : platforms) {
-        const SDL_Rect& r = p.rect;
+        const SDL_Rect& r = p->rect;
         minX = std::min(minX, r.x);
         maxX = std::max(maxX, r.x + r.w);
         minY = std::min(minY, r.y);
@@ -118,7 +118,7 @@ void Game::renderMinimap() const {
 
     // draw platforms
     for (const auto& p : platforms) {
-        const SDL_Rect& r = p.rect;
+        const SDL_Rect& r = p->rect;
         auto [mx1, my1] = worldToMinimap(r.x, r.y);
         auto [mx2, my2] = worldToMinimap(r.x + r.w, r.y + r.h);
         int mw = static_cast<int>(mx2 - mx1);
@@ -169,15 +169,9 @@ void Game::renderTimer() const {
 }
 
 void Game::renderDebug(float a, TTF_Font* font) {
-    player1.drawHitbox(renderer, a);
-    player2.drawHitbox(renderer, a);
-    for (auto& p : platforms)                 p.drawHitbox(renderer, a);
-    for (auto& i : items)            i->drawHitbox(renderer, a);
-    for (auto& pr : projectiles)           pr.drawHitbox(renderer, a);
-    for (auto& cr : meleeHitboxes)      cr.drawHitbox(renderer, a);
-    for (auto& cr : specialHitboxes)    cr.drawHitbox(renderer, a);
-    for (auto& gp : grapplePoints)       gp.drawHitbox(renderer, a);
-    for (auto& sw : shockwaves)             sw.drawHitboxes(renderer, a);
+    for (auto& entity : entities) {
+        entity->drawHitbox(renderer, a);
+    }
 
     Renderer::renderText(renderer, font,
         player1.name + ": " + player1.getStatusName(), 2, 2, BLACK);
@@ -199,26 +193,13 @@ void Game::renderDebug(float a, TTF_Font* font) {
 
 void Game::renderGameplay(float ts, float a) {
     TTF_Font* font = Resources::get().font;
-    TTF_Font* smallFont = Resources::get().smallFont;
-    TTF_Font* titleFont = Resources::get().titleFont;
 
     SDL_Texture* bgImage = Resources::get().getTexture(stage.bg);
     SDL_Rect bgRect = { 0, 0, SW, SH };
     Renderer::drawSprite(renderer, bgImage, &bgRect, false);
 
-    for (auto& p : platforms)           p.draw(renderer, a);
-    for (auto& gp : grapplePoints) gp.draw(renderer, a);
-
-    player1.draw(renderer, a);
-    player2.draw(renderer, a);
-
-    for (auto& pr : projectiles)     pr.draw(renderer, a);
-    for (auto& sw : shockwaves)       sw.draw(renderer, a);
-    for (auto& i : items) {
-        if (i->isAffecting()) {
-            i->drawEffect(renderer, a);
-        }
-        i->draw(renderer, a);
+    for (auto& entity : entities) {
+        entity->draw(renderer, a);
     }
 
     particles.draw(renderer, a);

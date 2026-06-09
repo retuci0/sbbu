@@ -2,7 +2,9 @@
 
 #include "misc/Color.h"
 #include "misc/Common.h"
+#include "obj/Entity.h"
 
+#include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 
 
@@ -135,4 +137,26 @@ void Renderer::renderArrow(SDL_Renderer* r, int cx, int cy, Facing dir) {
         { { static_cast<float>(base),   static_cast<float>(cy + 14) }, {255,255,255,220}, {0,0} },
     };
     SDL_RenderGeometry(r, nullptr, verts, 3, nullptr, 0);
+}
+
+void Renderer::drawEntity(SDL_Renderer *r, Entity *e, float a) {
+    if (!r || !e) return;
+    SDL_Rect drawRect = e->interpolatedRect(a);
+    drawSprite(r, e->tex, &drawRect, e->facing == Facing::LEFT);
+}
+
+void Renderer::drawHitbox(SDL_Renderer *r, const Entity *e, float a) {
+    if (!r || !e) return;
+    SDL_Rect drawRect = e->interpolatedRect(a);
+    Color c;
+    switch (e->getType()) {
+        case EntityType::PLAYER:   c = RED;  break;
+        case EntityType::PLATFORM: c = BLUE; break;
+        case EntityType::MISC:     c = LIME; break;
+    }
+    outlineRect(r, 
+        drawRect.x, drawRect.y, 
+        drawRect.w, drawRect.h, 
+        c, 2
+    ); 
 }

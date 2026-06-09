@@ -1,24 +1,23 @@
 #include "obj/Platform.h"
 
 #include "core/Resources.h"
-#include "misc/Common.h"
 #include "misc/Renderer.h"
 
 
-Platform::Platform(int x, int y, int w, int h, PlatformSize size) : size(size) {
+Platform::Platform(int x, int y, int w, int h, PlatformSize size) 
+    : Entity({x, y, w, h}), size(size) 
+{
     if (size == PlatformSize::BIG) {
-        image = Resources::get().getTexture("platform_big");
-        rect  = {x, y, w, h / 4};
+        tex = Resources::get().getTexture("platform_big");
     } else {
-        image = Resources::get().getTexture("platform_small");
-        rect  = {x, y, w, h};
+        tex = Resources::get().getTexture("platform_small");
     }
 }
 
-void Platform::draw(SDL_Renderer* r, float /*a*/) const {
-    Renderer::drawSprite(r, image, &rect, false); 
+void Platform::draw(SDL_Renderer* r, float /*a*/) {
+    Renderer::drawEntity(r, this, -1);
 }
 
 void Platform::drawHitbox(SDL_Renderer* r, float /*a*/) const {
-    Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, BLUE, 2);
+    Renderer::drawHitbox(r, this, -1);
 }

@@ -1,5 +1,6 @@
 #include "core/Game.h"
 
+#include "obj/CollisionRect.h"
 #include "ui/screen/CheatMenuScreen.h"
 
 #include <SDL2/SDL_gamecontroller.h>
@@ -50,7 +51,7 @@ void Game::handleGameplayInput() {
     if (input.shootP1) {
         if (player1.tryShoot()) {
             int px = (player1.facing == Facing::LEFT) ? player1.rect.x - 20 : player1.rect.x + 20;
-            projectiles.emplace_back(px, player1.rect.y, player1.facing, &player1);
+            projectiles.emplace_back(std::make_unique<Projectile>(px, player1.rect.y, player1.facing, &player1));
         }
         input.shootP1 = false;
     }
@@ -59,7 +60,7 @@ void Game::handleGameplayInput() {
             const int hw = 86 * player1.scale, hh = 76 * player1.scale;
             int hx = (player1.facing == Facing::RIGHT) ? player1.rect.x + player1.rect.w - 36 : player1.rect.x - hw + 36;
             int hy = player1.rect.y + (player1.rect.h - hh) / 2;
-            meleeHitboxes.emplace_back(hx, hy, hw, hh, &player1, 6);
+            meleeHitboxes.emplace_back(std::make_unique<CollisionRect>(hx, hy, hw, hh, &player1, 6));
         }
         input.meleeP1 = false;
     }
@@ -135,7 +136,7 @@ void Game::handleGameplayInput() {
     if (p2ShootPr) {
         if (player2.tryShoot()) {
             int px = (player2.facing == Facing::LEFT) ? player2.rect.x - 20 : player2.rect.x + 20;
-            projectiles.emplace_back(px, player2.rect.y, player2.facing, &player2);
+            projectiles.emplace_back(std::make_unique<Projectile>(px, player2.rect.y, player2.facing, &player2));
         }
     }
     if (p2MeleePr) {
@@ -143,7 +144,7 @@ void Game::handleGameplayInput() {
             const int hw = 86 * player2.scale, hh = 76 * player2.scale;
             int hx = (player2.facing == Facing::RIGHT) ? player2.rect.x + player2.rect.w - 36 : player2.rect.x - hw + 36;
             int hy = player2.rect.y + (player2.rect.h - hh) / 2;
-            meleeHitboxes.emplace_back(hx, hy, hw, hh, &player2, 6);
+            meleeHitboxes.emplace_back(std::make_unique<CollisionRect>(hx, hy, hw, hh, &player2, 6));
         }
     }
     if (p2SpecialPr) {

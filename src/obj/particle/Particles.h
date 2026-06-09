@@ -19,26 +19,26 @@ inline constexpr ParticleDefinition DEATH_PARTICLE = {
     "particle_death", 20, 20, 26.0f, 0.06f
 };
 
-class DoubleJumpParticle : public TextureParticle {
+class DoubleJumpParticle : public Particle {
 public:
-    DoubleJumpParticle(float x, float y, float vx, float vy)
-        : TextureParticle(DOUBLE_JUMP_PARTICLE, x, y, vx, vy) {}
+    DoubleJumpParticle(float x, float y, float dx, float dy)
+        : Particle(x, y, dx, dy, DOUBLE_JUMP_PARTICLE) {}
 };
 
-class DamageParticle : public TextureParticle {
+class DamageParticle : public Particle {
 public:
-    DamageParticle(float x, float y, float vx, float vy)
-        : TextureParticle(DAMAGE_PARTICLE, x, y, vx, vy) {}
+    DamageParticle(float x, float y, float dx, float dy)
+        : Particle(x, y, dx, dy, DAMAGE_PARTICLE) {}
 };
 
-class CritParticle : public TextureParticle {
+class CritParticle : public Particle {
 public:
-    CritParticle(float x, float y, float vx, float vy)
-        : TextureParticle(CRIT_PARTICLE, x, y, vx, vy) {}
+    CritParticle(float x, float y, float dx, float dy)
+        : Particle(x, y, dx, dy, CRIT_PARTICLE) {}
 };
 
-class DeathParticle : public TextureParticle {
+class DeathParticle : public Particle {
 public:
-    DeathParticle(float x, float y, float vx, float vy)
-        : TextureParticle(DEATH_PARTICLE, x, y, vx, vy) {}
+    DeathParticle(float x, float y, float dx, float dy)
+        : Particle(x, y, dx, dy, DEATH_PARTICLE) {}
 };

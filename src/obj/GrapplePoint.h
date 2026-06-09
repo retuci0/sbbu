@@ -1,7 +1,10 @@
 #pragma once
 
+#include "obj/Entity.h"
+
 #include "core/Resources.h"
 #include "misc/Renderer.h"
+
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 
@@ -12,10 +15,10 @@ enum class GrapplePointType {
     BLUE    // doesn't cancel momentum
 };
 
-class GrapplePoint {
+class GrapplePoint : public Entity {
 public:
     GrapplePoint(GrapplePointType type, SDL_Rect rect)
-        : type(type), rect(rect) 
+        : Entity(rect), type(type) 
     {
         tex = type == GrapplePointType::GREEN 
                 ? Resources::get().getTexture("grapple_point_green")
@@ -23,16 +26,17 @@ public:
     }
 
     ~GrapplePoint() = default;
-
     GrapplePointType type;
-    SDL_Rect rect;
-    SDL_Texture* tex;
 
-    void draw(SDL_Renderer* r, float /*a*/) {
+    void draw(SDL_Renderer* r, float /*a*/) override {
         Renderer::drawSprite(r, tex, &rect, false);
     }
 
-    void drawHitbox(SDL_Renderer* r, float /*a*/) {
-        Renderer::outlineRect(r, rect.x, rect.y, rect.w, rect.h, BLUE, 2);
+    void drawHitbox(SDL_Renderer* r, float /*a*/) const override {
+       Renderer::drawHitbox(r, this, -1);
+    }
+
+    EntityType getType() const override {
+        return EntityType::PLATFORM;
     }
 };

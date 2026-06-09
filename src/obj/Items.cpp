@@ -16,26 +16,25 @@
 
 Item::Item(const std::string& name, SDL_Rect spawnRect, SDL_Texture* tex, Mix_Chunk* sfx,
            float effectDuration, float respawnDelay)
-    : name(name)
-    , rect(spawnRect)
-    , prevRect(spawnRect)
+    : Entity(spawnRect, 0.0f, 0.0f, tex)
+    , name(name)
     , spawnRect(spawnRect)
-    , tex(tex)
     , sfx(sfx)
     , effectDuration(effectDuration)
     , respawnDelay(respawnDelay)
 {}
 
-void Item::draw(SDL_Renderer* r, float a) const {
+void Item::draw(SDL_Renderer* r, float a) {
     if (!active) return;
-    SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
-    Renderer::drawSprite(r, tex, &drawRect, false);
+    if (isAffecting()) {
+        drawEffect(r, a);
+    }
+    Renderer::drawEntity(r, this, a);
 }
 
 void Item::drawHitbox(SDL_Renderer* r, float a) const {
     if (!active) return;
-    SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
-    Renderer::outlineRect(r, drawRect.x, drawRect.y, drawRect.w, drawRect.h, LIME, 2);
+    Renderer::drawHitbox(r, this, a);
 }
 
 void Item::takeDamage(int damage, Facing side, float kbScale) {
@@ -51,11 +50,7 @@ void Item::takeDamage(int damage, Facing side, float kbScale) {
     }
 }
 
-void Item::update(std::vector<Player*>& players,
-                  const std::vector<Platform>& platforms,
-                  const std::vector<Projectile>& /*projectiles*/,
-                  float ts)
-{
+void Item::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
     // --- effect countdown ---
     if (effectTimer > 0.0f) {
         effectTimer -= ts;
@@ -68,7 +63,7 @@ void Item::update(std::vector<Player*>& players,
 
     if (!active) return;
 
-    prevRect = rect;
+    Entity::update(entities, ts);
 
     dx *= KB_FRICTION;
     if (std::abs(dx) < 0.1f) dx = 0.0f;
@@ -83,14 +78,16 @@ void Item::update(std::vector<Player*>& players,
     rect.y += static_cast<int>(dy * ts);
     onGround = false;
 
-    for (const auto& p : platforms) {
-        const int prevBottom = prevRect.y + prevRect.h;
-        if (prevBottom > p.rect.y) continue;
-        if (!SDL_HasIntersection(&rect, &p.rect)) continue;
-        rect.y   = p.rect.y - rect.h;
-        dy       = 0.0f;
-        onGround = true;
-        break;
+    for (const auto& e : entities) {
+        if (Platform* p = dynamic_cast<Platform*>(e.get())) {
+            const int prevBottom = prevRect.y + prevRect.h;
+            if (prevBottom > p->rect.y) continue;
+            if (!intersectsWith(*p)) continue;
+            rect.y   = p->rect.y - rect.h;
+            dy       = 0.0f;
+            onGround = true;
+            break;
+        }
     }
 }
 

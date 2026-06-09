@@ -29,14 +29,14 @@ void Player::init(int x, int y, const Character ch, const std::string& playerNam
     dx = dy             = 0.0f;
     status              = Status::IDLE;
     facing              = Facing::RIGHT;
-    currentTexture      = character.idle;
+    tex                 = character.idle;
     currentSpriteIndex  = 0.0f;
 
     int w = 125, h = 89;
     if (ch.idle) {
         SDL_QueryTexture(ch.idle, nullptr, nullptr, &w, &h);
     }
-    rect = {x, y, w, h};
+    rect = { x, y, w, h };
     prevRect = rect;
 }
 
@@ -119,7 +119,7 @@ void Player::dash() {
 }
 
 void Player::throwGrapple() {
-    if (grapple) { delete grapple; grapple = nullptr; }
+    if (grapple) { ungrapple(); }
 
     constexpr int HOOK_W = 14;
     constexpr int HOOK_H = 14;
@@ -136,6 +136,11 @@ void Player::throwGrapple() {
     float velY = 0.0f;
 
     grapple = new Grapple(*this, spawnX, spawnY, velX, velY);
+}
+
+void Player::ungrapple() {
+    delete grapple;
+    grapple = nullptr;
 }
 
 /////////////////////////////////////
@@ -331,13 +336,7 @@ bool Player::trySpecial(Direction dir) {
 /*             UPDATE             */
 ////////////////////////////////////
 
-void Player::update(const std::vector<Platform>& platforms,
-                    std::vector<Projectile>& projectiles,
-                    std::vector<Player*>& players,
-                    std::vector<GrapplePoint>& grapplePoints,
-                    std::vector<std::unique_ptr<Item>>& items,
-                    bool downKeyPressed, float ts
-) {
+void Player::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
     prevRect = rect;
 
     if (status == Status::SHIELDED) { dx = 0.0f; }
@@ -368,14 +367,22 @@ void Player::update(const std::vector<Platform>& platforms,
 
     // update grapple
     if (grapple) {
-        bool alive = grapple->update(platforms, players, projectiles, grapplePoints, items, ts);
+        bool alive = grapple->isAlive();
+        grapple->update(entities, ts);
         if (!alive) {
             // protect momentum if grapple point was blue
             if (grapple->targetPoint && grapple->targetPoint->type == GrapplePointType::BLUE) {
                 postGrappleTimer = POST_GRAPPLE_DURATION;
             }
-            delete grapple;
-            grapple = nullptr;
+            ungrapple();
+        }
+    }
+
+    // -> move to init?? <-
+    std::vector<Platform> platforms = {};
+    for (auto& e : entities) {
+        if (Platform* p = dynamic_cast<Platform*>(e.get())) {
+            platforms.push_back(*p);
         }
     }
 
@@ -413,9 +420,9 @@ void Player::update(const std::vector<Platform>& platforms,
 
     updateTimers(ts);
 
-    if (currentTexture && !dontResize) {
+    if (tex && !dontResize) {
         int w, h;
-        SDL_QueryTexture(currentTexture, nullptr, nullptr, &w, &h);
+        SDL_QueryTexture(tex, nullptr, nullptr, &w, &h);
         if (facing == Facing::LEFT && w != rect.w) {
             rect.x -= w - rect.w;
         }
@@ -572,7 +579,7 @@ void Player::resetTimers() {
 
 void Player::drawSprite(SDL_Renderer* r, SDL_Texture* tex, bool flipH, float a) {
     SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
-    currentTexture    = tex;
+    this->tex = tex;
     SDL_RendererFlip flip = flipH ? SDL_FLIP_HORIZONTAL : SDL_FLIP_NONE;
 
     if (invulnerableTimer > 0) {
@@ -712,8 +719,7 @@ void Player::drawNametag(SDL_Renderer* r, TTF_Font* font, float a) const {
 }
 
 void Player::drawHitbox(SDL_Renderer* r, float a) const {
-    SDL_Rect drawRect = interpolatedRect(prevRect, rect, a);
-    Renderer::outlineRect(r, drawRect.x, drawRect.y, drawRect.w, drawRect.h, RED, 2);
+    Renderer::drawHitbox(r, this, a);
     if (grapple) grapple->drawHitbox(r, a);
 }
 

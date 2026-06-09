@@ -10,7 +10,7 @@ Stage classicStage() {
     s.platforms = {
         Platform(360,  500, 1200, 300, PlatformSize::BIG),
         Platform(640,  250,  200,  30, PlatformSize::SMALL),
-        Platform(1080, 250,  200,  30, PlatformSize::SMALL),
+        Platform(1080, 250,  200,  30, PlatformSize::SMALL)
     };
     s.spawnpoints = { {740, 0}, {1180, 0} };
     s.deathZones = { -500, SW + 500, SH + 100, -1000 };
@@ -26,7 +26,7 @@ Stage pillarStage() {
         Platform(1220, 600,  500, 200, PlatformSize::BIG),
         Platform(760,  350,  400,  30, PlatformSize::SMALL),
         Platform(500,  200,  200,  30, PlatformSize::SMALL),
-        Platform(1220, 200,  200,  30, PlatformSize::SMALL),
+        Platform(1220, 200,  200,  30, PlatformSize::SMALL)
     };
     s.spawnpoints = { {450, 0}, {1470, 0} };
     s.deathZones = { -500, SW + 500, SH + 100, -1000 };
@@ -41,13 +41,13 @@ Stage flatStage() {
         Platform(160, 550, 1600, 250, PlatformSize::BIG),
         Platform(400, 320,  200,  30, PlatformSize::SMALL),
         Platform(860, 220,  200,  30, PlatformSize::SMALL),
-        Platform(1320,320,  200,  30, PlatformSize::SMALL),
+        Platform(1320,320,  200,  30, PlatformSize::SMALL)
     };
     s.spawnpoints = { {500, 0}, {1420, 0} };
     s.deathZones = { -500, SW + 500, SH + 100, -1000 };
-    s.grapplePoints = { 
-        GrapplePoint(GrapplePointType::GREEN, { 100, 100, 56, 56 }),
-        GrapplePoint(GrapplePointType::GREEN, { SW - 156, 100, 56, 56 })
+    s.grapplePoints = {
+        GrapplePoint(GrapplePointType::GREEN, SDL_Rect{ 100, 100, 56, 56 }),
+        GrapplePoint(GrapplePointType::GREEN, SDL_Rect{ SW - 156, 100, 56, 56 })
     };
     return s;
 }
@@ -57,16 +57,16 @@ Stage dashStage() {
     s.name = "dash";
     s.bg = "bg_dash";
     s.platforms = {
-        Platform( 410, 550, 1100, 250, PlatformSize::BIG),
-        Platform( 340, 380, 200, 30, PlatformSize::SMALL),
-        Platform( 340, 220, 200, 30, PlatformSize::SMALL),
-        Platform(1380, 380, 200, 30, PlatformSize::SMALL),
-        Platform(1380, 220, 200, 30, PlatformSize::SMALL),
+        Platform(410, 550, 1100, 250, PlatformSize::BIG),
+        Platform(340, 380,  200,  30, PlatformSize::SMALL),
+        Platform(340, 220,  200,  30, PlatformSize::SMALL),
+        Platform(1380,380,  200,  30, PlatformSize::SMALL),
+        Platform(1380,220,  200,  30, PlatformSize::SMALL)
     };
     s.spawnpoints = { {440, 0}, {1480, 0} };
     s.deathZones = { -500, SW + 500, SH - 200, -1000 };
-    s.grapplePoints = { 
-        GrapplePoint(GrapplePointType::BLUE, { (SW - 56) / 2, 300, 56, 56 })
+    s.grapplePoints = {
+        GrapplePoint(GrapplePointType::BLUE, SDL_Rect{ (SW - 56) / 2, 300, 56, 56 })
     };
     return s;
 }
@@ -76,15 +76,15 @@ Stage hellStage() {
     s.name = "hell";
     s.bg = "bg_hell";
     s.platforms = {
-        Platform( 410, 200, 1100, 250, PlatformSize::BIG),
-        Platform( 340, 550, 200,   30, PlatformSize::SMALL),
-        Platform(1380, 550, 200,   30, PlatformSize::SMALL)
+        Platform(410, 200, 1100, 250, PlatformSize::BIG),
+        Platform(340, 550,  200,  30, PlatformSize::SMALL),
+        Platform(1380,550,  200,  30, PlatformSize::SMALL)
     };
-    s.spawnpoints = {{ 440, 400 }, { 1480, 400 }};
+    s.spawnpoints = { {440, 400}, {1480, 400} };
     s.deathZones = { -500, SW + 500, SH + 300, -2000 };
     s.grapplePoints = {
-        GrapplePoint(GrapplePointType::BLUE, { (SW - 56) / 2, 600, 56, 56 }),
-        GrapplePoint(GrapplePointType::BLUE, { (SW - 56) / 2, 500, 56, 56 })
+        GrapplePoint(GrapplePointType::BLUE, SDL_Rect{ (SW - 56) / 2, 600, 56, 56 }),
+        GrapplePoint(GrapplePointType::BLUE, SDL_Rect{ (SW - 56) / 2, 500, 56, 56 })
     };
     return s;
 }

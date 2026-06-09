@@ -5,6 +5,7 @@
 
 #include "misc/Common.h"
 #include "misc/Characters.h"
+#include "obj/CollisionRect.h"
 #include "ui/screen/TitleScreen.h"
 
 #include <SDL2/SDL_events.h>
@@ -94,6 +95,17 @@ void Game::processEvents() {
 }
 
 void Game::update(float ts) {
+    entities.clear();
+    entities.push_back(std::make_unique<Player>(player1));
+    entities.push_back(std::make_unique<Player>(player2));
+    for (auto& p : platforms) entities.push_back(std::make_unique<Platform>(*p));
+    for (auto& p : grapplePoints) entities.push_back(std::make_unique<GrapplePoint>(*p));
+    for (auto& p : projectiles) entities.push_back(std::make_unique<Projectile>(*p));
+    for (auto& s : shockwaves) entities.push_back(std::make_unique<Shockwave>(*s));
+    for (auto& h : meleeHitboxes) entities.push_back(std::make_unique<CollisionRect>(*h));
+    for (auto& h : specialHitboxes) entities.push_back(std::make_unique<CollisionRect>(*h));
+    for (auto& i : items) entities.push_back(std::make_unique<Item>(*i));
+
     // update discord rpc
     discord.update();
 
@@ -148,7 +160,7 @@ void Game::update(float ts) {
             handleGameplayInput();
             updateGameplay(ts);
         }
-        particles.update(ts);
+        particles.update(entities, ts);
         if (networkMode == NetworkMode::REMOTE_HOST && network && network->isConnected()) {
             netSendStateUpdate();
         }

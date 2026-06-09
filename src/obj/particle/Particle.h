@@ -1,43 +1,36 @@
 #pragma once
 
+#include "obj/Entity.h"
 #include <SDL2/SDL_render.h>
+#include <memory>
 
-
-class Particle {
-public:
-    virtual ~Particle() = default;
-
-    virtual void update(float ts);
-    virtual void draw(SDL_Renderer* renderer, float a) const = 0;
-
-    bool isAlive() const { return lifetime > 0.0f; }
-
-protected:
-    Particle(float x, float y, float vx, float vy, int w, int h, float lifetime);
-
-    float x = 0.0f, y = 0.0f;
-    float prevX = 0.0f, prevY = 0.0f;
-    float vx = 0.0f, vy = 0.0f;
-    int w = 0, h = 0;
-    float lifetime = 0.0f;
-};
 
 struct ParticleDefinition {
-    const char* textureName;
-    int w;
-    int h;
+    const char* texture;
+    int w, h;
     float lifetime;
     float gravity;
 };
 
-class TextureParticle : public Particle {
+class Particle : public Entity {
 public:
-    TextureParticle(const ParticleDefinition& definition, float x, float y, float vx, float vy);
+    Particle(int x, int y, float dx, float dy, const ParticleDefinition& def);
+    virtual ~Particle() = default;
 
-    void update(float ts) override;
-    void draw(SDL_Renderer* renderer, float a) const override;
+    virtual void update(std::vector<std::unique_ptr<Entity>>& entities, float ts) override;
+    virtual void draw(SDL_Renderer* renderer, float a) override;
+
+    bool isAlive() const { return lifetime > 0.0f; }
+
+    EntityType getType() const override {
+        return EntityType::MISC;
+    }
 
 protected:
-    const ParticleDefinition& definition;
-    SDL_Texture* texture = nullptr;
+    Particle(int x, int y, int w, int h, float dx, float dy, float lifetime);
+
+    float dx = 0.0f, dy = 0.0f;
+    float lifetime = 0.0f;
+
+    const ParticleDefinition& def;
 };

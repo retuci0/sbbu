@@ -116,13 +116,13 @@ void Game::netSendStateUpdate() {
     sup.projectiles.reserve(projectiles.size());
     for (const auto& projectile : projectiles) {
         ProjectileState ps;
-        ps.x = static_cast<float>(projectile.rect.x);
-        ps.y = static_cast<float>(projectile.rect.y);
-        ps.velocity = projectile.velocity;
-        ps.facing = static_cast<uint8_t>(projectile.direction);
-        ps.ownerId = projectile.owner ? static_cast<uint8_t>(projectile.owner->id) : 0;
-        ps.parryFreezeTimer = static_cast<uint8_t>(std::clamp(projectile.parryFreezeTimer, 0.0f, 255.0f));
-        ps.parryFlashTimer = static_cast<uint8_t>(std::clamp(projectile.parryFlashTimer, 0.0f, 255.0f));
+        ps.x = static_cast<float>(projectile->rect.x);
+        ps.y = static_cast<float>(projectile->rect.y);
+        ps.velocity = projectile->velocity;
+        ps.facing = static_cast<uint8_t>(projectile->facing);
+        ps.ownerId = projectile->owner ? static_cast<uint8_t>(projectile->owner->id) : 0;
+        ps.parryFreezeTimer = static_cast<uint8_t>(std::clamp(projectile->parryFreezeTimer, 0.0f, 255.0f));
+        ps.parryFlashTimer = static_cast<uint8_t>(std::clamp(projectile->parryFlashTimer, 0.0f, 255.0f));
         sup.projectiles.push_back(ps);
     }
 
@@ -171,24 +171,24 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
         // rebuild if count changed
         for (const auto& ps : sup.projectiles) {
             Player* owner = (ps.ownerId == 1) ? &player2 : &player1;
-            projectiles.emplace_back( static_cast<int>(ps.x), static_cast<int>(ps.y),
-                                     static_cast<Facing>(ps.facing), owner);
-            projectiles.back().velocity = ps.velocity;
-            projectiles.back().parryFreezeTimer = ps.parryFreezeTimer;
-            projectiles.back().parryFlashTimer = ps.parryFlashTimer;
-            projectiles.back().prevRect = projectiles.back().rect;  // init prev
+            projectiles.emplace_back(std::make_unique<Projectile>(static_cast<int>(ps.x), static_cast<int>(ps.y),
+                                     static_cast<Facing>(ps.facing), owner));
+            projectiles.back()->velocity = ps.velocity;
+            projectiles.back()->parryFreezeTimer = ps.parryFreezeTimer;
+            projectiles.back()->parryFlashTimer = ps.parryFlashTimer;
+            projectiles.back()->prevRect = projectiles.back()->rect;  // init prev
         }
     } else {
         // update existing
         for (size_t i = 0; i < projectiles.size(); ++i) {
-            projectiles[i].prevRect = projectiles[i].rect;
-            projectiles[i].rect.x = static_cast<int>(sup.projectiles[i].x);
-            projectiles[i].rect.y = static_cast<int>(sup.projectiles[i].y);
-            projectiles[i].velocity = sup.projectiles[i].velocity;
-            projectiles[i].direction = static_cast<Facing>(sup.projectiles[i].facing);
-            projectiles[i].owner = (sup.projectiles[i].ownerId == 1) ? &player2 : &player1;
-            projectiles[i].parryFreezeTimer = sup.projectiles[i].parryFreezeTimer;
-            projectiles[i].parryFlashTimer = sup.projectiles[i].parryFlashTimer;
+            projectiles[i]->prevRect = projectiles[i]->rect;
+            projectiles[i]->rect.x = static_cast<int>(sup.projectiles[i].x);
+            projectiles[i]->rect.y = static_cast<int>(sup.projectiles[i].y);
+            projectiles[i]->velocity = sup.projectiles[i].velocity;
+            projectiles[i]->facing = static_cast<Facing>(sup.projectiles[i].facing);
+            projectiles[i]->owner = (sup.projectiles[i].ownerId == 1) ? &player2 : &player1;
+            projectiles[i]->parryFreezeTimer = sup.projectiles[i].parryFreezeTimer;
+            projectiles[i]->parryFlashTimer = sup.projectiles[i].parryFlashTimer;
         }
     }
 

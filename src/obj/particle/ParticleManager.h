@@ -12,7 +12,7 @@ class ParticleManager {
 public:
     ParticleManager(bool* particlesEnabled) : particlesEnabled(particlesEnabled) {}
 
-    void update(float ts);
+    void update(std::vector<std::unique_ptr<Entity>>& entities, float ts);
     void draw(SDL_Renderer* renderer, float a) const;
     void clear();
 
