@@ -335,6 +335,7 @@ void Player::update(const std::vector<Platform>& platforms,
                     std::vector<Projectile>& projectiles,
                     std::vector<Player*>& players,
                     std::vector<GrapplePoint>& grapplePoints,
+                    std::vector<std::unique_ptr<Item>>& items,
                     bool downKeyPressed, float ts
 ) {
     prevRect = rect;
@@ -367,7 +368,7 @@ void Player::update(const std::vector<Platform>& platforms,
 
     // update grapple
     if (grapple) {
-        bool alive = grapple->update(platforms, players, projectiles, grapplePoints, ts);
+        bool alive = grapple->update(platforms, players, projectiles, grapplePoints, items, ts);
         if (!alive) {
             // protect momentum if grapple point was blue
             if (grapple->targetPoint && grapple->targetPoint->type == GrapplePointType::BLUE) {

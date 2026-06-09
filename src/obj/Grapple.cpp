@@ -79,10 +79,34 @@ bool Grapple::pullOwnerToward(float hx, float hy, float ts) {
     return true;
 }
 
+bool Grapple::pullItemTowardOwner(Item* item, float ts) {
+    float px = item->rect.x + item->rect.w / 2.0f;
+    float py = item->rect.y + item->rect.h / 2.0f;
+
+    float hx = owner.rect.x + owner.rect.w * 0.5f;
+    float hy = owner.rect.y + owner.rect.h * 0.5f;
+
+    float toDx = hx - px;
+    float toDy = hy - py;
+    float dist = std::sqrt(toDx * toDx + toDy * toDy);
+
+    if (dist < ARRIVE_DIST) return false;
+
+    float invDist = 1.0f / dist;
+    float speed   = std::max(std::sqrt(item->dx * item->dx + item->dy * item->dy),
+                             PULL_FORCE);
+
+    item->dx = toDx * invDist * speed;
+    item->dy = toDy * invDist * speed;
+
+    return true;
+}
+
 bool Grapple::update(const std::vector<Platform>& platforms,
-                     std::vector<Player*>&         players,
+                     std::vector<Player*>&        players,
                      std::vector<Projectile>&     projectiles,
                      std::vector<GrapplePoint>&   points,
+                     std::vector<std::unique_ptr<Item>>& items,
                      float ts)
 {
     prevRect = rect;
@@ -137,6 +161,16 @@ bool Grapple::update(const std::vector<Platform>& platforms,
                     dx = dy = 0.0f;
                     targetPoint = &point;
                     state = GrappleState::LATCHED_POINT;
+                    return true;
+                }
+            }
+
+            // items
+            for (auto& item : items) {
+                if (SDL_HasIntersection(&item->rect, &rect)) {
+                    dx = dy = 0.0f;
+                    targetItem = item.get();
+                    state = GrappleState::LATCHED_ITEM;
                     return true;
                 }
             }
@@ -197,6 +231,19 @@ bool Grapple::update(const std::vector<Platform>& platforms,
             break;
         }
 
+        case GrappleState::LATCHED_ITEM: {
+            if (!targetItem) {
+                retract();
+                break;
+            }
+
+            rect.x = targetItem->rect.x + (targetItem->rect.w - rect.w) / 2;
+            rect.y = targetItem->rect.y + (targetItem->rect.h - rect.h) / 2;
+
+            if (!pullItemTowardOwner(targetItem, ts)) return false;
+            break;
+        }
+
         case GrappleState::RETRACTING: {
             float px = owner.rect.x + owner.rect.w * 0.5f;
             float py = owner.rect.y + owner.rect.h * 0.5f;
@@ -236,6 +283,7 @@ void Grapple::draw(SDL_Renderer* r, float a) const {
         case GrappleState::LATCHED_PLAYER:     c = RED;    break;
         case GrappleState::LATCHED_PROJECTILE: c = YELLOW; break;
         case GrappleState::LATCHED_POINT:      c = targetPoint->type == GrapplePointType::BLUE ? BLUE : LIME; break;
+        case GrappleState::LATCHED_ITEM:       c = GRAY;   break;
         default:                               c = CYAN;   break;
     }
 
@@ -259,7 +307,8 @@ bool Grapple::isLatched() const {
     return state == GrappleState::LATCHED_PLATFORM
         || state == GrappleState::LATCHED_PLAYER
         || state == GrappleState::LATCHED_PROJECTILE
-        || state == GrappleState::LATCHED_POINT;
+        || state == GrappleState::LATCHED_POINT
+        || state == GrappleState::LATCHED_ITEM;
 }
 
 void Grapple::retract() {

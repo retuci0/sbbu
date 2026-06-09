@@ -8,6 +8,7 @@
 class Player;
 class Platform;
 class Projectile;
+class Item;
 
 enum class GrappleState {
     FLYING,
@@ -15,6 +16,7 @@ enum class GrappleState {
     LATCHED_PLAYER,
     LATCHED_PROJECTILE,
     LATCHED_POINT,
+    LATCHED_ITEM,
     RETRACTING
 };
 
@@ -33,6 +35,7 @@ struct Grapple {
     Player*         targetPlayer     = nullptr;
     Projectile*     targetProjectile = nullptr;
     GrapplePoint*   targetPoint      = nullptr;
+    Item*           targetItem       = nullptr;
 
     static constexpr float TRAVEL_SPEED  = 24.0f;
     static constexpr float PULL_FORCE    = 12.0f;
@@ -44,9 +47,10 @@ struct Grapple {
     float originY = 0.0f;
 
     bool update(const std::vector<Platform>& platforms,
-                std::vector<Player*>&         players,
+                std::vector<Player*>&        players,
                 std::vector<Projectile>&     projectiles,
                 std::vector<GrapplePoint>&   points,
+                std::vector<std::unique_ptr<Item>>& items,
                 float ts);
 
     void draw(SDL_Renderer* r, float a) const;
@@ -60,4 +64,5 @@ private:
     float distanceFromOrigin() const;
 
     bool pullOwnerToward(float hx, float hy, float ts);
+    bool pullItemTowardOwner(Item* item, float ts);
 };

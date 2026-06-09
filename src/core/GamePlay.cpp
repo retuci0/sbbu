@@ -107,11 +107,11 @@ void Game::updateGameplay(float ts) {
 
     std::vector<Player*> players = { &player1, &player2 };
 
-    player1.update(platforms, projectiles, players, grapplePoints, isDown(options.keyP1Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0) > 0.5f, ts);
+    player1.update(platforms, projectiles, players, grapplePoints, items, isDown(options.keyP1Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0) > 0.5f, ts);
     bool p2Down = (networkMode == NetworkMode::REMOTE_HOST)
                   ? remoteIsDown(InputBit::DOWN)
                   : (isDown(options.keyP2Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 1) > 0.5f);
-    player2.update(platforms, projectiles, players, grapplePoints, p2Down, ts);
+    player2.update(platforms, projectiles, players, grapplePoints, items, p2Down, ts);
 
     auto trySpawnSpecialHitbox = [&](Player& attacker) {
         if (attacker.status != Status::SPECIAL_STATIC &&

@@ -45,6 +45,9 @@ public:
     SDL_Rect rect     = {};
     SDL_Rect prevRect = {};
 
+    float dx = 0.0f;
+    float dy = 0.0f;
+
     Player*  consumer = nullptr;
     
     float effectTimer = 0.0f;
@@ -56,7 +59,6 @@ protected:
     float    respawnDelay   = 0.0f;
 
     int      hp             = 30;
-    float    dx             = 0.0f;
     bool     onGround       = false;
     
     SDL_Texture* tex        = nullptr;
@@ -65,7 +67,6 @@ protected:
 private:
     std::string  name;
     SDL_Rect     spawnRect  = {};
-    float        dy         = 0.0f;
 
     static constexpr float GRAVITY      = 0.5f;
     static constexpr float TERMINAL_VEL = 20.0f;

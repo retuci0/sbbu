@@ -153,6 +153,7 @@ public:
                 std::vector<Projectile>& projectiles,
                 std::vector<Player*>& players,
                 std::vector<GrapplePoint>& grapplePoints,
+                std::vector<std::unique_ptr<Item>>& items,
                 bool downKeyPressed, float ts);
     void updateTimers(float ts);
     void resetTimers();
