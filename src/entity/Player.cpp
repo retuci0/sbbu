@@ -418,9 +418,11 @@ void Player::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
 
     updateTimers(ts);
 
-    if (tex && !dontResize) {
+    if (tex) {
         int w, h;
         SDL_QueryTexture(tex, nullptr, nullptr, &w, &h);
+        w *= scale;
+        h *= scale;
         if (facing == Facing::LEFT && w != rect.w) {
             rect.x -= w - rect.w;
         }

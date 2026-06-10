@@ -110,7 +110,7 @@ void Game::updateGameplay(float ts) {
         }
     }
 
-    player2->setDownKeyPressed(isDown(options.keyP1Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0) > 0.5f);
+    player1->setDownKeyPressed(isDown(options.keyP1Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0) > 0.5f);
     player1->update(entities, ts);
     bool p2Down = (networkMode == NetworkMode::REMOTE_HOST)
                   ? remoteIsDown(InputBit::DOWN)

@@ -8,6 +8,8 @@ build-windows/
 *.bmp
 screenshots/
 
+.mypy_cache/
+
 *.slo
 *.lo
 *.o

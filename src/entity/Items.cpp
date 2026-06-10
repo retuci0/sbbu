@@ -113,7 +113,6 @@ void MushroomItem::onPickup() {
 
     // size up
     scalePlayer(consumer, 2.0f);
-    consumer->dontResize = true;
 
     // damage buff
     consumer->character.stats.damage           *= 2;
@@ -126,7 +125,6 @@ void MushroomItem::onEffectEnd() {
     if (!consumer) return;
 
     scalePlayer(consumer, 0.5f);
-    consumer->dontResize = false;
 
     consumer->character.stats.damage           /= 2;
     consumer->character.stats.projectileDamage /= 2;

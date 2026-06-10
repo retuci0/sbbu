@@ -123,7 +123,6 @@ public:
 
     // item
     Item* item;
-    bool dontResize = false;
 
     // movement
     void move(int direction);  // -1 left, 0 stop, +1 right
