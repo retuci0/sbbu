@@ -49,9 +49,6 @@ public:
     static constexpr float RETRACT_SPEED = 10.0f;
     static constexpr float ARRIVE_DIST   = 64.0f;
 
-    float originX = 0.0f;
-    float originY = 0.0f;
-
     void update(std::vector<std::unique_ptr<Entity>>& entities, float ts) override;
 
     void draw(SDL_Renderer* r, float a) override;
@@ -71,4 +68,5 @@ private:
     bool pullItemTowardOwner(Item* item, float ts);
 
     bool alive = true;
+    bool velocitySnapshotted = false;
 };
