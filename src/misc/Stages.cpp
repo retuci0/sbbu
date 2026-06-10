@@ -1,6 +1,7 @@
 #include "Stages.h"
-#include "obj/GrapplePoint.h"
-#include "obj/Platform.h"
+
+#include "entity/GrapplePoint.h"
+#include "entity/Platform.h"
 
 
 Stage classicStage() {

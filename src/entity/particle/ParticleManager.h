@@ -1,6 +1,6 @@
 #pragma once
 
-#include "obj/particle/Particle.h"
+#include "entity/particle/Particle.h"
 
 #include <SDL2/SDL_render.h>
 

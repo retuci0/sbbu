@@ -1,8 +1,9 @@
-#include "obj/Player.h"
+#include "entity/Player.h"
 
-#include "obj/Items.h"
-#include "obj/Platform.h"
-#include "obj/Grapple.h"
+#include "entity/Items.h"
+#include "entity/Platform.h"
+#include "entity/Grapple.h"
+
 #include "core/Resources.h"
 #include "misc/Common.h"
 #include "misc/Renderer.h"
@@ -296,24 +297,24 @@ bool Player::trySpecial(Direction dir) {
     const char* snd;
     switch (dir) {
         case Direction::NONE:
-            character.onSpecialStatic(*this);
+            character.onSpecialStatic(this);
             status = Status::SPECIAL_STATIC;
             snd    = "special_static";
             break;
         case Direction::LEFT:
             // fallthrough
         case Direction::RIGHT:
-            character.onSpecialSide(*this);
+            character.onSpecialSide(this);
             status = Status::SPECIAL_SIDE;
             snd    = "special_side";
             break;
         case Direction::UP:
-            character.onSpecialUp(*this);
+            character.onSpecialUp(this);
             status = Status::SPECIAL_UP;
             snd    = "special_up";
             break;
         case Direction::DOWN:
-            character.onSpecialDown(*this);
+            character.onSpecialDown(this);
             status = Status::SPECIAL_DOWN;
             snd    = "special_down";
             break;
@@ -367,22 +368,19 @@ void Player::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
 
     // update grapple
     if (grapple) {
-        bool alive = grapple->isAlive();
         grapple->update(entities, ts);
-        if (!alive) {
-            // protect momentum if grapple point was blue
-            if (grapple->targetPoint && grapple->targetPoint->type == GrapplePointType::BLUE) {
+        if (!grapple->isAlive()) {
+            if (grapple->targetPoint && grapple->targetPoint->type == GrapplePointType::BLUE)
                 postGrappleTimer = POST_GRAPPLE_DURATION;
-            }
             ungrapple();
         }
     }
 
     // -> move to init?? <-
-    std::vector<Platform> platforms = {};
+    std::vector<const Platform*> platforms;
     for (auto& e : entities) {
-        if (Platform* p = dynamic_cast<Platform*>(e.get())) {
-            platforms.push_back(*p);
+        if (auto* p = dynamic_cast<Platform*>(e.get())) {
+            platforms.push_back(p);
         }
     }
 
@@ -391,13 +389,13 @@ void Player::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
     bool dropping = (droppingTimer > 0);
     if (!dropping && dy >= 0) {
         for (const auto& p : platforms) {
-            if (prevBottom > p.rect.y) continue;
-            if (!SDL_HasIntersection(&rect, &p.rect)) continue;
-            rect.y = p.rect.y - rect.h;
+            if (prevBottom > p->rect.y) continue;
+            if (!SDL_HasIntersection(&rect, &p->rect)) continue;
+            rect.y = p->rect.y - rect.h;
             dy = 0.0f;
             onGround = true;
             hasAirJumped = false;
-            if (p.size == PlatformSize::BIG)
+            if (p->size == PlatformSize::BIG)
                 standingOnBig = true;
         }
     }
@@ -405,9 +403,9 @@ void Player::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
     if (!onGround && !dropping) {
         SDL_Rect probe = { rect.x, rect.y + rect.h, rect.w, 3 };
         for (const auto& p : platforms) {
-            if (SDL_HasIntersection(&probe, &p.rect)) {
+            if (SDL_HasIntersection(&probe, &p->rect)) {
                 onGround = true;
-                if (p.size == PlatformSize::BIG)
+                if (p->size == PlatformSize::BIG)
                     standingOnBig = true;
                 break;
             }

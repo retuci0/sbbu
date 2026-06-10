@@ -1,6 +1,6 @@
 #include "core/Game.h"
 
-#include "obj/CollisionRect.h"
+#include "entity/CollisionRect.h"
 #include "ui/screen/CheatMenuScreen.h"
 
 #include <SDL2/SDL_gamecontroller.h>
@@ -16,23 +16,23 @@
 
 void Game::handleGameplayInput() {
     // open cheat menu
-    if (isDown(options.keyCheats)) { 
+    if (isDown(options.keyCheats)) {
         if (screens.currentAs<CheatMenuScreen>()) {
             screens.pop();
         } else {
-            screens.push(std::make_unique<CheatMenuScreen>(this)); 
+            screens.push(std::make_unique<CheatMenuScreen>(this));
         }
     }
 
+    // paused
     if (!screens.empty()) return;
 
-    // player 1 - always local (ctrl 0)
     float p1Axis  = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
     bool p1Left   = isDown(options.keyP1Left)   || (p1Axis < -AXIS_THRESHOLD);
     bool p1Right  = isDown(options.keyP1Right)  || (p1Axis > AXIS_THRESHOLD);
     bool p1Shield = isDown(options.keyP1Shield) || isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER, 0);
 
-    player1.move((p1Left && p1Right) ? 0 : p1Left ? -1 : p1Right ? +1 : 0);
+    player1->move((p1Left && p1Right) ? 0 : p1Left ? -1 : p1Right ? +1 : 0);
 
     auto tryJump = [&](Player& player) {
         bool wasOnGround = player.onGround;
@@ -45,22 +45,24 @@ void Game::handleGameplayInput() {
     };
 
     if (input.jumpP1) {
-        tryJump(player1);
+        tryJump(*player1);
         input.jumpP1 = false;
     }
     if (input.shootP1) {
-        if (player1.tryShoot()) {
-            int px = (player1.facing == Facing::LEFT) ? player1.rect.x - 20 : player1.rect.x + 20;
-            projectiles.emplace_back(std::make_unique<Projectile>(px, player1.rect.y, player1.facing, &player1));
+        if (player1->tryShoot()) {
+            int px = (player1->facing == Facing::LEFT) ? player1->rect.x - 20 : player1->rect.x + 20;
+            auto* proj = spawnEntity<Projectile>(px, player1->rect.y, player1->facing, player1);
+            projectiles.push_back(proj);
         }
         input.shootP1 = false;
     }
     if (input.meleeP1) {
-        if (player1.tryMelee()) {
-            const int hw = 86 * player1.scale, hh = 76 * player1.scale;
-            int hx = (player1.facing == Facing::RIGHT) ? player1.rect.x + player1.rect.w - 36 : player1.rect.x - hw + 36;
-            int hy = player1.rect.y + (player1.rect.h - hh) / 2;
-            meleeHitboxes.emplace_back(std::make_unique<CollisionRect>(hx, hy, hw, hh, &player1, 6));
+        if (player1->tryMelee()) {
+            const int hw = 86 * player1->scale, hh = 76 * player1->scale;
+            int hx = (player1->facing == Facing::RIGHT) ? player1->rect.x + player1->rect.w - 36 : player1->rect.x - hw + 36;
+            int hy = player1->rect.y + (player1->rect.h - hh) / 2;
+            auto* hitbox = spawnEntity<CollisionRect>(hx, hy, hw, hh, player1, 6);
+            meleeHitboxes.push_back(hitbox);
         }
         input.meleeP1 = false;
     }
@@ -76,32 +78,30 @@ void Game::handleGameplayInput() {
         else if (isDown(options.keyP1Right)) dir = Direction::RIGHT;
         else if (isDown(options.keyP1Jump)) dir = Direction::UP;
         else if (isDown(options.keyP1Down)) dir = Direction::DOWN;
-        player1.trySpecial(dir);
+        player1->trySpecial(dir);
         input.specialP1 = false;
     }
     if (input.dashP1) {
-        player1.dash();
+        player1->dash();
         input.dashP1 = false;
     }
     if (input.grappleP1) {
-        player1.throwGrapple();
+        player1->throwGrapple();
         input.grappleP1 = false;
     }
 
-    player1.setShieldHeld(p1Shield);
+    player1->setShieldHeld(p1Shield);
     if (p1Shield) {
-        player1.tryShield();
-    } else if (!p1Shield && !player1.shieldHeld) {
-        player1.releaseShield();
+        player1->tryShield();
+    } else if (!p1Shield && !player1->shieldHeld) {
+        player1->releaseShield();
     }
 
-    // player2 - local or remote
     bool p2Left, p2Right, p2Down, p2Shield;
     bool p2JumpPr, p2ShootPr, p2MeleePr, p2SpecialPr;
     bool p2JumpDn, p2DashPr, p2GrapplePr;
 
     if (networkMode == NetworkMode::REMOTE_HOST) {
-        // remote player: read from network bits
         p2Left      = remoteIsDown(InputBit::LEFT);
         p2Right     = remoteIsDown(InputBit::RIGHT);
         p2Down      = remoteIsDown(InputBit::DOWN);
@@ -114,7 +114,6 @@ void Game::handleGameplayInput() {
         p2DashPr    = remoteIsPressed(InputBit::DASH);
         p2GrapplePr = remoteIsPressed(InputBit::GRAPPLE);
     } else {
-        // local player 2: keyboard OR controller 1
         float p2Axis = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 1);
         p2Left   = isDown(options.keyP2Left)   || (p2Axis < -AXIS_THRESHOLD);
         p2Right  = isDown(options.keyP2Right)  || (p2Axis > AXIS_THRESHOLD);
@@ -129,22 +128,24 @@ void Game::handleGameplayInput() {
         p2GrapplePr = input.grappleP2; input.grappleP2 = false;
     }
 
-    if (player2.status != Status::DAMAGED)
-        player2.move((p2Left && p2Right) ? 0 : p2Left ? -1 : p2Right ? 1 : 0);
+    if (player2->status != Status::DAMAGED)
+        player2->move((p2Left && p2Right) ? 0 : p2Left ? -1 : p2Right ? 1 : 0);
 
-    if (p2JumpPr) tryJump(player2);
+    if (p2JumpPr) tryJump(*player2);
     if (p2ShootPr) {
-        if (player2.tryShoot()) {
-            int px = (player2.facing == Facing::LEFT) ? player2.rect.x - 20 : player2.rect.x + 20;
-            projectiles.emplace_back(std::make_unique<Projectile>(px, player2.rect.y, player2.facing, &player2));
+        if (player2->tryShoot()) {
+            int px = (player2->facing == Facing::LEFT) ? player2->rect.x - 20 : player2->rect.x + 20;
+            auto* proj = spawnEntity<Projectile>(px, player2->rect.y, player2->facing, player2);
+            projectiles.push_back(proj);
         }
     }
     if (p2MeleePr) {
-        if (player2.tryMelee()) {
-            const int hw = 86 * player2.scale, hh = 76 * player2.scale;
-            int hx = (player2.facing == Facing::RIGHT) ? player2.rect.x + player2.rect.w - 36 : player2.rect.x - hw + 36;
-            int hy = player2.rect.y + (player2.rect.h - hh) / 2;
-            meleeHitboxes.emplace_back(std::make_unique<CollisionRect>(hx, hy, hw, hh, &player2, 6));
+        if (player2->tryMelee()) {
+            const int hw = 86 * player2->scale, hh = 76 * player2->scale;
+            int hx = (player2->facing == Facing::RIGHT) ? player2->rect.x + player2->rect.w - 36 : player2->rect.x - hw + 36;
+            int hy = player2->rect.y + (player2->rect.h - hh) / 2;
+            auto* hitbox = spawnEntity<CollisionRect>(hx, hy, hw, hh, player2, 6);
+            meleeHitboxes.push_back(hitbox);
         }
     }
     if (p2SpecialPr) {
@@ -155,17 +156,16 @@ void Game::handleGameplayInput() {
         else if (p2Right || p2AxisX >  AXIS_THRESHOLD)  dir = Direction::RIGHT;
         else if (p2JumpDn || p2AxisY < -AXIS_THRESHOLD) dir = Direction::UP;
         else if (p2Down  || p2AxisY >  AXIS_THRESHOLD)  dir = Direction::DOWN;
-        player2.trySpecial(dir);
+        player2->trySpecial(dir);
     }
-    if (p2DashPr) {
-        player2.dash();
-    }
+    if (p2DashPr) player2->dash();
+    if (p2GrapplePr) player2->throwGrapple();
 
-    player2.setShieldHeld(p2Shield);
+    player2->setShieldHeld(p2Shield);
     if (p2Shield) {
-        player2.tryShield();
-    } else if (!p2Shield && !player2.shieldHeld) {
-        player2.releaseShield();
+        player2->tryShield();
+    } else if (!p2Shield && !player2->shieldHeld) {
+        player2->releaseShield();
     }
 }
 

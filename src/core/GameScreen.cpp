@@ -85,9 +85,9 @@ void Game::handleScreenTransitions() {
             uint8_t si  = pendingSetup.stageIdx;
             if (si >= stages.size()) si = 0;
             setup(charList[i1], pendingSetup.name1, charList[i2], pendingSetup.name2, stages[si]);
-            player1.color = { pendingSetup.r1, pendingSetup.g1, pendingSetup.b1, 230 };
-            player2.color = { pendingSetup.r2, pendingSetup.g2, pendingSetup.b2, 230 };
-            player1.resetTimers(); player2.resetTimers();
+            player1->color = { pendingSetup.r1, pendingSetup.g1, pendingSetup.b1, 230 };
+            player2->color = { pendingSetup.r2, pendingSetup.g2, pendingSetup.b2, 230 };
+            player1->resetTimers(); player2->resetTimers();
             projectiles.clear(); meleeHitboxes.clear(); specialHitboxes.clear();
             particles.clear();
             if (Resources::get().gameMusic) playGameMusic();
@@ -131,10 +131,10 @@ void Game::handleScreenTransitions() {
         setup(csResult.char1, csResult.name1, csResult.char2, csResult.name2,
           pendingStageResult.stage);  // use stored stage
         hasPendingStageResult = false;
-        player1.color = csResult.color1;
-        player2.color = csResult.color2;
-        player1.resetTimers();
-        player2.resetTimers();
+        player1->color = csResult.color1;
+        player2->color = csResult.color2;
+        player1->resetTimers();
+        player2->resetTimers();
         projectiles.clear();
         meleeHitboxes.clear();
         specialHitboxes.clear();

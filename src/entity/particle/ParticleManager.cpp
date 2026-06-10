@@ -1,6 +1,6 @@
-#include "obj/particle/ParticleManager.h"
+#include "entity/particle/ParticleManager.h"
 
-#include "obj/particle/Particles.h"
+#include "entity/particle/Particles.h"
 
 #include <algorithm>
 #include <cmath>

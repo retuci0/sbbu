@@ -1,7 +1,8 @@
 #pragma once
 
+#include "entity/Entity.h"
+
 #include "core/Resources.h"
-#include "obj/Entity.h"
 
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_rect.h>

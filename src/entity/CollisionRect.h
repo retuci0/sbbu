@@ -1,7 +1,8 @@
 #pragma once
 
-#include "obj/Entity.h"
-#include "obj/Player.h"
+#include "entity/Entity.h"
+
+#include "entity/Player.h"
 
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
@@ -18,5 +19,5 @@ public:
 
     void update(std::vector<std::unique_ptr<Entity>>& entities, float ts) override;
     bool isAlive() const { return lifetime > 0; }
-    void drawHitbox(SDL_Renderer* r, float a);
+    void drawHitbox(SDL_Renderer* r, float a) const override;
 };

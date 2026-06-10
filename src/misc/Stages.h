@@ -1,9 +1,8 @@
 #pragma once
 
-#include "obj/GrapplePoint.h"
-#include "obj/Items.h"
-#include "obj/Platform.h"
-#include "obj/Player.h"
+#include "entity/GrapplePoint.h"
+#include "entity/Platform.h"
+#include "entity/Player.h"
 
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>

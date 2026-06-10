@@ -1,4 +1,4 @@
-#include "obj/CollisionRect.h"
+#include "entity/CollisionRect.h"
 
 #include "misc/Renderer.h"
 
@@ -11,6 +11,6 @@ void CollisionRect::update(std::vector<std::unique_ptr<Entity>>& entities, float
     if (lifetime > 0) lifetime -= ts;
 }
 
-void CollisionRect::drawHitbox(SDL_Renderer* r, float /*a*/) {
+void CollisionRect::drawHitbox(SDL_Renderer* r, float /*a*/) const {
     Renderer::drawHitbox(r, this, -1);
 }

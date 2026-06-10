@@ -1,9 +1,9 @@
-#include "obj/Grapple.h"
+#include "entity/Grapple.h"
 
-#include "obj/GrapplePoint.h"
-#include "obj/Player.h"
-#include "obj/Platform.h"
-#include "obj/Projectile.h"
+#include "entity/GrapplePoint.h"
+#include "entity/Player.h"
+#include "entity/Platform.h"
+#include "entity/Projectile.h"
 
 #include "core/Resources.h"
 #include "misc/Common.h"
@@ -114,9 +114,6 @@ void Grapple::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
     switch (state) {
 
         case GrappleState::FLYING: {
-            rect.x += static_cast<int>(dx * ts);
-            rect.y += static_cast<int>(dy * ts);
-
             if (distanceFromOrigin() > MAX_RANGE) {
                 retract();
                 break;
@@ -230,6 +227,10 @@ void Grapple::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
         }
 
         case GrappleState::LATCHED_POINT: {
+            if (!targetPoint) {
+                retract();
+                break;
+            }
             // snapshot the player's velocity
             if (targetPoint->type == GrapplePointType::BLUE
                     && playerDx0 == 0.0f && playerDy0 == 0.0f

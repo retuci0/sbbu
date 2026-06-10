@@ -30,24 +30,24 @@ void Game::render(float ts, float a) {
     }
 }
 
-void Game::renderPlayerHud(const Player& player) const {
+void Game::renderPlayerHud(const Player* player) const {
     int x = (player == player1) ? 480 : 1315;
 
-    SDL_Texture* icon = (player.invulnerableTimer > 0 && player.damagedTimer == 0)
-                      ? player.character.deadIcon
-                      : player.character.icon;
+    SDL_Texture* icon = (player->invulnerableTimer > 0 && player->damagedTimer == 0)
+                      ? player->character.deadIcon
+                      : player->character.icon;
     int w2, h2;
     SDL_QueryTexture(icon, nullptr, nullptr, &w2, &h2);
     SDL_Rect iconRect = { x, SH - 183 - h2, w2, h2 };
     Renderer::drawSprite(renderer, icon, &iconRect, false);
 
     Renderer::fillRect(renderer, x, 950, 150, 45, WHITE);
-    Renderer::renderText(renderer, Resources::get().font, player.name, x + 10, 955, BLACK);
+    Renderer::renderText(renderer, Resources::get().font, player->name, x + 10, 955, BLACK);
 
-    if (player.lives >= 0) {
+    if (player->lives >= 0) {
         Renderer::renderText(renderer, Resources::get().titleFont,
-            std::to_string(player.hp) + " hp", x, 900, WHITE);
-        for (int i = 0; i < player.lives; ++i) {
+            std::to_string(player->hp) + " hp", x, 900, WHITE);
+        for (int i = 0; i < player->lives; ++i) {
             SDL_Texture* heartImage = Resources::get().getTexture("heart");
             SDL_Rect heart = { x + i * 35, 997, 30, 30 };
             Renderer::drawSprite(renderer, heartImage, &heart, false);
@@ -57,9 +57,9 @@ void Game::renderPlayerHud(const Player& player) const {
     }
 
     Renderer::fillRect(renderer, x - 10, 840, 5, 57, BLACK);
-    int h = static_cast<int>(player.charge * 57);
-    Color c = { static_cast<int>(255.0f - player.charge * 255.0f),
-                static_cast<int>(player.charge * 255.0f), 0 };
+    int h = static_cast<int>(player->charge * 57);
+    Color c = { static_cast<int>(255.0f - player->charge * 255.0f),
+                static_cast<int>(player->charge * 255.0f), 0 };
     Renderer::fillRect(renderer, x - 10, 840 + (57 - h), 5, h, c);
 
     // network indicator
@@ -86,11 +86,11 @@ void Game::renderMinimap() const {
     }
 
     // players
-    auto expand = [&](const Player& player) {
-        minX = std::min(minX, player.rect.x);
-        maxX = std::max(maxX, player.rect.x + player.rect.w);
-        minY = std::min(minY, player.rect.y);
-        maxY = std::max(maxY, player.rect.y + player.rect.h);
+    auto expand = [&](const Player* player) {
+        minX = std::min(minX, player->rect.x);
+        maxX = std::max(maxX, player->rect.x + player->rect.w);
+        minY = std::min(minY, player->rect.y);
+        maxY = std::max(maxY, player->rect.y + player->rect.h);
     };
     expand(player1);
     expand(player2);
@@ -129,13 +129,13 @@ void Game::renderMinimap() const {
     }
 
     // draw players with their respective color
-    auto drawPlayer = [&](const Player& player, Color color) {
-        auto [mx, my] = worldToMinimap(player.rect.x + player.rect.w / 2.0f,
-                                       player.rect.y + player.rect.h / 2.0f);
+    auto drawPlayer = [&](const Player* player, Color color) {
+        auto [mx, my] = worldToMinimap(player->rect.x + player->rect.w / 2.0f,
+                                       player->rect.y + player->rect.h / 2.0f);
         Renderer::fillCircle(renderer, static_cast<int>(mx), static_cast<int>(my), 2, color);
     };
-    drawPlayer(player1, player1.color);
-    drawPlayer(player2, player2.color);
+    drawPlayer(player1, player1->color);
+    drawPlayer(player2, player2->color);
 }
 
 void Game::renderCountdown() const {
@@ -174,9 +174,9 @@ void Game::renderDebug(float a, TTF_Font* font) {
     }
 
     Renderer::renderText(renderer, font,
-        player1.name + ": " + player1.getStatusName(), 2, 2, BLACK);
+        player1->name + ": " + player1->getStatusName(), 2, 2, BLACK);
     Renderer::renderText(renderer, font,
-        player2.name + ": " + player2.getStatusName(), 2, 32, BLACK);
+        player2->name + ": " + player2->getStatusName(), 2, 32, BLACK);
 
     std::string fpsStr = "fps: " + std::to_string(static_cast<int>(fps));
     int tw, th;
@@ -209,8 +209,8 @@ void Game::renderGameplay(float ts, float a) {
     renderPlayerHud(player1);
     renderPlayerHud(player2);
     
-    if (player1.rect.x < -player1.rect.w || player1.rect.x > SW
-            || player2.rect.x < -player2.rect.w || player2.rect.x > SW
+    if (player1->rect.x < -player1->rect.w || player1->rect.x > SW
+            || player2->rect.x < -player2->rect.w || player2->rect.x > SW
     ) {
         renderMinimap();
     }

@@ -58,16 +58,16 @@ public:
     void unload();
 
     // override in subclasses for unique specials, defaults are generic
-    virtual SpecialHitboxParams specialStatic(Player& player) const;
-    virtual SpecialHitboxParams specialSide  (Player& player) const;
-    virtual SpecialHitboxParams specialUp    (Player& player) const;
-    virtual SpecialHitboxParams specialDown  (Player& player) const;
+    virtual SpecialHitboxParams specialStatic(Player* player) const;
+    virtual SpecialHitboxParams specialSide  (Player* player) const;
+    virtual SpecialHitboxParams specialUp    (Player* player) const;
+    virtual SpecialHitboxParams specialDown  (Player* player) const;
 
     // override to apply movement on special activation (called from trySpecial)
-    virtual void onSpecialStatic(Player& player) const;
-    virtual void onSpecialSide  (Player& player) const;
-    virtual void onSpecialUp    (Player& player) const;
-    virtual void onSpecialDown  (Player& player) const;
+    virtual void onSpecialStatic(Player* player) const;
+    virtual void onSpecialSide  (Player* player) const;
+    virtual void onSpecialUp    (Player* player) const;
+    virtual void onSpecialDown  (Player* player) const;
 
     virtual ~Character() = default;
 };
@@ -85,8 +85,8 @@ public:
 class LorcCharacter : public Character {
 public:
     LorcCharacter();
-    SpecialHitboxParams specialDown(Player& player) const override;
-    void onSpecialDown(Player& player) const override;
+    SpecialHitboxParams specialDown(Player* player) const override;
+    void onSpecialDown(Player* player) const override;
 };
 
 class JordiCharacter : public Character { 

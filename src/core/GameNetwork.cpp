@@ -31,7 +31,6 @@ void Game::processNetworkPackets() {
                 if (networkMode == NetworkMode::REMOTE_CLIENT) {
                     auto* gsp = dynamic_cast<GameSetupPacket*>(pkt.get());
                     if (gsp) {
-                        // only apply setup if in the waiting screen
                         if (screens.currentAs<WaitingScreen>()) {
                             if (gsp->char1Idx >= CHARACTER_NUM || gsp->char2Idx >= CHARACTER_NUM)
                                 break;
@@ -50,11 +49,11 @@ void Game::processNetworkPackets() {
             }
             case PacketType::DISCONNECT:
                 if (network) network->disconnect(false);
-                if (!screens && player1.lives >= 0 && player2.lives >= 0) {
+                if (!screens && player1->lives >= 0 && player2->lives >= 0) {
                     if (networkMode == NetworkMode::REMOTE_HOST) {
-                        player2.lives = -1;
+                        player2->lives = -1;
                     } else if (networkMode == NetworkMode::REMOTE_CLIENT) {
-                        player1.lives = -1;
+                        player1->lives = -1;
                     }
                 }
                 break;
@@ -96,33 +95,33 @@ void Game::netSendStateUpdate() {
     StateUpdatePacket sup;
     sup.frame = netFrame;
 
-    auto fillState = [](const Player& p) -> PlayerState {
+    auto fillState = [](const Player* p) -> PlayerState {
         PlayerState ps;
-        ps.x = static_cast<float>(p.rect.x);
-        ps.y = static_cast<float>(p.rect.y);
-        ps.dx = p.dx;
-        ps.dy = p.dy;
-        ps.hp = static_cast<int16_t>(p.hp);
-        ps.lives = (p.lives < 0) ? 255 : static_cast<uint8_t>(p.lives);
-        ps.status = static_cast<uint8_t>(p.status);
-        ps.facing = static_cast<uint8_t>(p.facing);
-        ps.charge = p.charge;
-        ps.invulnerable = (p.invulnerableTimer > 0) ? 1 : 0;
-        ps.onGround = p.onGround ? 1 : 0;
+        ps.x = static_cast<float>(p->rect.x);
+        ps.y = static_cast<float>(p->rect.y);
+        ps.dx = p->dx;
+        ps.dy = p->dy;
+        ps.hp = static_cast<int16_t>(p->hp);
+        ps.lives = (p->lives < 0) ? 255 : static_cast<uint8_t>(p->lives);
+        ps.status = static_cast<uint8_t>(p->status);
+        ps.facing = static_cast<uint8_t>(p->facing);
+        ps.charge = p->charge;
+        ps.invulnerable = (p->invulnerableTimer > 0) ? 1 : 0;
+        ps.onGround = p->onGround ? 1 : 0;
         return ps;
     };
     sup.p1 = fillState(player1);
     sup.p2 = fillState(player2);
     sup.projectiles.reserve(projectiles.size());
-    for (const auto& projectile : projectiles) {
+    for (Projectile* proj : projectiles) {
         ProjectileState ps;
-        ps.x = static_cast<float>(projectile->rect.x);
-        ps.y = static_cast<float>(projectile->rect.y);
-        ps.velocity = projectile->velocity;
-        ps.facing = static_cast<uint8_t>(projectile->facing);
-        ps.ownerId = projectile->owner ? static_cast<uint8_t>(projectile->owner->id) : 0;
-        ps.parryFreezeTimer = static_cast<uint8_t>(std::clamp(projectile->parryFreezeTimer, 0.0f, 255.0f));
-        ps.parryFlashTimer = static_cast<uint8_t>(std::clamp(projectile->parryFlashTimer, 0.0f, 255.0f));
+        ps.x = static_cast<float>(proj->rect.x);
+        ps.y = static_cast<float>(proj->rect.y);
+        ps.velocity = proj->velocity;
+        ps.facing = static_cast<uint8_t>(proj->facing);
+        ps.ownerId = proj->owner ? static_cast<uint8_t>(proj->owner->id) : 0;
+        ps.parryFreezeTimer = static_cast<uint8_t>(std::clamp(proj->parryFreezeTimer, 0.0f, 255.0f));
+        ps.parryFlashTimer = static_cast<uint8_t>(std::clamp(proj->parryFlashTimer, 0.0f, 255.0f));
         sup.projectiles.push_back(ps);
     }
 
@@ -134,62 +133,56 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
     lastAppliedStateFrame = sup.frame;
     hasAppliedStateFrame = true;
 
-    // for interpolation
-    player1.prevRect = player1.rect;
-    player2.prevRect = player2.rect;
+    // interpolation
+    player1->prevRect = player1->rect;
+    player2->prevRect = player2->rect;
 
-    // authorative state for player1
-    player1.rect.x = static_cast<int>(sup.p1.x);
-    player1.rect.y = static_cast<int>(sup.p1.y);
-    player1.dx = sup.p1.dx;
-    player1.dy = sup.p1.dy;
-    player1.hp = sup.p1.hp;
-    player1.lives = (sup.p1.lives == 255) ? -1 : static_cast<int>(sup.p1.lives);
-    player1.status = static_cast<Status>(sup.p1.status);
-    player1.facing = static_cast<Facing>(sup.p1.facing);
-    player1.charge = sup.p1.charge;
-    player1.invulnerableTimer = sup.p1.invulnerable ? Player::INV_DURATION : 0;
-    player1.onGround = sup.p1.onGround != 0;
+    // authoritative state for player1
+    player1->rect.x = static_cast<int>(sup.p1.x);
+    player1->rect.y = static_cast<int>(sup.p1.y);
+    player1->dx = sup.p1.dx;
+    player1->dy = sup.p1.dy;
+    player1->hp = sup.p1.hp;
+    player1->lives = (sup.p1.lives == 255) ? -1 : static_cast<int>(sup.p1.lives);
+    player1->status = static_cast<Status>(sup.p1.status);
+    player1->facing = static_cast<Facing>(sup.p1.facing);
+    player1->charge = sup.p1.charge;
+    player1->invulnerableTimer = sup.p1.invulnerable ? Player::INV_DURATION : 0;
+    player1->onGround = sup.p1.onGround != 0;
 
-    // authorative state for player2
-    player2.rect.x = static_cast<int>(sup.p2.x);
-    player2.rect.y = static_cast<int>(sup.p2.y);
-    player2.dx = sup.p2.dx;
-    player2.dy = sup.p2.dy;
-    player2.hp = sup.p2.hp;
-    player2.lives = (sup.p2.lives == 255) ? -1 : static_cast<int>(sup.p2.lives);
-    player2.status = static_cast<Status>(sup.p2.status);
-    player2.facing = static_cast<Facing>(sup.p2.facing);
-    player2.charge = sup.p2.charge;
-    player2.invulnerableTimer = sup.p2.invulnerable ? Player::INV_DURATION : 0;
-    player2.onGround = sup.p2.onGround != 0;
+    // authoritative state for player2
+    player2->rect.x = static_cast<int>(sup.p2.x);
+    player2->rect.y = static_cast<int>(sup.p2.y);
+    player2->dx = sup.p2.dx;
+    player2->dy = sup.p2.dy;
+    player2->hp = sup.p2.hp;
+    player2->lives = (sup.p2.lives == 255) ? -1 : static_cast<int>(sup.p2.lives);
+    player2->status = static_cast<Status>(sup.p2.status);
+    player2->facing = static_cast<Facing>(sup.p2.facing);
+    player2->charge = sup.p2.charge;
+    player2->invulnerableTimer = sup.p2.invulnerable ? Player::INV_DURATION : 0;
+    player2->onGround = sup.p2.onGround != 0;
 
-    // handle projs
-    if (projectiles.size() != sup.projectiles.size()) {
-        projectiles.clear();
-        projectiles.reserve(sup.projectiles.size());
-        // rebuild if count changed
-        for (const auto& ps : sup.projectiles) {
-            Player* owner = (ps.ownerId == 1) ? &player2 : &player1;
-            projectiles.emplace_back(std::make_unique<Projectile>(static_cast<int>(ps.x), static_cast<int>(ps.y),
-                                     static_cast<Facing>(ps.facing), owner));
-            projectiles.back()->velocity = ps.velocity;
-            projectiles.back()->parryFreezeTimer = ps.parryFreezeTimer;
-            projectiles.back()->parryFlashTimer = ps.parryFlashTimer;
-            projectiles.back()->prevRect = projectiles.back()->rect;  // init prev
-        }
-    } else {
-        // update existing
-        for (size_t i = 0; i < projectiles.size(); ++i) {
-            projectiles[i]->prevRect = projectiles[i]->rect;
-            projectiles[i]->rect.x = static_cast<int>(sup.projectiles[i].x);
-            projectiles[i]->rect.y = static_cast<int>(sup.projectiles[i].y);
-            projectiles[i]->velocity = sup.projectiles[i].velocity;
-            projectiles[i]->facing = static_cast<Facing>(sup.projectiles[i].facing);
-            projectiles[i]->owner = (sup.projectiles[i].ownerId == 1) ? &player2 : &player1;
-            projectiles[i]->parryFreezeTimer = sup.projectiles[i].parryFreezeTimer;
-            projectiles[i]->parryFlashTimer = sup.projectiles[i].parryFlashTimer;
-        }
+    // handle projectiles
+    // First, destroy all existing projectiles (they will be replaced by the new state)
+    for (Projectile* proj : projectiles) {
+        destroyEntity(proj);
+    }
+    projectiles.clear();
+
+    // Rebuild from network state
+    projectiles.reserve(sup.projectiles.size());
+    for (const auto& ps : sup.projectiles) {
+        Player* owner = (ps.ownerId == 1) ? player2 : player1;
+        Projectile* proj = spawnEntity<Projectile>(
+            static_cast<int>(ps.x), static_cast<int>(ps.y),
+            static_cast<Facing>(ps.facing), owner
+        );
+        proj->velocity = ps.velocity;
+        proj->parryFreezeTimer = ps.parryFreezeTimer;
+        proj->parryFlashTimer = ps.parryFlashTimer;
+        proj->prevRect = proj->rect; // init prev for interpolation
+        projectiles.push_back(proj);
     }
 
     hasTargetState = true;

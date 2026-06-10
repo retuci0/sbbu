@@ -3,7 +3,7 @@
 #include "core/Resources.h"
 #include "misc/Common.h"
 #include "misc/Renderer.h"
-#include "obj/Platform.h"
+#include "entity/Platform.h"
 #include "ui/widget/ButtonWidget.h"
 
 #include <SDL2/SDL_events.h>

@@ -1,4 +1,4 @@
-#include "obj/particle/Particle.h"
+#include "entity/particle/Particle.h"
 
 #include "core/Resources.h"
 #include "misc/Renderer.h"

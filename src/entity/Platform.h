@@ -1,6 +1,7 @@
 #pragma once
 
-#include "obj/Entity.h"
+#include "entity/Entity.h"
+
 #include <SDL2/SDL.h>
 
 

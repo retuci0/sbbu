@@ -2,7 +2,7 @@
 
 #include "misc/Color.h"
 #include "misc/Common.h"
-#include "obj/Entity.h"
+#include "entity/Entity.h"
 
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>

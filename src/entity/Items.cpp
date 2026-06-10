@@ -1,7 +1,7 @@
-#include "obj/Items.h"
+#include "entity/Items.h"
 
-#include "obj/Platform.h"
-#include "obj/Player.h"
+#include "entity/Platform.h"
+#include "entity/Player.h"
 
 #include "misc/Common.h"
 #include "misc/Renderer.h"

@@ -34,36 +34,36 @@ CheatMenuScreen::CheatMenuScreen(Game* game) : Screen() {
     addWidget<ButtonWidget>(COL0_X, BTN_ROW_Y, BTN_W, BTN_H, "tp p1", GREEN, WHITE,
         [&, game]{
             auto x = getX(); auto y = getY();
-            if (x) game->player1.rect.x = *x;
-            if (y) game->player1.rect.y = *y;
+            if (x) game->player1->rect.x = *x;
+            if (y) game->player1->rect.y = *y;
         }
     );
     addWidget<ButtonWidget>(COL1_X, BTN_ROW_Y, BTN_W, BTN_H, "tp p2", GREEN, WHITE,
         [&, game]{
             auto x = getX(); auto y = getY();
-            if (x) game->player2.rect.x = *x;
-            if (y) game->player2.rect.y = *y;
+            if (x) game->player2->rect.x = *x;
+            if (y) game->player2->rect.y = *y;
         }
     );
 
     addWidget<ButtonWidget>(COL0_X, BTN_ROW_Y + (BTN_H + ROW_GAP), BTN_W, BTN_H, "heal p1", GREEN, WHITE,
         [&, game]{
             auto hp = getHp();
-            if (hp) game->player1.hp = std::min(*hp, game->player1.character.stats.health);
+            if (hp) game->player1->hp = std::min(*hp, game->player1->character.stats.health);
         }
     );
     addWidget<ButtonWidget>(COL1_X, BTN_ROW_Y + (BTN_H + ROW_GAP), BTN_W, BTN_H, "heal p2", GREEN, WHITE,
         [&, game]{
             auto hp = getHp();
-            if (hp) game->player2.hp = std::min(*hp, game->player2.character.stats.health);
+            if (hp) game->player2->hp = std::min(*hp, game->player2->character.stats.health);
         }
     );
 
     addWidget<ButtonWidget>(COL0_X, BTN_ROW_Y + 2 * (BTN_H + ROW_GAP), BTN_W, BTN_H, "kill p1", GREEN, WHITE,
-        [&, game]{ game->player1.hp = 0; }
+        [&, game]{ game->player1->hp = 0; }
     );
     addWidget<ButtonWidget>(COL1_X, BTN_ROW_Y + 2 * (BTN_H + ROW_GAP), BTN_W, BTN_H, "kill p2", GREEN, WHITE,
-        [&, game]{ game->player2.hp = 0; }
+        [&, game]{ game->player2->hp = 0; }
     );
 
     addWidget<ButtonWidget>(SW / 2 - BTN_W / 2, BTN_ROW_Y + 3 * (BTN_H + ROW_GAP), BTN_W, BTN_H, "spawn random item", GREEN, WHITE,

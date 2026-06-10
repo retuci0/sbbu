@@ -1,11 +1,9 @@
 #include "core/Game.h"
-
 #include "core/Resources.h"
 #include "core/InputHandler.h"
 #include "misc/ScreenshotManager.h"
-#include "obj/GrapplePoint.h"
+#include "entity/GrapplePoint.h"
 #include <SDL2/SDL_mixer.h>
-#include <memory>
 
 
 ///////////////////////////////////////
@@ -13,7 +11,7 @@
 ///////////////////////////////////////
 
 void Game::init() {
-    // init sdl and its subsystems
+    // init SDL and its subsystems
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_GAMECONTROLLER) != 0) {
         throw std::runtime_error(std::string("SDL_Init: ") + SDL_GetError());
     }
@@ -30,13 +28,13 @@ void Game::init() {
         throw std::runtime_error(std::string("SDLNet_Init: ") + SDLNet_GetError());
     }
 
-    // load config
+    // load settings
     options.loadFromFile();
 
-    // get monitor size;
     SDL_DisplayMode dm;
     SDL_GetCurrentDisplayMode(0, &dm);
 
+    // init window
     window = SDL_CreateWindow(
         "super bert bros ultimate",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -45,9 +43,9 @@ void Game::init() {
     Uint32 flags = SDL_GetWindowFlags(window);
     SDL_SetWindowFullscreen(window, flags | (options.fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0));
 
+    // init SDL renderer
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (options.vsync) SDL_RenderSetVSync(renderer, 1);
-    
     if (!renderer) throw std::runtime_error(std::string("SDL_CreateRenderer: ") + SDL_GetError());
     SDL_RenderSetLogicalSize(renderer, SW, SH);
 
@@ -57,6 +55,7 @@ void Game::init() {
     Resources::get().applySfxVolume(options.sfxVolume);
     Mix_VolumeMusic(static_cast<int>(9 * options.musVolume));
 
+    // init Discord RPC
     discord.init(DISCORD_APP_ID);
     discord.setPresence("on the title screen", "super bert bros ultimate");
 
@@ -72,30 +71,46 @@ void Game::setup(const Character* c1, const std::string& n1,
 {
     discord.setPresence(n1 + " vs " + n2, "fighting in " + s.name);
 
+    // clear previous game state
+    entities.clear();
+    platforms.clear();
+    grapplePoints.clear();
+    projectiles.clear();
+    items.clear();
+    meleeHitboxes.clear();
+    specialHitboxes.clear();
+    shockwaves.clear();
+    particles.clear();
+
+    // spawn players
+    player1 = spawnEntity<Player>();
+    player2 = spawnEntity<Player>();
+
+    // spawn platforms and grapple points
     for (const Platform& plat : s.platforms) {
-        platforms.push_back(std::make_unique<Platform>(plat));
+        auto* ptr = spawnEntity<Platform>(plat);
+        platforms.push_back(ptr);
     }
     for (const GrapplePoint& gp : s.grapplePoints) {
-        grapplePoints.push_back(std::make_unique<GrapplePoint>(gp));
+        auto* ptr = spawnEntity<GrapplePoint>(gp);
+        grapplePoints.push_back(ptr);
     }
-    stage         = std::move(s);
 
+    stage = s;
     itemsEnabled = pendingStageResult.items;
-
     items.clear();
     resetItemSpawnTimer();
 
     int x1 = s.spawnpoints.size() > 0 ? s.spawnpoints[0].x : 640;
     int x2 = s.spawnpoints.size() > 1 ? s.spawnpoints[1].x : 1080;
 
-    player1.init(x1, 0, *c1, n1);
-    player1.id = 0;
+    player1->init(x1, 0, *c1, n1);
+    player1->id = 0;
+    player2->init(x2, 0, *c2, n2);
+    player2->id = 1;
 
-    player2.init(x2, 0, *c2, n2);
-    player2.id = 1;
-
-    player1.color = { 100, 149, 237, 230 };
-    player2.color = { 255,  80,  80, 230 };
+    player1->color = { 100, 149, 237, 230 };
+    player2->color = { 255,  80,  80, 230 };
 
     remoteInputBits = 0;
     prevRemoteInputBits = 0;

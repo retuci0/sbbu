@@ -1,9 +1,10 @@
 #pragma once
 
-#include "CollisionRect.h"
+#include "entity/Entity.h"
+#include "entity/CollisionRect.h"
 
-#include "obj/Entity.h"
-#include "obj/Player.h"
+#include "entity/Player.h"
+
 #include "misc/Common.h"
 
 #include <SDL2/SDL_rect.h>
@@ -21,7 +22,10 @@ public:
     bool active = true;
 
     ShockwaveRect(int x, int y, int w, int h, Player* owner)
-    : CollisionRect(x, y, w, h, owner) {}
+    : CollisionRect(x, y, w, h, owner) 
+    {
+        tex = Resources::get().getTexture("shockwave");
+    }
 
     void update(std::vector<std::unique_ptr<Entity>>& entities, float ts) override;
 };

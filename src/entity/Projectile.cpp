@@ -1,9 +1,10 @@
 #include "Projectile.h"
 
+#include "entity/Entity.h"
+
 #include "core/Resources.h"
 #include "misc/Common.h"
 #include "misc/Renderer.h"
-#include "obj/Entity.h"
 
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
@@ -25,9 +26,9 @@ void Projectile::update(std::vector<std::unique_ptr<Entity>>& entities, float ts
     }
     
     if (facing == Facing::LEFT) { 
-        dx = -static_cast<int>(velocity * ts); 
-    } else { 
-        dx = +static_cast<int>(velocity * ts); 
+        dx = -velocity; 
+    } else {
+        dx = +velocity; 
     }
 
     Entity::update(entities, ts);

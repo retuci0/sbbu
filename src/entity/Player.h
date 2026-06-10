@@ -1,11 +1,11 @@
 #pragma once
 
-#include "obj/Entity.h"
+#include "entity/Entity.h"
+#include "entity/Items.h"
 
 #include "misc/Characters.h"
 #include "misc/Common.h"
 #include "misc/Color.h"
-#include "obj/Items.h"
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>

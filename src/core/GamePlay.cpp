@@ -1,9 +1,12 @@
 #include "core/Game.h"
 
 #include "core/Resources.h"
-#include "obj/CollisionRect.h"
+
+#include "entity/CollisionRect.h"
+#include "entity/Grapple.h"
 
 #include <SDL2/SDL_mixer.h>
+
 #include <algorithm>
 #include <memory>
 #include <random>
@@ -17,17 +20,16 @@ namespace {
         bool critical;
     };
 
-    HitValues rollCriticalHit(const Player& attacker, int damage, float kbScale) {
+    HitValues rollCriticalHit(const Player* attacker, int damage, float kbScale) {
         static std::mt19937 rng(std::random_device{}());
         static std::uniform_real_distribution<float> chance(0.0f, 1.0f);
 
-        if (chance(rng) >= attacker.character.stats.critChance) {
-            return {damage, kbScale, false};
+        if (chance(rng) >= attacker->character.stats.critChance) {
+            return { damage, kbScale, false };
         }
-        return {std::max(1, damage * 2), kbScale * 1.5f, true};
+        return { std::max(1, damage * 2), kbScale * 1.5f, true };
     }
 }
-
 
 //////////////////////////////////////
 /*               GAME               */
@@ -43,7 +45,7 @@ void Game::trySpawnItem() {
     if (!itemsEnabled) return;
 
     int liveCount = 0;
-    for (const auto& item : items) {
+    for (Item* item : items) {
         if (item->isActive()) ++liveCount;
     }
     if (liveCount >= MAX_LIVE_ITEMS) return;
@@ -57,15 +59,15 @@ void Game::trySpawnItem() {
         std::function<std::unique_ptr<Item>(int, int)> make;
     };
     static const std::vector<ItemEntry> itemTable = {
-        { 10, [](int x, int y) { return std::make_unique<MushroomItem>(x, y); }},
-        { 10, [](int x, int y) { return std::make_unique<ShitItem>(x, y); }},
-        { 6,  [](int x, int y) { return std::make_unique<CocaineItem>(x, y); }},
-        { 4,  [](int x, int y) { return std::make_unique<SpringItem>(x, y); } },
+        { 10, [](int x, int y) { return std::make_unique<MushroomItem>(x, y); } },
+        { 10, [](int x, int y) { return std::make_unique<ShitItem>(x, y);     } },
+        { 6,  [](int x, int y) { return std::make_unique<CocaineItem>(x, y);  } },
+        { 4,  [](int x, int y) { return std::make_unique<SpringItem>(x, y);   } },
     };
 
     // pick a random platform
     std::uniform_int_distribution<int> platPick(0, static_cast<int>(platforms.size()) - 1);
-    auto& plat = platforms[platPick(rng)];
+    Platform* plat = platforms[platPick(rng)];
 
     constexpr int ITEM_W = 56;
     constexpr int ITEM_H = 56;
@@ -88,10 +90,12 @@ void Game::trySpawnItem() {
         if (roll < 0) { chosen = &e; break; }
     }
 
-    items.push_back(chosen->make(spawnX, spawnY));
+    auto itemPtr = chosen->make(spawnX, spawnY);
+    Item* item = itemPtr.get();
+    entities.push_back(std::move(itemPtr));
+    items.push_back(item);
 
-    Mix_Chunk* sound = Resources::get().getSound("spawn_item");
-    if (sound) Mix_PlayChannel(-1, sound, 0);
+    Mix_PlayChannel(-1, Resources::get().getSound("spawn_item"), 0);
 }
 
 void Game::updateGameplay(float ts) {
@@ -106,44 +110,47 @@ void Game::updateGameplay(float ts) {
         }
     }
 
-    std::vector<Player*> players = { &player1, &player2 };
-
-    player1.update(entities, ts);
-    player2.setDownKeyPressed(isDown(options.keyP1Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0) > 0.5f);
+    player2->setDownKeyPressed(isDown(options.keyP1Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0) > 0.5f);
+    player1->update(entities, ts);
     bool p2Down = (networkMode == NetworkMode::REMOTE_HOST)
                   ? remoteIsDown(InputBit::DOWN)
                   : (isDown(options.keyP2Down) || getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 1) > 0.5f);
-    player2.update(entities, ts);
-    player2.setDownKeyPressed(p2Down);
+    player2->setDownKeyPressed(p2Down);
+    player2->update(entities, ts);
 
-    auto trySpawnSpecialHitbox = [&](Player& attacker) {
-        if (attacker.status != Status::SPECIAL_STATIC &&
-            attacker.status != Status::SPECIAL_SIDE   &&
-            attacker.status != Status::SPECIAL_UP     &&
-            attacker.status != Status::SPECIAL_DOWN)   return;
-        if (attacker.specialHitboxSpawned)             return;
-        if (attacker.specialTimer > Player::SPECIAL_DURATION - Player::SPECIAL_HITBOX_DURATION) return;
+    auto trySpawnSpecialHitbox = [&](Player* attacker) {
+        if (attacker->status != Status::SPECIAL_STATIC 
+                && attacker->status != Status::SPECIAL_SIDE   
+                && attacker->status != Status::SPECIAL_UP     
+                && attacker->status != Status::SPECIAL_DOWN
+        ) {
+            return;
+        }
+        if (attacker->specialHitboxSpawned) return;
+        if (attacker->specialTimer > Player::SPECIAL_DURATION - Player::SPECIAL_HITBOX_DURATION) return;
 
-        attacker.specialHitboxSpawned = true;
+        attacker->specialHitboxSpawned = true;
 
         SpecialHitboxParams p;
-        switch (attacker.status) {
-            case Status::SPECIAL_STATIC: p = attacker.character.specialStatic(attacker); break;
-            case Status::SPECIAL_SIDE:   p = attacker.character.specialSide(attacker);   break;
-            case Status::SPECIAL_UP:     p = attacker.character.specialUp(attacker);     break;
-            case Status::SPECIAL_DOWN:   p = attacker.character.specialDown(attacker);   break;
+        switch (attacker->status) {
+            case Status::SPECIAL_STATIC: p = attacker->character.specialStatic(attacker); break;
+            case Status::SPECIAL_SIDE:   p = attacker->character.specialSide(attacker);   break;
+            case Status::SPECIAL_UP:     p = attacker->character.specialUp(attacker);     break;
+            case Status::SPECIAL_DOWN:   p = attacker->character.specialDown(attacker);   break;
             default: return;
         }
 
-        if (p.spawnShockwave && attacker.onGround) {
-            shockwaves.emplace_back(std::make_unique<Shockwave>(attacker.rect.x + attacker.rect.w / 2,
-                                    attacker.rect.y + attacker.rect.h - SHOCKWAVE_SIZE * attacker.scale, 
-                                    &attacker));
+        if (p.spawnShockwave && attacker->onGround) {
+            auto* shock = spawnEntity<Shockwave>(attacker->rect.x + attacker->rect.w / 2,
+                                                  attacker->rect.y + attacker->rect.h - SHOCKWAVE_SIZE * attacker->scale,
+                                                  attacker);
+            shockwaves.push_back(shock);
         }
 
-        auto& cr = specialHitboxes.emplace_back(std::make_unique<CollisionRect>(p.x, p.y, p.w, p.h, &attacker, 5));
-        cr->damageScale = p.damageScale;
-        cr->kbScale     = p.kbScale;
+        auto* hitbox = spawnEntity<CollisionRect>(p.x, p.y, p.w, p.h, attacker, 5);
+        hitbox->damageScale = p.damageScale;
+        hitbox->kbScale     = p.kbScale;
+        specialHitboxes.push_back(hitbox);
     };
     trySpawnSpecialHitbox(player1);
     trySpawnSpecialHitbox(player2);
@@ -157,8 +164,8 @@ void Game::updateGameplay(float ts) {
         }
     };
 
-    auto tryParryProjectile = [&](std::unique_ptr<Projectile>& projectile) {
-        auto tryHitbox = [&](const std::unique_ptr<CollisionRect>& hitbox) {
+    auto tryParryProjectile = [&](Projectile* projectile) {
+        auto tryHitbox = [&](CollisionRect* hitbox) {
             if (!hitbox->owner || projectile->owner == hitbox->owner) return false;
             if (projectile->parryFreezeTimer > 0) return false;
             if (!SDL_HasIntersection(&projectile->rect, &hitbox->rect)) return false;
@@ -170,10 +177,10 @@ void Game::updateGameplay(float ts) {
             return true;
         };
 
-        for (const auto& hitbox : meleeHitboxes) {
+        for (CollisionRect* hitbox : meleeHitboxes) {
             if (tryHitbox(hitbox)) return true;
         }
-        for (const auto& hitbox : specialHitboxes) {
+        for (CollisionRect* hitbox : specialHitboxes) {
             if (tryHitbox(hitbox)) return true;
         }
         return false;
@@ -181,103 +188,131 @@ void Game::updateGameplay(float ts) {
 
     // projectiles
     for (auto it = projectiles.begin(); it != projectiles.end(); ) {
-        if (tryParryProjectile(*it)) { ++it; continue; }
-        it->get()->update(entities, ts);
-        if (it->get()->rect.x >= SW || it->get()->rect.x <= 0) { it = projectiles.erase(it); continue; }
+        Projectile* proj = *it;
+        if (tryParryProjectile(proj)) { ++it; continue; }
+        proj->update(entities, ts);
+        if (proj->rect.x >= SW || proj->rect.x <= 0) {
+            destroyEntity(proj);
+            it = projectiles.erase(it);
+            continue;
+        }
 
         // projectile vs items
         bool hitItem = false;
-        for (auto& item : items) {
-            if (!item->isActive() || !item->isAlive()) continue;
-            if (!SDL_HasIntersection(&it->get()->rect, &item->rect)) continue;
-            int dmg = it->get()->owner->character.stats.projectileDamage;
-            item->takeDamage(dmg, it->get()->facing, 1.0f);
+        for (auto itemIt = items.begin(); itemIt != items.end(); ) {
+            Item* item = *itemIt;
+            if (!item->isActive() || !item->isAlive()) { ++itemIt; continue; }
+            if (!SDL_HasIntersection(&proj->rect, &item->rect)) { ++itemIt; continue; }
+            int dmg = proj->owner->character.stats.projectileDamage;
+            item->takeDamage(dmg, proj->facing, 1.0f);
             if (!item->isAlive()) {
-                Player* beneficiary = it->get()->owner;
+                Player* beneficiary = proj->owner;
                 item->consumer = beneficiary;
                 item->rect.x = beneficiary->rect.x;
                 item->rect.y = beneficiary->rect.y;
                 item->onPickup();
             }
+            destroyEntity(proj);
             it = projectiles.erase(it);
             hitItem = true;
             break;
         }
         if (hitItem) continue;
 
-        if (it->get()->owner != &player1 && SDL_HasIntersection(&it->get()->rect, &player1.rect)) {
-            if (player1.invulnerableTimer > 0) { ++it; continue; }
-            auto hit = rollCriticalHit(*it->get()->owner, it->get()->owner->character.stats.projectileDamage, 1.0f);
-            if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
-                player1.blockHit(hit.damage, hit.kbScale);
+        if (proj->owner != player1 && SDL_HasIntersection(&proj->rect, &player1->rect)) {
+            if (player1->invulnerableTimer > 0) { ++it; continue; }
+            auto hit = rollCriticalHit(proj->owner, proj->owner->character.stats.projectileDamage, 1.0f);
+            if (player1->status == Status::SHIELDED && player1->shieldTimer > 0 && !player1->shieldBroken) {
+                player1->blockHit(hit.damage, hit.kbScale);
+                destroyEntity(proj);
                 it = projectiles.erase(it);
                 continue;
             } else {
-                player1.getHit(it->get()->owner, it->get()->facing, hit.damage, hit.kbScale);
-                spawnHitParticles(player1, hit);
-                it->get()->owner->charge = std::min(it->get()->owner->charge + 0.1f, Player::MAX_CHARGE);
+                player1->getHit(proj->owner, proj->facing, hit.damage, hit.kbScale);
+                spawnHitParticles(*player1, hit);
+                proj->owner->charge = std::min(proj->owner->charge + 0.1f, Player::MAX_CHARGE);
+                destroyEntity(proj);
                 it = projectiles.erase(it);
                 continue;
             }
         }
-        if (it->get()->owner != &player2 && SDL_HasIntersection(&it->get()->rect, &player2.rect)) {
-            if (player2.invulnerableTimer > 0) { ++it; continue; }
-            auto hit = rollCriticalHit(*it->get()->owner, it->get()->owner->character.stats.projectileDamage, 1.0f);
-            if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
-                player2.blockHit(hit.damage, hit.kbScale);
+        if (proj->owner != player2 && SDL_HasIntersection(&proj->rect, &player2->rect)) {
+            if (player2->invulnerableTimer > 0) { ++it; continue; }
+            auto hit = rollCriticalHit(proj->owner, proj->owner->character.stats.projectileDamage, 1.0f);
+            if (player2->status == Status::SHIELDED && player2->shieldTimer > 0 && !player2->shieldBroken) {
+                player2->blockHit(hit.damage, hit.kbScale);
+                destroyEntity(proj);
                 it = projectiles.erase(it);
                 continue;
             } else {
-                player2.getHit(it->get()->owner, it->get()->facing, hit.damage, hit.kbScale);
-                spawnHitParticles(player2, hit);
-                it->get()->owner->charge = std::min(it->get()->owner->charge + 0.1f, Player::MAX_CHARGE);
+                player2->getHit(proj->owner, proj->facing, hit.damage, hit.kbScale);
+                spawnHitParticles(*player2, hit);
+                proj->owner->charge = std::min(proj->owner->charge + 0.1f, Player::MAX_CHARGE);
+                destroyEntity(proj);
                 it = projectiles.erase(it);
                 continue;
             }
         }
         ++it;
     }
-    if (projectiles.size() > MAX_PROJ) projectiles.erase(projectiles.end());
+    if (projectiles.size() > MAX_PROJ) {
+        // remove extra projectiles from the end
+        for (size_t i = MAX_PROJ; i < projectiles.size(); ++i) {
+            destroyEntity(projectiles[i]);
+        }
+        projectiles.resize(MAX_PROJ);
+    }
 
     // melee hitboxes
     for (auto it = meleeHitboxes.begin(); it != meleeHitboxes.end(); ) {
-        it->get()->update(entities, ts);
-        if (!it->get()->isAlive()) { it = meleeHitboxes.erase(it); continue; }
+        CollisionRect* hitbox = *it;
+        hitbox->update(entities, ts);
+        if (!hitbox->isAlive()) {
+            destroyEntity(hitbox);
+            it = meleeHitboxes.erase(it);
+            continue;
+        }
 
-        for (auto& item : items) {
-            if (!item->isActive() || !item->isAlive()) continue;
-            if (!SDL_HasIntersection(&it->get()->rect, &item->rect)) continue;
-            item->takeDamage(it->get()->owner->character.stats.damage, it->get()->owner->facing, it->get()->kbScale);
+        for (auto itemIt = items.begin(); itemIt != items.end(); ) {
+            Item* item = *itemIt;
+            if (!item->isActive() || !item->isAlive()) { ++itemIt; continue; }
+            if (!SDL_HasIntersection(&hitbox->rect, &item->rect)) { ++itemIt; continue; }
+            item->takeDamage(hitbox->owner->character.stats.damage, hitbox->owner->facing, hitbox->kbScale);
             if (!item->isAlive()) {
-                Player* beneficiary = it->get()->owner;
+                Player* beneficiary = hitbox->owner;
                 item->consumer = beneficiary;
                 item->rect.x = beneficiary->rect.x;
                 item->rect.y = beneficiary->rect.y;
                 item->onPickup();
             }
+            break; // one item per hitbox
         }
 
-        if (it->get()->owner == &player1 && SDL_HasIntersection(&it->get()->rect, &player2.rect)) {
-            auto hit = rollCriticalHit(*it->get()->owner, it->get()->owner->character.stats.damage, it->get()->kbScale);
-            if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
-                player2.blockHit(hit.damage, hit.kbScale);
+        if (hitbox->owner == player1 && SDL_HasIntersection(&hitbox->rect, &player2->rect)) {
+            auto hit = rollCriticalHit(hitbox->owner, hitbox->owner->character.stats.damage, hitbox->kbScale);
+            if (player2->invulnerableTimer > 0) continue;
+            if (player2->status == Status::SHIELDED && player2->shieldTimer > 0 && !player2->shieldBroken) {
+                player2->blockHit(hit.damage, hit.kbScale);
             } else {
-                player2.getHit(it->get()->owner, player1.facing, hit.damage, hit.kbScale);
-                spawnHitParticles(player2, hit);
-                player1.charge = std::min(player1.charge + 0.1f, Player::MAX_CHARGE);
+                player2->getHit(hitbox->owner, player1->facing, hit.damage, hit.kbScale);
+                spawnHitParticles(*player2, hit);
+                player1->charge = std::min(player1->charge + 0.1f, Player::MAX_CHARGE);
             }
+            destroyEntity(hitbox);
             it = meleeHitboxes.erase(it);
             continue;
         }
-        if (it->get()->owner == &player2 && SDL_HasIntersection(&it->get()->rect, &player1.rect)) {
-            auto hit = rollCriticalHit(*it->get()->owner, it->get()->owner->character.stats.damage, it->get()->kbScale);
-            if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
-                player1.blockHit(hit.damage, hit.kbScale);
+        if (hitbox->owner == player2 && SDL_HasIntersection(&hitbox->rect, &player1->rect)) {
+            if (player2->invulnerableTimer > 0) continue;
+            auto hit = rollCriticalHit(hitbox->owner, hitbox->owner->character.stats.damage, hitbox->kbScale);
+            if (player1->status == Status::SHIELDED && player1->shieldTimer > 0 && !player1->shieldBroken) {
+                player1->blockHit(hit.damage, hit.kbScale);
             } else {
-                player1.getHit(it->get()->owner, player2.facing, hit.damage, hit.kbScale);
-                spawnHitParticles(player1, hit);
-                player2.charge = std::min(player2.charge + 0.1f, Player::MAX_CHARGE);
+                player1->getHit(hitbox->owner, player2->facing, hit.damage, hit.kbScale);
+                spawnHitParticles(*player1, hit);
+                player2->charge = std::min(player2->charge + 0.1f, Player::MAX_CHARGE);
             }
+            destroyEntity(hitbox);
             it = meleeHitboxes.erase(it);
             continue;
         }
@@ -285,76 +320,90 @@ void Game::updateGameplay(float ts) {
     }
 
     // items
-    for (auto& item : items) {
+    for (auto it = items.begin(); it != items.end(); ) {
+        Item* item = *it;
         item->update(entities, ts);
-        // kill items outside of the stage
         if (stage.isOutsideWorld(item->rect)) item->kill();
+        if (!item->isActive() && !item->isAlive() && item->effectTimer <= 0.0f) {
+            destroyEntity(item);
+            it = items.erase(it);
+        } else {
+            ++it;
+        }
     }
-    items.erase(
-        std::remove_if(items.begin(), items.end(), [](const std::unique_ptr<Item>& i) {
-            return !i->isActive() && !i->isAlive() && i->effectTimer <= 0.0f;
-        }),
-        items.end()
-    );
 
     // shockwaves
     for (auto it = shockwaves.begin(); it != shockwaves.end(); ) {
-        it->get()->update(entities, ts);
+        Shockwave* shock = *it;
+        shock->update(entities, ts);
         auto tryHit = [&](Player& target) {
-            if (&target == it->get()->getOwner()) return;
+            if (&target == shock->getOwner()) return;
             if (target.invulnerableTimer > 0) return;
-            auto dir = it->get()->checkCollision(target);
+            auto dir = shock->checkCollision(target);
             if (!dir) return;
-            int dmg   = static_cast<int>(it->get()->getOwner()->character.stats.damage * 1.5f);
+            int dmg   = static_cast<int>(shock->getOwner()->character.stats.damage * 1.5f);
             float kb  = 1.5f;
-            auto hit  = rollCriticalHit(*it->get()->getOwner(), dmg, kb);
+            auto hit  = rollCriticalHit(shock->getOwner(), dmg, kb);
             if (target.status == Status::SHIELDED && target.shieldTimer > 0 && !target.shieldBroken) {
                 target.blockHit(hit.damage, hit.kbScale);
             } else {
-                target.getHit(it->get()->getOwner(), *dir, hit.damage, hit.kbScale);
+                target.getHit(shock->getOwner(), *dir, hit.damage, hit.kbScale);
                 spawnHitParticles(target, hit);
             }
         };
-        tryHit(player1); tryHit(player2);
-        if (!it->get()->isAlive()) it = shockwaves.erase(it); else ++it;
+        tryHit(*player1);
+        tryHit(*player2);
+        if (!shock->isAlive()) {
+            destroyEntity(shock);
+            it = shockwaves.erase(it);
+        } else {
+            ++it;
+        }
     }
 
     // special hitboxes collision
     for (auto it = specialHitboxes.begin(); it != specialHitboxes.end(); ) {
-        it->get()->update(entities, ts);
-        if (!it->get()->isAlive()) { it = specialHitboxes.erase(it); continue; }
-
-        // special vs items
-        for (auto& item : items) {
-            if (!item->isActive() || !item->isAlive()) continue;
-            if (!SDL_HasIntersection(&it->get()->rect, &item->rect)) continue;
-            int dmg = static_cast<int>(it->get()->owner->character.stats.damage * it->get()->damageScale);
-            item->takeDamage(dmg, it->get()->owner->facing, it->get()->kbScale);
+        CollisionRect* hitbox = *it;
+        hitbox->update(entities, ts);
+        if (!hitbox->isAlive()) {
+            destroyEntity(hitbox);
+            it = specialHitboxes.erase(it);
+            continue;
         }
 
-        if (it->get()->owner == &player1 && SDL_HasIntersection(&it->get()->rect, &player2.rect)) {
-            if (player2.invulnerableTimer == 0) {
-                int dmg  = static_cast<int>(player1.character.stats.damage * it->get()->damageScale);
-                auto hit = rollCriticalHit(player1, dmg, it->get()->kbScale);
-                if (player2.status == Status::SHIELDED && player2.shieldTimer > 0 && !player2.shieldBroken) {
-                    player2.blockHit(hit.damage, hit.kbScale);
+        // special vs items
+        for (Item* item : items) {
+            if (!item->isActive() || !item->isAlive()) continue;
+            if (!SDL_HasIntersection(&hitbox->rect, &item->rect)) continue;
+            int dmg = static_cast<int>(hitbox->owner->character.stats.damage * hitbox->damageScale);
+            item->takeDamage(dmg, hitbox->owner->facing, hitbox->kbScale);
+        }
+
+        if (hitbox->owner == player1 && SDL_HasIntersection(&hitbox->rect, &player2->rect)) {
+            if (player2->invulnerableTimer == 0) {
+                int dmg  = static_cast<int>(player1->character.stats.damage * hitbox->damageScale);
+                auto hit = rollCriticalHit(player1, dmg, hitbox->kbScale);
+                if (player2->status == Status::SHIELDED && player2->shieldTimer > 0 && !player2->shieldBroken) {
+                    player2->blockHit(hit.damage, hit.kbScale);
                 } else {
-                    player2.getHit(it->get()->owner, player1.facing, hit.damage, hit.kbScale);
-                    spawnHitParticles(player2, hit);
+                    player2->getHit(hitbox->owner, player1->facing, hit.damage, hit.kbScale);
+                    spawnHitParticles(*player2, hit);
                 }
+                destroyEntity(hitbox);
                 it = specialHitboxes.erase(it);
                 continue;
             }
-        } else if (it->get()->owner == &player2 && SDL_HasIntersection(&it->get()->rect, &player1.rect)) {
-            if (player1.invulnerableTimer == 0) {
-                int dmg  = static_cast<int>(player2.character.stats.damage * it->get()->damageScale);
-                auto hit = rollCriticalHit(player2, dmg, it->get()->kbScale);
-                if (player1.status == Status::SHIELDED && player1.shieldTimer > 0 && !player1.shieldBroken) {
-                    player1.blockHit(hit.damage, hit.kbScale);
+        } else if (hitbox->owner == player2 && SDL_HasIntersection(&hitbox->rect, &player1->rect)) {
+            if (player1->invulnerableTimer == 0) {
+                int dmg  = static_cast<int>(player2->character.stats.damage * hitbox->damageScale);
+                auto hit = rollCriticalHit(player2, dmg, hitbox->kbScale);
+                if (player1->status == Status::SHIELDED && player1->shieldTimer > 0 && !player1->shieldBroken) {
+                    player1->blockHit(hit.damage, hit.kbScale);
                 } else {
-                    player1.getHit(it->get()->owner, player2.facing, hit.damage, hit.kbScale);
-                    spawnHitParticles(player1, hit);
+                    player1->getHit(hitbox->owner, player2->facing, hit.damage, hit.kbScale);
+                    spawnHitParticles(*player1, hit);
                 }
+                destroyEntity(hitbox);
                 it = specialHitboxes.erase(it);
                 continue;
             }
@@ -363,14 +412,14 @@ void Game::updateGameplay(float ts) {
     }
 
     // death handling
-    auto handleDeath = [&](Player& p) {
-        bool voidDeath = stage.isOutsideWorld(p.rect);
-        bool hpDead    = (p.hp <= 0);
+    auto handleDeath = [&](Player* p) {
+        bool voidDeath = stage.isOutsideWorld(p->rect);
+        bool hpDead    = (p->hp <= 0);
         if (!(voidDeath || hpDead)) return;
-        if (p.lives > 0) {
-            respawn(p, voidDeath);
-        } else if (p.lives == 0) {
-            p.lives = -1;
+        if (p->lives > 0) {
+            respawn(*p, voidDeath);
+        } else if (p->lives == 0) {
+            p->lives = -1;
         }
     };
     handleDeath(player1);
@@ -405,6 +454,30 @@ void Game::respawn(Player& p, bool voidDeath) {
     p.currentSpriteIndex   = 0.0f;
     p.specialHitboxSpawned = false;
     p.resetTimers();
-    p.grapple              = nullptr;
+    p.ungrapple();
     p.invulnerableTimer    = Player::INV_DURATION;
+}
+
+
+void Game::destroyEntity(Entity* victim) {
+    if (!victim) return;
+
+    // retract any grapple that targets this entity
+    auto retractIfMatches = [victim](Player* p) {
+        if (!p || !p->grapple) return;
+        Grapple* g = p->grapple;
+        if (g->targetPlayer == victim 
+                || g->targetProjectile == victim 
+                || g->targetPoint == victim 
+                || g->targetItem == victim
+        ) {
+            g->retract();
+        }
+    };
+    retractIfMatches(player1);
+    retractIfMatches(player2);
+
+    auto it = std::find_if(entities.begin(), entities.end(),
+        [victim](const std::unique_ptr<Entity>& e) { return e.get() == victim; });
+    if (it != entities.end()) entities.erase(it);
 }

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "obj/particle/Particle.h"
+#include "entity/particle/Particle.h"
 
 
 inline constexpr ParticleDefinition DOUBLE_JUMP_PARTICLE = {

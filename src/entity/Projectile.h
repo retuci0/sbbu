@@ -1,8 +1,10 @@
 #pragma once
 
+#include "entity/Entity.h"
+
+#include "entity/Player.h"
+
 #include "misc/Common.h"
-#include "obj/Entity.h"
-#include "obj/Player.h"
 
 #include <SDL2/SDL.h>
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "obj/Entity.h"
+#include "entity/Entity.h"
 
 #include "core/Resources.h"
 #include "misc/Renderer.h"

@@ -5,7 +5,7 @@
 
 #include "misc/Common.h"
 #include "misc/Characters.h"
-#include "obj/CollisionRect.h"
+#include "entity/CollisionRect.h"
 #include "ui/screen/TitleScreen.h"
 
 #include <SDL2/SDL_events.h>
@@ -95,30 +95,16 @@ void Game::processEvents() {
 }
 
 void Game::update(float ts) {
-    entities.clear();
-    entities.push_back(std::make_unique<Player>(player1));
-    entities.push_back(std::make_unique<Player>(player2));
-    for (auto& p : platforms) entities.push_back(std::make_unique<Platform>(*p));
-    for (auto& p : grapplePoints) entities.push_back(std::make_unique<GrapplePoint>(*p));
-    for (auto& p : projectiles) entities.push_back(std::make_unique<Projectile>(*p));
-    for (auto& s : shockwaves) entities.push_back(std::make_unique<Shockwave>(*s));
-    for (auto& h : meleeHitboxes) entities.push_back(std::make_unique<CollisionRect>(*h));
-    for (auto& h : specialHitboxes) entities.push_back(std::make_unique<CollisionRect>(*h));
-    for (auto& i : items) entities.push_back(std::make_unique<Item>(*i));
-
     // update discord rpc
     discord.update();
 
     if (screens) {
         screens.update();
-
-        // poll network even while on a screen (e.g. waiting for handshake)
         if (network) {
             network->poll();
             processNetworkPackets();
             netUpdatePing();
         }
-
         handleScreenTransitions();
         return;
     }
@@ -133,22 +119,22 @@ void Game::update(float ts) {
         if (network->isConnected()
                 && (networkMode == NetworkMode::REMOTE_HOST || networkMode == NetworkMode::REMOTE_CLIENT)
                 && SDL_GetTicks() - network->getLastReceiveTicks() > REMOTE_TIMEOUT_MS
-                && player1.lives >= 0 && player2.lives >= 0) {
+                && player1->lives >= 0 && player2->lives >= 0) {
             network->disconnect(false);
             if (networkMode == NetworkMode::REMOTE_HOST) {
-                player2.lives = -1;
+                player2->lives = -1;
             } else {
-                player1.lives = -1;
+                player1->lives = -1;
             }
         }
     }
 
     if (networkMode == NetworkMode::REMOTE_CLIENT) {
         netSendClientInputs();
-        player1.animate(ts);
-        player2.animate(ts);
-        player1.updateTimers(ts);
-        player2.updateTimers(ts);
+        player1->animate(ts);
+        player2->animate(ts);
+        player1->updateTimers(ts);
+        player2->updateTimers(ts);
     } else {
         if (countdownActive) {
             countdownTimer -= ts;
@@ -171,24 +157,24 @@ void Game::update(float ts) {
     // end game
     if (timer <= 0.0f && timerDuration > 0) {
         std::string details;
-        if (player1.lives > player2.lives) {
-            details = player1.name + " wins!";
-        } else if (player2.lives > player1.lives) {
-            details = player2.name + " wins!";
+        if (player1->lives > player2->lives) {
+            details = player1->name + " wins!";
+        } else if (player2->lives > player1->lives) {
+            details = player2->name + " wins!";
         } else {
             details = "it's a tie!";
         }
         showEndScreen("time concluded!", details);
         return;
     }
-    if (player1.lives == -1 && player2.lives == -1) {
+    if (player1->lives == -1 && player2->lives == -1) {
         showEndScreen("both players died", "what a skill issue");
-    } else if (player1.lives == -1) {
-        showEndScreen("gg!", "1st: " + player2.name + " (" + player2.character.stats.name + ")   "
-                            "2nd: " + player1.name + " (" + player1.character.stats.name + ")");
-    } else if (player2.lives == -1) {
-        showEndScreen("gg!", "1st: " + player1.name + " (" + player1.character.stats.name + ")   "
-                            "2nd: " + player2.name + " (" + player2.character.stats.name + ")");
+    } else if (player1->lives == -1) {
+        showEndScreen("gg!", "1st: " + player2->name + " (" + player2->character.stats.name + ")   "
+                            "2nd: " + player1->name + " (" + player1->character.stats.name + ")");
+    } else if (player2->lives == -1) {
+        showEndScreen("gg!", "1st: " + player1->name + " (" + player1->character.stats.name + ")   "
+                            "2nd: " + player2->name + " (" + player2->character.stats.name + ")");
     }
 }
 

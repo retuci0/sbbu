@@ -1,4 +1,4 @@
-#include "obj/Platform.h"
+#include "entity/Platform.h"
 
 #include "core/Resources.h"
 #include "misc/Renderer.h"

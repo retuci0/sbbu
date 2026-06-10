@@ -3,17 +3,16 @@
 #include "InputHandler.h"
 #include "Options.h"
 
-#include "obj/Entity.h"
-#include "obj/Player.h"
-#include "obj/CollisionRect.h"
-#include "obj/Items.h"
+#include "entity/Entity.h"
+#include "entity/Player.h"
+#include "entity/CollisionRect.h"
+#include "entity/Items.h"
+#include "entity/Projectile.h"
+#include "entity/Shockwave.h"
+#include "entity/particle/ParticleManager.h"
 
 #include "misc/Discord.h"
 #include "misc/ScreenshotManager.h"
-
-#include "obj/Projectile.h"
-#include "obj/Shockwave.h"
-#include "obj/particle/ParticleManager.h"
 
 #include "misc/Stages.h"
 #include "misc/Characters.h"
@@ -35,9 +34,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 
-// forward declare screen classes
 class CharacterSelectionScreen;
 class CheatMenuScreen;
 class GameEndScreen;
@@ -49,68 +48,64 @@ class TitleScreen;
 class VolumeScreen;
 class WaitingScreen;
 
-// id of the discord bot (aka app)
 constexpr uint64_t DISCORD_APP_ID = 1511836048005660672;
 
 class Game : public InputHandler {
 public:
-    // game stuff
     void init();
     void run();
     void cleanup();
-    
-    Player player1, player2;
+
+    // pointers for quick access
+    Player* player1 = nullptr;
+    Player* player2 = nullptr;
 
     void trySpawnItem();
 
 private:
-    // more game stuff
     bool running = true;
     Stage stage;
+
     void update(float ts);
     void processEvents();
-    void setup(const Character* c1, const std::string& n1, 
+    void setup(const Character* c1, const std::string& n1,
                const Character* c2, const std::string& n2,
                const Stage& stage);
 
-    // SDL
     SDL_Window*   window   = nullptr;
     SDL_Renderer* renderer = nullptr;
 
-    // settings and current input
     Options       options;
     Input         input;
 
-    // screenshots
-    ScreenshotManager* screenshots;
-
-    // discord rpc
+    ScreenshotManager* screenshots = nullptr;
     DiscordManager discord;
 
-    // screens
     ScreenStack screens;
     void handleScreenTransitions();
     void showPauseScreen();
     void showTitleScreen();
     void showEndScreen(const std::string& title, const std::string& details);
 
-    // pending stage selection result
     StageSelectionResult pendingStageResult;
     bool hasPendingStageResult = false;
 
-    // game entities
-    std::vector<std::unique_ptr<Entity>>        entities        = {};
-    std::vector<std::unique_ptr<Item>>          items           = {};
-    std::vector<std::unique_ptr<Platform>>      platforms       = {};
-    std::vector<std::unique_ptr<GrapplePoint>>  grapplePoints   = {};
-    std::vector<std::unique_ptr<Projectile>>    projectiles     = {};
-    std::vector<std::unique_ptr<CollisionRect>> meleeHitboxes   = {};
-    std::vector<std::unique_ptr<CollisionRect>> specialHitboxes = {};
-    std::vector<std::unique_ptr<Shockwave>>     shockwaves      = {};
+    // entity storage
+    std::vector<std::unique_ptr<Entity>> entities;
+
+    // typed views (non owning)
+    std::vector<Platform*>      platforms;
+    std::vector<GrapplePoint*>  grapplePoints;
+    std::vector<Projectile*>    projectiles;
+    std::vector<Item*>          items;
+    std::vector<CollisionRect*> meleeHitboxes;
+    std::vector<CollisionRect*> specialHitboxes;
+    std::vector<Shockwave*>     shockwaves;
+
     ParticleManager particles = ParticleManager(&options.particles);
+
     static constexpr int MAX_PROJ = 8;
-    
-    // items
+
     bool itemsEnabled = true;
     float itemSpawnTimer = 0.0f;
     void resetItemSpawnTimer();
@@ -119,62 +114,54 @@ private:
     static constexpr float ITEM_SPAWN_MAX = 1200.0f;
     static constexpr int   MAX_LIVE_ITEMS = 3;
 
-    // countdown and timer
     float countdownTimer = 0.0f;
     bool countdownActive = false;
     static constexpr float COUNTDOWN_DURATION = 210.0f;
     float timer = 0.0f;
     int timerDuration = 0;
 
-    // fps related stuff
     float fps;
     int frames;
     Uint32 lastFpsUpdate;
-    static constexpr int   TICK_RATE    = 20;                   // 20 tps
-    static constexpr float TICK_MS      = 1000.0f / TICK_RATE;  // 50 ms
-    static constexpr float TICK_SCALE   = 60.0f / TICK_RATE;    // 3.0 at 20hz
+    static constexpr int   TICK_RATE    = 20;
+    static constexpr float TICK_MS      = 1000.0f / TICK_RATE;
+    static constexpr float TICK_SCALE   = 60.0f / TICK_RATE;
 
-    // music
     Mix_Music* music = nullptr;
     void playTitleMusic();
     void playGameMusic();
-    
-    // gameplay
+
     void respawn(Player& p, bool voidDeath);
     void updateGameplay(float ts);
 
-    // input
     void onKey(SDL_Keycode key, KeyAction action) override;
-    void onControllerButton(SDL_GameControllerButton button, 
+    void onControllerButton(SDL_GameControllerButton button,
                             ControllerButtonAction action, int ctrl) override;
     void handleGameplayInput();
     void injectControllerNav(SDL_Event e);
     void injectNavigationKey(SDL_KeyCode key);
+
     struct NavRepeat {
         SDL_KeyCode lastKey = SDLK_UNKNOWN;
         Uint32 lastTime = 0;
         bool repeatActive = false;
-    };
-    NavRepeat navRepeat;
-    SDL_GameControllerAxis lastActiveNavAxis = SDL_CONTROLLER_AXIS_INVALID;
-    static constexpr Uint32 NAV_INITIAL_DELAY   = 300;  // ms before first repeat
-    static constexpr Uint32 NAV_REPEAT_INTERVAL = 200;  // ms between repeats
+    } navRepeat;
 
-    // render stuff
+    SDL_GameControllerAxis lastActiveNavAxis = SDL_CONTROLLER_AXIS_INVALID;
+    static constexpr Uint32 NAV_INITIAL_DELAY   = 300;
+    static constexpr Uint32 NAV_REPEAT_INTERVAL = 200;
+
     void render(float ts, float a);
-    void renderPlayerHud(const Player& player) const;
+    void renderPlayerHud(const Player* player) const;
     void renderMinimap() const;
     void renderGameplay(float ts, float a);
     void renderDebug(float a, TTF_Font* font);
     void renderCountdown() const;
     void renderTimer() const;
 
-
-
-    // network stuff
-
+    // ---------- network ----------
     std::unique_ptr<Network> network;
-    
+
     NetworkMode networkMode = NetworkMode::NONE;
     uint16_t remoteInputBits = 0, prevRemoteInputBits = 0;
     uint16_t lastSentInputs = 0;
@@ -197,16 +184,11 @@ private:
         uint8_t r1 = 0, g1 = 0, b1 = 0;
         uint8_t r2 = 0, g2 = 0, b2 = 0;
     } pendingSetup;
-
     bool hasPendingSetup = false;
 
-    bool remoteIsDown(uint16_t bit) const { 
-        return (remoteInputBits & bit) != 0; 
-    }
-
+    bool remoteIsDown(uint16_t bit) const { return (remoteInputBits & bit) != 0; }
     bool remoteIsPressed(uint16_t bit) const {
-        return ((remoteInputBits & bit) != 0) 
-            && ((prevRemoteInputBits & bit) == 0);
+        return ((remoteInputBits & bit) != 0) && ((prevRemoteInputBits & bit) == 0);
     }
 
     void processNetworkPackets();
@@ -214,4 +196,20 @@ private:
     void netApplyStateUpdate(const StateUpdatePacket& sup);
     void netUpdatePing();
     void netSendClientInputs();
+
+    // ---------- entity management helpers ----------
+    template<typename T, typename... Args>
+    T* spawnEntity(Args&&... args) {
+        auto obj = std::make_unique<T>(std::forward<Args>(args)...);
+        T* ptr = obj.get();
+        entities.push_back(std::move(obj));
+        return ptr;
+    }
+
+    template<typename T>
+    void eraseCached(std::vector<T*>& cache, T* victim) {
+        cache.erase(std::remove(cache.begin(), cache.end(), victim), cache.end());
+    }
+
+    void destroyEntity(Entity* victim);
 };
