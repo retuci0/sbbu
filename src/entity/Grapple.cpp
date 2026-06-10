@@ -19,7 +19,7 @@
 Grapple::Grapple(Player& player, int startX, int startY, float dx, float dy)
     : Entity({ startX, startY, 14, 14 }, dx, dy)
     , owner(player)
-{ 
+{
     tex = Resources::get().getTexture("grapple"); 
 }
 

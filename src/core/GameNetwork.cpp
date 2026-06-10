@@ -1,5 +1,8 @@
 #include "core/Game.h"
 
+#include "entity/Grapple.h"
+#include "entity/Items.h"
+
 #include "ui/screen/WaitingScreen.h"
 
 
@@ -112,6 +115,55 @@ void Game::netSendStateUpdate() {
     };
     sup.p1 = fillState(player1);
     sup.p2 = fillState(player2);
+
+    auto fillGrapple = [&](const Player* p, const std::vector<Projectile*>& projs) -> GrappleNetState {
+        GrappleNetState g;
+        if (!p->grapple) return g;
+        const Grapple* gr = p->grapple;
+        g.active = 1;
+        g.x      = static_cast<float>(gr->rect.x);
+        g.y      = static_cast<float>(gr->rect.y);
+        g.dx     = gr->dx;
+        g.dy     = gr->dy;
+        g.state  = static_cast<uint8_t>(gr->state);
+        g.playerDx0           = gr->playerDx0;
+        g.playerDy0           = gr->playerDy0;
+        g.velocitySnapshotted = gr->velocitySnapshotted ? 1 : 0;
+
+        if (gr->targetPlayer) {
+            g.targetKind  = 1;
+            g.targetIndex = static_cast<uint8_t>(gr->targetPlayer->id);
+        } else if (gr->targetProjectile) {
+            g.targetKind = 2;
+            // find index in projectiles list
+            for (size_t i = 0; i < projs.size(); ++i) {
+                if (projs[i] == gr->targetProjectile) {
+                    g.targetIndex = static_cast<uint8_t>(std::min<size_t>(i, 254));
+                    break;
+                }
+            }
+        } else if (gr->targetPoint) {
+            g.targetKind = 3;
+            for (size_t i = 0; i < grapplePoints.size(); ++i) {
+                if (grapplePoints[i] == gr->targetPoint) {
+                    g.targetIndex = static_cast<uint8_t>(std::min<size_t>(i, 254));
+                    break;
+                }
+            }
+        } else if (gr->targetItem) {
+            g.targetKind = 4;
+            for (size_t i = 0; i < items.size(); ++i) {
+                if (items[i] == gr->targetItem) {
+                    g.targetIndex = static_cast<uint8_t>(std::min<size_t>(i, 254));
+                    break;
+                }
+            }
+        }
+        return g;
+    };
+    sup.grapple1 = fillGrapple(player1, projectiles);
+    sup.grapple2 = fillGrapple(player2, projectiles);
+
     sup.projectiles.reserve(projectiles.size());
     for (Projectile* proj : projectiles) {
         ProjectileState ps;
@@ -164,13 +216,13 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
     player2->onGround = sup.p2.onGround != 0;
 
     // handle projectiles
-    // First, destroy all existing projectiles (they will be replaced by the new state)
+    // first, destroy all existing projectiles (they will be replaced by the new state)
     for (Projectile* proj : projectiles) {
         destroyEntity(proj);
     }
     projectiles.clear();
 
-    // Rebuild from network state
+    // rebuild from network state
     projectiles.reserve(sup.projectiles.size());
     for (const auto& ps : sup.projectiles) {
         Player* owner = (ps.ownerId == 1) ? player2 : player1;
@@ -181,9 +233,64 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
         proj->velocity = ps.velocity;
         proj->parryFreezeTimer = ps.parryFreezeTimer;
         proj->parryFlashTimer = ps.parryFlashTimer;
-        proj->prevRect = proj->rect; // init prev for interpolation
+        proj->prevRect = proj->rect;  // init prev for interpolation
         projectiles.push_back(proj);
     }
+
+    // apply grapple state for both players
+    auto applyGrapple = [&](Player* p, const GrappleNetState& g) {
+        if (!g.active) {
+            // host says no grapple: tear down any local one
+            if (p->grapple) p->ungrapple();
+            return;
+        }
+
+        // create or reuse the grapple object
+        if (!p->grapple) {
+            p->grapple = new Grapple(*p,
+                static_cast<int>(g.x), static_cast<int>(g.y),
+                g.dx, g.dy);
+        }
+        Grapple* gr = p->grapple;
+
+        gr->prevRect = gr->rect;
+        gr->rect.x   = static_cast<int>(g.x);
+        gr->rect.y   = static_cast<int>(g.y);
+        gr->dx       = g.dx;
+        gr->dy       = g.dy;
+        gr->state    = static_cast<GrappleState>(g.state);
+        gr->playerDx0           = g.playerDx0;
+        gr->playerDy0           = g.playerDy0;
+        gr->velocitySnapshotted = g.velocitySnapshotted != 0;
+
+        // restore target pointers from indices
+        gr->targetPlayer     = nullptr;
+        gr->targetProjectile = nullptr;
+        gr->targetPoint      = nullptr;
+        gr->targetItem       = nullptr;
+
+        switch (g.targetKind) {
+            case 1: // player
+                gr->targetPlayer = (g.targetIndex == static_cast<uint8_t>(player1->id)) ? player1 : player2;
+                break;
+            case 2: // projectile
+                if (g.targetIndex < projectiles.size())
+                    gr->targetProjectile = projectiles[g.targetIndex];
+                break;
+            case 3: // grapple point
+                if (g.targetIndex < grapplePoints.size())
+                    gr->targetPoint = grapplePoints[g.targetIndex];
+                break;
+            case 4: // item
+                if (g.targetIndex < items.size())
+                    gr->targetItem = items[g.targetIndex];
+                break;
+            default:
+                break;
+        }
+    };
+    applyGrapple(player1, sup.grapple1);
+    applyGrapple(player2, sup.grapple2);
 
     hasTargetState = true;
 }
@@ -200,6 +307,7 @@ void Game::netSendClientInputs() {
     if (isDown(options.keyP1Special)) inputs |= InputBit::SPECIAL;
     if (isDown(options.keyP1Shield))  inputs |= InputBit::SHIELD;
     if (isDown(options.keyP1Dash))    inputs |= InputBit::DASH;
+    if (isDown(options.keyP1Grapple)) inputs |= InputBit::GRAPPLE;
     // controller 0
     float axisX = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTX, 0);
     float axisY = getNormalizedAxis(SDL_CONTROLLER_AXIS_LEFTY, 0);
@@ -212,6 +320,7 @@ void Game::netSendClientInputs() {
     if (isDown(SDL_CONTROLLER_BUTTON_Y,           0)) inputs |= InputBit::SPECIAL;
     if (isDown(SDL_CONTROLLER_BUTTON_LEFTSHOULDER,0)) inputs |= InputBit::SHIELD;
     if (isDown(SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,0)) inputs |= InputBit::DASH;
+    if (isDown(SDL_CONTROLLER_BUTTON_RIGHTSTICK,  0)) inputs |= InputBit::GRAPPLE;
 
     ClientInputPacket cip(netFrame, inputs, lastSentInputs);
     network->send(cip);

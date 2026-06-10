@@ -110,6 +110,22 @@ struct PlayerState {
     uint8_t onGround = 0;
 };
 
+// 0xFF = no grapple active
+// targetKind: 0=none/platform, 1=player, 2=projectile, 3=point(idx in targetIndex), 4=item
+struct GrappleNetState {
+    uint8_t  active      = 0;        // 1 if grapple exists
+    float    x           = 0.0f;
+    float    y           = 0.0f;
+    float    dx          = 0.0f;
+    float    dy          = 0.0f;
+    uint8_t  state       = 0;        // GrappleState enum
+    uint8_t  targetKind  = 0;
+    uint8_t  targetIndex = 0xFF;     // player id (1/2), projectile index, grapple-point index
+    float    playerDx0   = 0.0f;
+    float    playerDy0   = 0.0f;
+    uint8_t  velocitySnapshotted = 0;
+};
+
 struct ProjectileState {
     float x = 0.0f, y = 0.0f, velocity = 0.0f;
     uint8_t facing = 0;
@@ -143,6 +159,23 @@ public:
         writePlayer(p1);
         writePlayer(p2);
 
+        auto writeGrapple = [&](const GrappleNetState& g) {
+            out.writeUint8(g.active);
+            if (!g.active) return;
+            out.writeFloat(g.x);
+            out.writeFloat(g.y);
+            out.writeFloat(g.dx);
+            out.writeFloat(g.dy);
+            out.writeUint8(g.state);
+            out.writeUint8(g.targetKind);
+            out.writeUint8(g.targetIndex);
+            out.writeFloat(g.playerDx0);
+            out.writeFloat(g.playerDy0);
+            out.writeUint8(g.velocitySnapshotted);
+        };
+        writeGrapple(grapple1);
+        writeGrapple(grapple2);
+
         uint8_t count = static_cast<uint8_t>(std::min<size_t>(projectiles.size(), 255));
         out.writeUint8(count);
         for (uint8_t i = 0; i < count; ++i) {
@@ -172,6 +205,23 @@ public:
         readPlayer(p1);
         readPlayer(p2);
 
+        auto readGrapple = [&](GrappleNetState& g) {
+            g.active = in.readUint8();
+            if (!g.active) return;
+            g.x                  = in.readFloat();
+            g.y                  = in.readFloat();
+            g.dx                 = in.readFloat();
+            g.dy                 = in.readFloat();
+            g.state              = in.readUint8();
+            g.targetKind         = in.readUint8();
+            g.targetIndex        = in.readUint8();
+            g.playerDx0          = in.readFloat();
+            g.playerDy0          = in.readFloat();
+            g.velocitySnapshotted = in.readUint8();
+        };
+        readGrapple(grapple1);
+        readGrapple(grapple2);
+
         uint8_t count = in.readUint8();
         projectiles.clear();
         projectiles.reserve(count);
@@ -190,6 +240,7 @@ public:
 
     uint32_t frame = 0;
     PlayerState p1, p2;
+    GrappleNetState grapple1, grapple2;
     std::vector<ProjectileState> projectiles;
 };
 

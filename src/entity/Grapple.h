@@ -42,6 +42,7 @@ public:
     Item*           targetItem       = nullptr;
 
     bool isAlive() const { return alive; }
+    bool velocitySnapshotted = false;
 
     static constexpr float TRAVEL_SPEED  = 24.0f;
     static constexpr float PULL_FORCE    = 12.0f;
@@ -68,5 +69,4 @@ private:
     bool pullItemTowardOwner(Item* item, float ts);
 
     bool alive = true;
-    bool velocitySnapshotted = false;
 };
