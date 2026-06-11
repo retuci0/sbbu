@@ -59,6 +59,11 @@ void Item::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
             effectTimer = 0.0f;
             onEffectEnd();
         }
+        if (consumer) {
+            prevRect = rect;
+            rect.x = consumer->rect.x;
+            rect.y = consumer->rect.y;
+        }
         return;
     }
 

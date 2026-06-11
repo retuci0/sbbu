@@ -213,8 +213,7 @@ void Game::updateGameplay(float ts) {
                 item->rect.x = beneficiary->rect.x;
                 item->rect.y = beneficiary->rect.y;
                 item->onPickup();
-                destroyEntity(item);
-                itemIt = items.erase(itemIt);
+                ++itemIt;
             } else {
                 ++itemIt;
             }
@@ -290,11 +289,8 @@ void Game::updateGameplay(float ts) {
                 item->rect.x = beneficiary->rect.x;
                 item->rect.y = beneficiary->rect.y;
                 item->onPickup();
-                destroyEntity(item);
-                itemIt = items.erase(itemIt);
-            } else {
-                ++itemIt;
             }
+            ++itemIt;
             break;  // one item per hitbox
         }
 
