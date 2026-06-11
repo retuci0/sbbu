@@ -11,7 +11,7 @@ void disableRandomPlatform(std::vector<std::unique_ptr<Entity>> &entities) {
     std::vector<Platform*> platforms = {};
     for (auto& e : entities) {
         if (Platform* p = dynamic_cast<Platform*>(e.get())) {
-            if (!p->active) platforms.push_back(p);
+            if (p->active) platforms.push_back(p);
         }
     }
     if (platforms.empty()) return;

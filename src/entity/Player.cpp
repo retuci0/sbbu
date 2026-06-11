@@ -253,6 +253,7 @@ bool Player::shouldSuffocate(const std::vector<const Platform*>& platforms) cons
     for (auto& platform : platforms) {
         if (rect.x > platform->rect.x && rect.x + rect.w < platform->rect.x + platform->rect.w
                 && rect.y > platform->rect.y && rect.y + rect.h < platform->rect.y + platform->rect.h
+                && platform->active
         ) {
             return true;
         }
@@ -439,9 +440,11 @@ void Player::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
             }
         }
     }
+
     if (downKeyPressed && onGround && droppingTimer == 0 && !standingOnBig) {
         droppingTimer = DROP_DURATION;
     }
+
     if (droppingTimer > 0) droppingTimer -= ts;
 
     updateTimers(ts);

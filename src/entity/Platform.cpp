@@ -26,8 +26,6 @@ void Platform::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) 
 
     if (inactiveTimer <= 0.0f) active = true;
     else                       active = false;
-
-    SDL_Log(std::to_string(inactiveTimer).c_str());
 }
 
 void Platform::draw(SDL_Renderer* r, float /*a*/) {
