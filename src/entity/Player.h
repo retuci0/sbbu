@@ -151,6 +151,9 @@ public:
         downKeyPressed = pressed;
     }
 
+    static constexpr int SUFFOCATION_DAMAGE = 5;
+    bool shouldSuffocate(const std::vector<const Platform*>& platforms) const;
+
     void draw(SDL_Renderer* r, float a) override;
     void drawShield(SDL_Renderer* r, float a) const;
     void drawNametag(SDL_Renderer* r, TTF_Font* font, float a) const;

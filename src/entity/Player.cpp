@@ -180,7 +180,7 @@ void Player::getHit(Player* attacker, Facing side, int damage, float kbScale) {
     charge = std::max(0.0f, charge - damage * 0.05f);
 
     // thorns
-    if (shitAuraTimer > 0.0f) {
+    if (shitAuraTimer > 0.0f && attacker) {
         attacker->getHit(this, facing, damage, kbScale);
     }
 }
@@ -248,6 +248,17 @@ float Player::getShieldScale() const {
     return shieldHp / SHIELD_HP_MAX;
 }
 
+
+bool Player::shouldSuffocate(const std::vector<const Platform*>& platforms) const {
+    for (auto& platform : platforms) {
+        if (rect.x > platform->rect.x && rect.x + rect.w < platform->rect.x + platform->rect.w
+                && rect.y > platform->rect.y && rect.y + rect.h < platform->rect.y + platform->rect.h
+        ) {
+            return true;
+        }
+    }
+    return false;
+}
 
 ////////////////////////////////////
 /*             ATTACK             */
@@ -394,6 +405,10 @@ void Player::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
         if (auto* p = dynamic_cast<Platform*>(e.get())) {
             platforms.push_back(p);
         }
+    }
+
+    if (shouldSuffocate(platforms)) {
+        getHit(nullptr, facing, SUFFOCATION_DAMAGE, 0);
     }
 
     // drop-through
