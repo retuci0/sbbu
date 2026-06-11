@@ -417,7 +417,7 @@ void Player::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
     if (!dropping && dy >= 0) {
         for (const auto& p : platforms) {
             if (prevBottom > p->rect.y) continue;
-            if (!SDL_HasIntersection(&rect, &p->rect)) continue;
+            if (!p->intersectsWith(*this)) continue;
             rect.y = p->rect.y - rect.h;
             dy = 0.0f;
             onGround = true;
@@ -432,8 +432,9 @@ void Player::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
         for (const auto& p : platforms) {
             if (SDL_HasIntersection(&probe, &p->rect)) {
                 onGround = true;
-                if (p->size == PlatformSize::BIG)
+                if (p->size == PlatformSize::BIG) {
                     standingOnBig = true;
+                }
                 break;
             }
         }

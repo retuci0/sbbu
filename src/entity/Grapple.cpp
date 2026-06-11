@@ -46,7 +46,7 @@ bool Grapple::pullOwnerToward(float hx, float hy, float ts) {
     if (dist < ARRIVE_DIST) {
         if (!targetPoint) return false;
 
-        if (targetPoint->type == GrapplePointType::GREEN) {
+        if (targetPoint->type == GrapplePointType::GREEN || targetPoint->type == GrapplePointType::YELLOW) {
             // green: kill momentum
             owner.dx = 0.0f;
             owner.dy = 0.0f;
@@ -125,7 +125,8 @@ void Grapple::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
             for (auto& e : entities) {
                 // platforms
                 if (Platform* plat = dynamic_cast<Platform*>(e.get())) {
-                    if (intersectsWith(*plat)) {
+                    // use the platform's method to check if it's active too
+                    if (plat->intersectsWith(*this)) {  
                         dx = dy = 0.0f;
                         state = GrappleState::LATCHED_PLATFORM;
                         alive = true;
@@ -159,6 +160,9 @@ void Grapple::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
                 // grapple points
                 if (GrapplePoint* point = dynamic_cast<GrapplePoint*>(e.get())) {
                     if (intersectsWith(*point)) {
+                        // skip inactive yellow hookpoints
+                        if (point->type == GrapplePointType::YELLOW && !point->active) continue;
+                        
                         dx = dy = 0.0f;
                         targetPoint = point;
                         state = GrappleState::LATCHED_POINT;

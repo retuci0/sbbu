@@ -88,7 +88,7 @@ void Item::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
         if (Platform* p = dynamic_cast<Platform*>(e.get())) {
             const int prevBottom = prevRect.y + prevRect.h;
             if (prevBottom > p->rect.y) continue;
-            if (!intersectsWith(*p)) continue;
+            if (!p->intersectsWith(*this)) continue;
             rect.y   = p->rect.y - rect.h;
             dy       = 0.0f;
             onGround = true;

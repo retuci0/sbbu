@@ -10,6 +10,7 @@
 #include <string>
 #include <vector>
 
+extern void disableRandomPlatform(std::vector<std::unique_ptr<Entity>>& entities);
 
 struct Spawnpoint {
     int x, y;

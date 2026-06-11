@@ -2,7 +2,24 @@
 
 #include "entity/GrapplePoint.h"
 #include "entity/Platform.h"
+#include <random>
+#include <vector>
 
+
+void disableRandomPlatform(std::vector<std::unique_ptr<Entity>> &entities) {
+    static std::mt19937 rng(std::random_device{}());
+    std::vector<Platform*> platforms = {};
+    for (auto& e : entities) {
+        if (Platform* p = dynamic_cast<Platform*>(e.get())) {
+            if (!p->active) platforms.push_back(p);
+        }
+    }
+    if (platforms.empty()) return;
+    std::uniform_int_distribution<int> platPick(0, static_cast<int>(platforms.size()) - 1);
+    Platform* plat = platforms[platPick(rng)];
+
+    plat->inactiveTimer = 180;
+}
 
 Stage classicStage() {
     Stage s;
@@ -85,7 +102,9 @@ Stage hellStage() {
     s.deathZones = { -500, SW + 500, SH + 300, -2000 };
     s.grapplePoints = {
         GrapplePoint(GrapplePointType::BLUE, SDL_Rect{ (SW - 56) / 2, 600, 56, 56 }),
-        GrapplePoint(GrapplePointType::BLUE, SDL_Rect{ (SW - 56) / 2, 500, 56, 56 })
+        GrapplePoint(GrapplePointType::BLUE, SDL_Rect{ (SW - 56) / 2, 500, 56, 56 }),
+        GrapplePoint(GrapplePointType::YELLOW, SDL_Rect{ 180, 480, 56, 56 }, disableRandomPlatform, 180),
+        GrapplePoint(GrapplePointType::YELLOW, SDL_Rect{ SW - 180 - 56, 480, 56, 56 }, disableRandomPlatform, 180)
     };
     return s;
 }

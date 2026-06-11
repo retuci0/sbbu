@@ -417,6 +417,14 @@ void Game::updateGameplay(float ts) {
         ++it;
     }
 
+    // update grapple points and platforms
+    for (auto& gp : grapplePoints) {
+        gp->update(entities, ts);
+    }
+    for (auto& plat : platforms) {
+        plat->update(entities, ts);
+    }
+
     // death handling
     auto handleDeath = [&](Player* p) {
         bool voidDeath = stage.isOutsideWorld(p->rect);

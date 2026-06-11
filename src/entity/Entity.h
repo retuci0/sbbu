@@ -43,7 +43,7 @@ public:
     // velocity
     float dx = 0.0f, dy = 0.0f;
 
-    bool intersectsWith(const Entity& other) const {
+    virtual bool intersectsWith(const Entity& other) const {
         return SDL_HasIntersection(&rect, &other.rect);
     }
 

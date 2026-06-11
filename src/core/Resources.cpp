@@ -61,10 +61,14 @@ namespace {
 
 void Resources::load(SDL_Renderer* renderer) {
     // sprites
-    registerTexture(renderer, "platform_big",    "assets/images/platform/platform_big.png");
-    registerTexture(renderer, "platform_small",  "assets/images/platform/platform_small.png");
+    registerTexture(renderer, "platform_big_active",    "assets/images/platform/platform_big_active.png");
+    registerTexture(renderer, "platform_big_inactive",    "assets/images/platform/platform_big_inactive.png");
+    registerTexture(renderer, "platform_small_active",  "assets/images/platform/platform_small_active.png");
+    registerTexture(renderer, "platform_small_inactive",  "assets/images/platform/platform_small_inactive.png");
     registerTexture(renderer, "grapple_point_green", "assets/images/platform/gp_green.png");
     registerTexture(renderer, "grapple_point_blue", "assets/images/platform/gp_blue.png");
+    registerTexture(renderer, "grapple_point_yellow_active", "assets/images/platform/gp_yellow_active.png");
+    registerTexture(renderer, "grapple_point_yellow_inactive", "assets/images/platform/gp_yellow_inactive.png");
 
     registerTexture(renderer, "projectile",      "assets/images/projectile/projectile.png");
     registerTexture(renderer, "shockwave",       "assets/images/projectile/shockwave.png");
