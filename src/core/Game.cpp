@@ -5,7 +5,6 @@
 
 #include "misc/Common.h"
 #include "misc/Characters.h"
-#include "entity/CollisionRect.h"
 #include "ui/screen/TitleScreen.h"
 
 #include <SDL2/SDL_events.h>

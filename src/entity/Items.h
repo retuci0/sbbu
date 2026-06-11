@@ -16,10 +16,11 @@ class Player;
 class Platform;
 class Projectile;
 
-constexpr float SHIT_ITEM_DURATION      = 600.0f;
-constexpr float MUSHROOM_ITEM_DURATION  = 600.0f;
-constexpr float COCAINE_ITEM_DURATION   = 500.0f;
-constexpr float SPRING_ITEM_DURATION    = 500.0f;
+constexpr float SHIT_ITEM_DURATION          = 600.0f;
+constexpr float MUSHROOM_ITEM_DURATION      = 600.0f;
+constexpr float COCAINE_ITEM_DURATION       = 500.0f;
+constexpr float SPRING_ITEM_DURATION        = 500.0f;
+constexpr float ANGEL_WINGS_ITEM_DURATION   = 360.0f;
 
 class Item : public Entity {
 public:
@@ -138,6 +139,25 @@ public:
 
     void onPickup()    override;
     void onEffectEnd() override;
+    void drawEffect(SDL_Renderer* r, float a) const override;
+
+private:
+    SDL_Texture* overlay = nullptr;
+};
+
+class AngelWingsItem : public Item {
+public:
+    AngelWingsItem(int x, int y)
+    : Item("angel_wings",
+           { x, y, 56, 56 },
+           Resources::get().getTexture("item_angel_wings"),
+           nullptr,
+           ANGEL_WINGS_ITEM_DURATION,
+           0.0f)
+    , overlay(Resources::get().getTexture("angel_overlay"))
+    {}
+
+    void onPickup() override;
     void drawEffect(SDL_Renderer* r, float a) const override;
 
 private:

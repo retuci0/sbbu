@@ -8,6 +8,7 @@
 #include "misc/Common.h"
 #include "misc/Renderer.h"
 
+#include <SDL2/SDL_log.h>
 #include <SDL2/SDL_mixer.h>
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
@@ -30,8 +31,11 @@ void Player::init(int x, int y, const Character ch, const std::string& playerNam
     dx = dy             = 0.0f;
     status              = Status::IDLE;
     facing              = Facing::RIGHT;
+
     tex                 = character.idle;
     currentSpriteIndex  = 0.0f;
+
+    shieldTex = Resources::get().getTexture("shield");
 
     int w = 125, h = 89;
     if (ch.idle) {
@@ -120,6 +124,7 @@ void Player::dash() {
 }
 
 void Player::throwGrapple() {
+    if (status == Status::STUNNED) return;
     if (grapple) { ungrapple(); }
 
     constexpr int HOOK_W = 14;
@@ -240,8 +245,7 @@ void Player::blockHit(int damage, float kbScale) {
 
 float Player::getShieldScale() const {
     if (shieldBroken) return 0.0f;
-    float scale = shieldHp / SHIELD_HP_MAX;
-    return std::max(scale, SHIELD_MIN_SIZE);
+    return shieldHp / SHIELD_HP_MAX;
 }
 
 
@@ -340,7 +344,16 @@ bool Player::trySpecial(Direction dir) {
 void Player::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
     prevRect = rect;
 
+    // don't allow movement while shielding
     if (status == Status::SHIELDED) { dx = 0.0f; }
+
+    // freefall
+    if (downKeyPressed && (status == Status::WALKING 
+            || status == Status::JUMPING 
+            || status == Status::IDLE)
+    ) {
+        dy += 2.3;
+    }
 
     // gravity
     if (!(grapple && grapple->isLatched())) {
@@ -376,7 +389,6 @@ void Player::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
         }
     }
 
-    // -> move to init?? <-
     std::vector<const Platform*> platforms;
     for (auto& e : entities) {
         if (auto* p = dynamic_cast<Platform*>(e.get())) {
@@ -703,9 +715,11 @@ void Player::drawShield(SDL_Renderer* r, float a) const {
     int cx     = drawRect.x + drawRect.w / 2;
     int cy     = drawRect.y + drawRect.h / 2;
     int radius = static_cast<int>((drawRect.w / 2.0f + drawRect.h / 2.0f) / 2 * scale);
-    Color shieldColor = color;
-    shieldColor.a = 128;
-    Renderer::fillCircle(r, cx, cy, radius, shieldColor);
+    SDL_Rect shieldRect = { cx - radius, cy - radius, 2 * radius, 2 * radius };
+
+    SDL_SetTextureColorMod(shieldTex, color.r, color.g, color.b);
+    Renderer::drawSprite(r, shieldTex, &shieldRect, false);
+    SDL_SetTextureColorMod(shieldTex, 255, 255, 255);
 }
 
 void Player::drawNametag(SDL_Renderer* r, TTF_Font* font, float a) const {

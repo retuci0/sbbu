@@ -25,11 +25,12 @@ Item::Item(const std::string& name, SDL_Rect spawnRect, SDL_Texture* tex, Mix_Ch
 {}
 
 void Item::draw(SDL_Renderer* r, float a) {
-    if (!active) return;
-    if (isAffecting()) {
+    if (consumer && isAffecting()) {
         drawEffect(r, a);
     }
-    Renderer::drawEntity(r, this, a);
+    if (active) {
+        Renderer::drawEntity(r, this, a);
+    }
 }
 
 void Item::drawHitbox(SDL_Renderer* r, float a) const {
@@ -202,7 +203,7 @@ void CocaineItem::onEffectEnd() {
 void CocaineItem::drawEffect(SDL_Renderer* r, float a) const {
     if (!consumer) return;
 
-    SDL_Rect drawRect = interpolatedRect(consumer->prevRect, consumer->rect, a);
+    SDL_Rect drawRect = consumer->interpolatedRect(a);
 
     Renderer::drawSprite(r, overlay, &drawRect, consumer->facing == Facing::LEFT);
 }
@@ -231,7 +232,28 @@ void SpringItem::onEffectEnd() {
 void SpringItem::drawEffect(SDL_Renderer* r, float a) const {
     if (!consumer) return;
 
-    SDL_Rect drawRect = interpolatedRect(consumer->prevRect, consumer->rect, a);
+    SDL_Rect drawRect = consumer->interpolatedRect(a);
     
+    Renderer::drawSprite(r, overlay, &drawRect, consumer->facing == Facing::LEFT);
+}
+
+
+//////////////////////////////////////////////////
+/*               ANGEL WINGS ITEM               */
+//////////////////////////////////////////////////
+
+void AngelWingsItem::onPickup() {
+    if (!consumer) return;
+
+    consumer->invulnerableTimer = effectDuration;
+
+    Item::onPickup();
+}
+
+void AngelWingsItem::drawEffect(SDL_Renderer* r, float a) const {
+    if (!consumer) return;
+
+    SDL_Rect drawRect = consumer->interpolatedRect(a);
+
     Renderer::drawSprite(r, overlay, &drawRect, consumer->facing == Facing::LEFT);
 }

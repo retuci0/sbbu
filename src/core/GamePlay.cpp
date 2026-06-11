@@ -4,6 +4,7 @@
 
 #include "entity/CollisionRect.h"
 #include "entity/Grapple.h"
+#include "entity/Items.h"
 
 #include <SDL2/SDL_mixer.h>
 
@@ -59,10 +60,11 @@ void Game::trySpawnItem() {
         std::function<std::unique_ptr<Item>(int, int)> make;
     };
     static const std::vector<ItemEntry> itemTable = {
-        { 10, [](int x, int y) { return std::make_unique<MushroomItem>(x, y); } },
-        { 10, [](int x, int y) { return std::make_unique<ShitItem>(x, y);     } },
-        { 6,  [](int x, int y) { return std::make_unique<CocaineItem>(x, y);  } },
-        { 4,  [](int x, int y) { return std::make_unique<SpringItem>(x, y);   } },
+        { 10, [](int x, int y) { return std::make_unique<MushroomItem>(x, y);   } },
+        { 10, [](int x, int y) { return std::make_unique<ShitItem>(x, y);       } },
+        { 6,  [](int x, int y) { return std::make_unique<CocaineItem>(x, y);    } },
+        { 4,  [](int x, int y) { return std::make_unique<SpringItem>(x, y);     } },
+        { 3,  [](int x, int y) { return std::make_unique<AngelWingsItem>(x, y); } },
     };
 
     // pick a random platform

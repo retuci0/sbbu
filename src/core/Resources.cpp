@@ -74,9 +74,12 @@ void Resources::load(SDL_Renderer* renderer) {
     registerTexture(renderer, "item_shit",     "assets/images/item/shit.png");
     registerTexture(renderer, "item_cocaine",  "assets/images/item/cocaine.png");
     registerTexture(renderer, "item_spring",   "assets/images/item/spring.png");
+    registerTexture(renderer, "item_angel_wings", "assets/images/item/angel_wings.png");
 
+    registerTexture(renderer, "shield",        "assets/images/characters/shield_overlay.png");
     registerTexture(renderer, "high_overlay",  "assets/images/characters/high_overlay.png");
     registerTexture(renderer, "spring_overlay","assets/images/characters/springs_overlay.png");
+    registerTexture(renderer, "angel_overlay", "assets/images/characters/angel_overlay.png");
 
     registerTexture(renderer, "heart",           "assets/images/ui/heart.png");
     registerTexture(renderer, "settings",        "assets/images/ui/settings.png");

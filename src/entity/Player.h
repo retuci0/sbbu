@@ -40,6 +40,9 @@ class Player : public Entity {
 public:
     Player() = default;
     void init(int x, int y, const Character ch, const std::string& playerName);
+    
+    // player color indicator (drawn above head)
+    Color color = WHITE;
 
     std::string name;
     Character character; 
@@ -100,7 +103,6 @@ public:
     static constexpr float SHIELD_HP_HIT_COST   = 8.0f;
     static constexpr int   SHIELD_BREAK_STUN    = 180;
     static constexpr int   SHIELD_STUN_DURATION = 14;
-    static constexpr float SHIELD_MIN_SIZE      = 0.35f;
 
     float shieldTimer      = 0.0f;
     float shieldHp         = SHIELD_HP_MAX;
@@ -110,6 +112,8 @@ public:
     float stunTimer        = 0.0f;
     bool  shieldHeld       = false;
 
+    SDL_Texture* shieldTex = nullptr;
+
     // grapple
     Grapple* grapple = nullptr;
     void throwGrapple();
@@ -117,9 +121,6 @@ public:
 
     // animation
     float currentSpriteIndex = 0.0f;
-
-    // player color indicator (drawn above head)
-    Color color = WHITE;
 
     // item
     Item* item;
@@ -145,7 +146,7 @@ public:
     void updateTimers(float ts);
     void resetTimers();
 
-    bool downKeyPressed = false;
+    bool downKeyPressed  = false;
     void setDownKeyPressed(bool pressed) {
         downKeyPressed = pressed;
     }
