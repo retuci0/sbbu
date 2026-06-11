@@ -94,6 +94,16 @@ void Item::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
             onGround = true;
             break;
         }
+
+        // i completely made up this collision system lmfao
+        if (Player* p = dynamic_cast<Player*>(e.get())) {
+            if (intersectsWith(*p)) {
+                float distX = (p->rect.x + p->rect.w / 2.0f) - (rect.x + rect.w / 2.0f);
+                float distY = (p->rect.y + p->rect.h / 2.0f) - (rect.y + rect.h / 2.0f);
+                dx = ((p->dx / p->character.stats.terminalVelocity) / 2.7f) * distX * (p->facing == Facing::LEFT ? 1 : -1);
+                dy = ((p->dy / p->character.stats.terminalVelocity) / 2.7f) * distY;
+            }
+        }
     }
 }
 
