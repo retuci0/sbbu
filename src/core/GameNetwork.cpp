@@ -98,8 +98,9 @@ void Game::netSendStateUpdate() {
     StateUpdatePacket sup;
     sup.frame = netFrame;
 
-    auto fillState = [](const Player* p) -> PlayerState {
-        PlayerState ps;
+    // players
+    auto fillState = [](const Player* p) -> PlayerNetState {
+        PlayerNetState ps;
         ps.x = static_cast<float>(p->rect.x);
         ps.y = static_cast<float>(p->rect.y);
         ps.dx = p->dx;
@@ -116,6 +117,7 @@ void Game::netSendStateUpdate() {
     sup.p1 = fillState(player1);
     sup.p2 = fillState(player2);
 
+    // grapple
     auto fillGrapple = [&](const Player* p, const std::vector<Projectile*>& projs) -> GrappleNetState {
         GrappleNetState g;
         if (!p->grapple) return g;
@@ -164,9 +166,10 @@ void Game::netSendStateUpdate() {
     sup.grapple1 = fillGrapple(player1, projectiles);
     sup.grapple2 = fillGrapple(player2, projectiles);
 
+    // projectiles
     sup.projectiles.reserve(projectiles.size());
     for (Projectile* proj : projectiles) {
-        ProjectileState ps;
+        ProjectileNetState ps;
         ps.x = static_cast<float>(proj->rect.x);
         ps.y = static_cast<float>(proj->rect.y);
         ps.velocity = proj->velocity;
@@ -177,6 +180,29 @@ void Game::netSendStateUpdate() {
         sup.projectiles.push_back(ps);
     }
 
+    // items
+    for (Item* item : items) {
+        ItemNetState ins;
+        ins.x           = static_cast<float>(item->rect.x);
+        ins.y           = static_cast<float>(item->rect.y);
+        ins.typeIdx     = item->getTypeIdx();
+        ins.alive       = item->isAlive() ? 1 : 0;
+        ins.active      = item->isActive() ? 1 : 0;
+        ins.effectTimer = item->effectTimer;
+        ins.hp          = static_cast<float>(item->hp);
+        sup.items.push_back(ins);
+    }
+ 
+    // platforms
+    sup.platformActive.reserve(platforms.size());
+    for (Platform* plat : platforms) {
+        sup.platformActive.push_back(plat->active ? 1 : 0);
+    }
+ 
+    // countdown
+    sup.countdownTimer  = countdownTimer;
+    sup.countdownActive = countdownActive ? 1 : 0;
+
     network->send(sup);
 }
 
@@ -184,11 +210,11 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
     if (hasAppliedStateFrame && sup.frame <= lastAppliedStateFrame) return;
     lastAppliedStateFrame = sup.frame;
     hasAppliedStateFrame = true;
-
+ 
     // interpolation
     player1->prevRect = player1->rect;
     player2->prevRect = player2->rect;
-
+ 
     // authoritative state for player1
     player1->rect.x = static_cast<int>(sup.p1.x);
     player1->rect.y = static_cast<int>(sup.p1.y);
@@ -201,7 +227,7 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
     player1->charge = sup.p1.charge;
     player1->invulnerableTimer = sup.p1.invulnerable ? Player::INV_DURATION : 0;
     player1->onGround = sup.p1.onGround != 0;
-
+ 
     // authoritative state for player2
     player2->rect.x = static_cast<int>(sup.p2.x);
     player2->rect.y = static_cast<int>(sup.p2.y);
@@ -214,14 +240,13 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
     player2->charge = sup.p2.charge;
     player2->invulnerableTimer = sup.p2.invulnerable ? Player::INV_DURATION : 0;
     player2->onGround = sup.p2.onGround != 0;
-
+ 
     // handle projectiles
-    // first, destroy all existing projectiles (they will be replaced by the new state)
     for (Projectile* proj : projectiles) {
         destroyEntity(proj);
     }
     projectiles.clear();
-
+ 
     // rebuild from network state
     projectiles.reserve(sup.projectiles.size());
     for (const auto& ps : sup.projectiles) {
@@ -236,7 +261,7 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
         proj->prevRect = proj->rect;  // init prev for interpolation
         projectiles.push_back(proj);
     }
-
+ 
     // apply grapple state for both players
     auto applyGrapple = [&](Player* p, const GrappleNetState& g) {
         if (!g.active) {
@@ -244,7 +269,7 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
             if (p->grapple) p->ungrapple();
             return;
         }
-
+ 
         // create or reuse the grapple object
         if (!p->grapple) {
             p->grapple = new Grapple(*p,
@@ -252,7 +277,7 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
                 g.dx, g.dy);
         }
         Grapple* gr = p->grapple;
-
+ 
         gr->prevRect = gr->rect;
         gr->rect.x   = static_cast<int>(g.x);
         gr->rect.y   = static_cast<int>(g.y);
@@ -262,13 +287,13 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
         gr->playerDx0           = g.playerDx0;
         gr->playerDy0           = g.playerDy0;
         gr->velocitySnapshotted = g.velocitySnapshotted != 0;
-
+ 
         // restore target pointers from indices
         gr->targetPlayer     = nullptr;
         gr->targetProjectile = nullptr;
         gr->targetPoint      = nullptr;
         gr->targetItem       = nullptr;
-
+ 
         switch (g.targetKind) {
             case 1: // player
                 gr->targetPlayer = (g.targetIndex == static_cast<uint8_t>(player1->id)) ? player1 : player2;
@@ -291,10 +316,52 @@ void Game::netApplyStateUpdate(const StateUpdatePacket& sup) {
     };
     applyGrapple(player1, sup.grapple1);
     applyGrapple(player2, sup.grapple2);
-
+ 
+    // sync items
+    while (items.size() > sup.items.size()) {
+        Item* last = items.back();
+        items.pop_back();
+        destroyEntity(last);
+    }
+    for (size_t i = 0; i < sup.items.size(); ++i) {
+        const ItemNetState& ins = sup.items[i];
+        Item* item = nullptr;
+        if (i >= items.size()) {
+            std::unique_ptr<Item> newItem;
+            switch (ins.typeIdx) {
+                case 0:  newItem = std::make_unique<MushroomItem>(static_cast<int>(ins.x), static_cast<int>(ins.y));   break;
+                case 1:  newItem = std::make_unique<ShitItem>(static_cast<int>(ins.x), static_cast<int>(ins.y));       break;
+                case 2:  newItem = std::make_unique<CocaineItem>(static_cast<int>(ins.x), static_cast<int>(ins.y));    break;
+                case 3:  newItem = std::make_unique<SpringItem>(static_cast<int>(ins.x), static_cast<int>(ins.y));     break;
+                case 4:  newItem = std::make_unique<AngelWingsItem>(static_cast<int>(ins.x), static_cast<int>(ins.y)); break;
+                default: newItem = std::make_unique<MushroomItem>(static_cast<int>(ins.x), static_cast<int>(ins.y));   break;
+            }
+            item = newItem.get();
+            entities.push_back(std::move(newItem));
+            items.push_back(item);
+        } else {
+            item = items[i];
+        }
+        item->rect.x     = static_cast<int>(ins.x);
+        item->rect.y     = static_cast<int>(ins.y);
+        item->prevRect   = item->rect;
+        item->effectTimer= ins.effectTimer;
+        item->hp         = static_cast<int>(ins.hp);
+        if (!ins.alive)  item->kill();
+        if (!ins.active) item->deactivate();
+    }
+ 
+    // sync platforms
+    for (size_t i = 0; i < sup.platformActive.size() && i < platforms.size(); ++i) {
+        platforms[i]->active = (sup.platformActive[i] != 0);
+    }
+ 
+    // sync countdown
+    countdownTimer  = sup.countdownTimer;
+    countdownActive = sup.countdownActive != 0;
+ 
     hasTargetState = true;
 }
-
 void Game::netSendClientInputs() {
     uint16_t inputs = 0;
     // keyboard

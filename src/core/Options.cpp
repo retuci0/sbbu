@@ -84,7 +84,7 @@ void Options::loadFromFile(const std::string& filename) {
         parseKey(keyP1Melee,    "keyP1Melee");
         parseKey(keyP1Special,  "keyP1Special");
         parseKey(keyP1Shield,   "keyP1Shield");
-        parseKey(keyP2Dash,     "keyP2Dash");
+        parseKey(keyP1Dash,     "keyP1Dash");
         parseKey(keyP1Grapple,  "keyP1Grapple");
 
         parseKey(keyP2Left,     "keyP2Left");

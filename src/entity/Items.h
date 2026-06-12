@@ -8,6 +8,8 @@
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 
+#include <cstdint>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -40,11 +42,14 @@ public:
     void kill() { hp = 0; active = false; }
     bool isAlive()  const { return hp > 0; }
     bool isActive() const { return active; }
+    void deactivate() { active = false; }
     bool isAffecting() const { return effectTimer > 0.0f; }
 
-    Player*  consumer = nullptr;
-    
-    float effectTimer = 0.0f;
+    virtual uint8_t getTypeIdx() const { throw std::runtime_error("invalid item type"); }
+
+    Player* consumer    = nullptr;
+    float   effectTimer = 0.0f;
+    int     hp          = 30;
 
 protected:
     bool     active         = true;
@@ -52,7 +57,6 @@ protected:
     float    respawnTimer   = 0.0f;
     float    respawnDelay   = 0.0f;
 
-    int      hp             = 30;
     bool     onGround       = false;
     
     Mix_Chunk*   sfx        = nullptr;
@@ -85,6 +89,8 @@ public:
     void onPickup()    override;
     void onEffectEnd() override;
 
+    uint8_t getTypeIdx() const override { return 0; }
+
 private:
     void scalePlayer(Player* player, float k);
 };
@@ -103,6 +109,8 @@ public:
     void onPickup()    override;
     void onEffectEnd() override;
     void drawEffect(SDL_Renderer* r, float a) const override;
+
+    uint8_t getTypeIdx() const override { return 1; }
 };
 
 class CocaineItem : public Item {
@@ -120,6 +128,8 @@ public:
     void onPickup()    override;
     void onEffectEnd() override;
     void drawEffect(SDL_Renderer* r, float a) const override;
+
+    uint8_t getTypeIdx() const override { return 2; }
 
 private:
     SDL_Texture* overlay = nullptr;
@@ -141,6 +151,8 @@ public:
     void onEffectEnd() override;
     void drawEffect(SDL_Renderer* r, float a) const override;
 
+    uint8_t getTypeIdx() const override { return 3; }
+
 private:
     SDL_Texture* overlay = nullptr;
 };
@@ -159,6 +171,8 @@ public:
 
     void onPickup() override;
     void drawEffect(SDL_Renderer* r, float a) const override;
+
+    uint8_t getTypeIdx() const override { return 4; }
 
 private:
     SDL_Texture* overlay = nullptr;

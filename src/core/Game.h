@@ -168,9 +168,9 @@ private:
     uint32_t netFrame = 0;
     uint32_t lastAppliedStateFrame = 0;
     bool hasAppliedStateFrame = false;
-    PlayerState targetPlayer1State;
-    PlayerState targetPlayer2State;
-    std::vector<ProjectileState> targetProjectiles;
+    PlayerNetState targetPlayer1State;
+    PlayerNetState targetPlayer2State;
+    std::vector<ProjectileNetState> targetProjectiles;
     bool hasTargetState = false;
     uint32_t pingSequence = 0;
     uint32_t pendingPingSequence = 0;

@@ -154,7 +154,8 @@ void Game::handleScreenTransitions() {
             }
             GameSetupPacket gsp(i1, i2, csResult.name1, csResult.name2,
                                 csResult.color1.r, csResult.color1.g, csResult.color1.b,
-                                csResult.color2.r, csResult.color2.g, csResult.color2.b, si);
+                                csResult.color2.r, csResult.color2.g, csResult.color2.b, 
+                                si, pendingStageResult.items);
             network->send(gsp);
         }
 

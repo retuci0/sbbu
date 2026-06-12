@@ -12,8 +12,8 @@
 #include <SDL2/SDL_rect.h>
 #include <SDL2/SDL_render.h>
 
-#include <cmath>
 #include <algorithm>
+#include <cmath>
 
 
 Grapple::Grapple(Player& player, int startX, int startY, float dx, float dy)
@@ -264,7 +264,6 @@ void Grapple::update(std::vector<std::unique_ptr<Entity>>& entities, float ts) {
             rect.y = targetItem->rect.y + (targetItem->rect.h - rect.h) / 2;
 
             if (distanceFromOrigin() > MAX_RANGE) {
-                SDL_Log("retracting");
                 retract();
                 break;
             }

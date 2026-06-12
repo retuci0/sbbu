@@ -99,7 +99,7 @@ public:
 };
 
 
-struct PlayerState {
+struct PlayerNetState {
     float x = 0.0f, y = 0.0f, dx = 0.0f, dy = 0.0f;
     int16_t hp = 0;
     uint8_t lives = 0;      // 255 = -1 (dead)
@@ -113,20 +113,30 @@ struct PlayerState {
 // 0xFF = no grapple active
 // targetKind: 0=none/platform, 1=player, 2=projectile, 3=point(idx in targetIndex), 4=item
 struct GrappleNetState {
-    uint8_t  active      = 0;        // 1 if grapple exists
+    uint8_t  active      = 0;     // 1 if grapple exists
     float    x           = 0.0f;
     float    y           = 0.0f;
     float    dx          = 0.0f;
     float    dy          = 0.0f;
-    uint8_t  state       = 0;        // GrappleState enum
+    uint8_t  state       = 0;     // GrappleState enum
     uint8_t  targetKind  = 0;
-    uint8_t  targetIndex = 0xFF;     // player id (1/2), projectile index, grapple-point index
+    uint8_t  targetIndex = 0xFF;  // player id (1/2), projectile index, grapple-point index
     float    playerDx0   = 0.0f;
     float    playerDy0   = 0.0f;
     uint8_t  velocitySnapshotted = 0;
 };
 
-struct ProjectileState {
+struct ItemNetState {
+    float    x           = 0.0f;
+    float    y           = 0.0f;
+    uint8_t  typeIdx     = 0;  // item type index
+    uint8_t  alive       = 1;
+    uint8_t  active      = 1;
+    float    effectTimer = 0.0f;
+    float    hp          = 0.0f;
+};
+
+struct ProjectileNetState {
     float x = 0.0f, y = 0.0f, velocity = 0.0f;
     uint8_t facing = 0;
     uint8_t ownerId = 0;
@@ -137,7 +147,7 @@ struct ProjectileState {
 class StateUpdatePacket : public Packet {
 public:
     StateUpdatePacket() = default;
-    StateUpdatePacket(uint32_t frame, const PlayerState& p1, const PlayerState& p2)
+    StateUpdatePacket(uint32_t frame, const PlayerNetState& p1, const PlayerNetState& p2)
         : frame(frame), p1(p1), p2(p2) {}
 
     PacketType getType() const override { return PacketType::STATE_UPDATE; }
@@ -145,7 +155,7 @@ public:
 
     void write(ByteBuffer& out) const override {
         out.writeUint32(frame);
-        auto writePlayer = [&](const PlayerState& ps) {
+        auto writePlayer = [&](const PlayerNetState& ps) {
             out.writeFloat(ps.x); out.writeFloat(ps.y);
             out.writeFloat(ps.dx); out.writeFloat(ps.dy);
             out.writeInt16(ps.hp);
@@ -159,6 +169,7 @@ public:
         writePlayer(p1);
         writePlayer(p2);
 
+        // grapple
         auto writeGrapple = [&](const GrappleNetState& g) {
             out.writeUint8(g.active);
             if (!g.active) return;
@@ -176,9 +187,10 @@ public:
         writeGrapple(grapple1);
         writeGrapple(grapple2);
 
-        uint8_t count = static_cast<uint8_t>(std::min<size_t>(projectiles.size(), 255));
-        out.writeUint8(count);
-        for (uint8_t i = 0; i < count; ++i) {
+        // projectiles
+        uint8_t projCount = static_cast<uint8_t>(std::min<size_t>(projectiles.size(), 255));
+        out.writeUint8(projCount);
+        for (uint8_t i = 0; i < projCount; ++i) {
             const auto& pr = projectiles[i];
             out.writeFloat(pr.x);
             out.writeFloat(pr.y);
@@ -188,10 +200,38 @@ public:
             out.writeUint8(pr.parryFreezeTimer);
             out.writeUint8(pr.parryFlashTimer);
         }
+
+        // items
+        uint8_t itemCount = static_cast<uint8_t>(std::min<size_t>(items.size(), 255));
+        out.writeUint8(itemCount);
+        for (uint8_t i = 0; i < itemCount; ++i) {
+            const auto& it = items[i];
+            out.writeFloat(it.x);
+            out.writeFloat(it.y);
+            out.writeUint8(it.typeIdx);
+            out.writeUint8(it.alive);
+            out.writeUint8(it.active);
+            out.writeFloat(it.effectTimer);
+            out.writeFloat(it.hp);
+        }
+
+        // platforms
+        uint8_t platCount = static_cast<uint8_t>(std::min<size_t>(platformActive.size(), 255));
+        out.writeUint8(platCount);
+        for (uint8_t i = 0; i < platCount; ++i) {
+            out.writeUint8(platformActive[i]);
+        }
+
+        // countdown
+        out.writeFloat(countdownTimer);
+        out.writeUint8(countdownActive);
     }
+
     void read(ByteBuffer& in) override {
         frame = in.readUint32();
-        auto readPlayer = [&](PlayerState& ps) {
+
+        // players
+        auto readPlayer = [&](PlayerNetState& ps) {
             ps.x = in.readFloat(); ps.y = in.readFloat();
             ps.dx = in.readFloat(); ps.dy = in.readFloat();
             ps.hp = in.readInt16();
@@ -205,6 +245,7 @@ public:
         readPlayer(p1);
         readPlayer(p2);
 
+        // grapple
         auto readGrapple = [&](GrappleNetState& g) {
             g.active = in.readUint8();
             if (!g.active) return;
@@ -222,11 +263,12 @@ public:
         readGrapple(grapple1);
         readGrapple(grapple2);
 
-        uint8_t count = in.readUint8();
+        // projectiles
+        uint8_t projCount = in.readUint8();
         projectiles.clear();
-        projectiles.reserve(count);
-        for (uint8_t i = 0; i < count; ++i) {
-            ProjectileState pr;
+        projectiles.reserve(projCount);
+        for (uint8_t i = 0; i < projCount; ++i) {
+            ProjectileNetState pr;
             pr.x = in.readFloat();
             pr.y = in.readFloat();
             pr.velocity = in.readFloat();
@@ -236,12 +278,44 @@ public:
             pr.parryFlashTimer = in.readUint8();
             projectiles.push_back(pr);
         }
+
+        // items
+        uint8_t itemCount = in.readUint8();
+        items.clear();
+        items.reserve(itemCount);
+        for (uint8_t i = 0; i < itemCount; ++i) {
+            ItemNetState it;
+            it.x          = in.readFloat();
+            it.y          = in.readFloat();
+            it.typeIdx    = in.readUint8();
+            it.alive      = in.readUint8();
+            it.active     = in.readUint8();
+            it.effectTimer= in.readFloat();
+            it.hp         = in.readFloat();
+            items.push_back(it);
+        }
+
+        // platforms
+        uint8_t platCount = in.readUint8();
+        platformActive.clear();
+        platformActive.reserve(platCount);
+        for (uint8_t i = 0; i < platCount; ++i) {
+            platformActive.push_back(in.readUint8());
+        }
+
+        // countdown
+        countdownTimer  = in.readFloat();
+        countdownActive = in.readUint8();
     }
 
     uint32_t frame = 0;
-    PlayerState p1, p2;
+    PlayerNetState p1, p2;
     GrappleNetState grapple1, grapple2;
-    std::vector<ProjectileState> projectiles;
+    std::vector<ProjectileNetState> projectiles;
+    std::vector<ItemNetState> items;
+    std::vector<uint8_t> platformActive;  // one bit per platform: 1=active, 0=inactive
+    float countdownTimer  = 0.0f;
+    uint8_t countdownActive = 0;
 };
 
 
@@ -252,12 +326,12 @@ public:
                     const std::string& name1, const std::string& name2,
                     uint8_t r1, uint8_t g1, uint8_t b1,
                     uint8_t r2, uint8_t g2, uint8_t b2,
-                    uint8_t stageIdx)
+                    uint8_t stageIdx, bool itemsEnabled)
         : char1Idx(char1Idx), char2Idx(char2Idx),
           name1(name1), name2(name2),
           r1(r1), g1(g1), b1(b1),
           r2(r2), g2(g2), b2(b2),
-          stageIdx(stageIdx) {}
+          stageIdx(stageIdx), itemsEnabled(itemsEnabled) {}
 
     PacketType getType() const override { return PacketType::GAME_SETUP; }
     PacketDirection getDirection() const override { return PacketDirection::CLIENTBOUND; }
@@ -270,6 +344,7 @@ public:
         out.writeUint8(r1); out.writeUint8(g1); out.writeUint8(b1);
         out.writeUint8(r2); out.writeUint8(g2); out.writeUint8(b2);
         out.writeUint8(stageIdx);
+        out.writeBool(itemsEnabled);
     }
     void read(ByteBuffer& in) override {
         char1Idx = in.readUint8();
@@ -279,6 +354,7 @@ public:
         r1 = in.readUint8(); g1 = in.readUint8(); b1 = in.readUint8();
         r2 = in.readUint8(); g2 = in.readUint8(); b2 = in.readUint8();
         stageIdx = in.readUint8();
+        itemsEnabled = in.readBool();
     }
 
     uint8_t char1Idx = 0, char2Idx = 0;
@@ -286,6 +362,7 @@ public:
     std::string name1, name2;
     uint8_t r1 = 0, g1 = 0, b1 = 0;
     uint8_t r2 = 0, g2 = 0, b2 = 0;
+    bool itemsEnabled = true;
 };
 
 
