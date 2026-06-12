@@ -39,7 +39,7 @@ private:
 
     int selectedChar1 = 0, selectedChar2 = 0;
     Color color1{}, color2{};
-    bool nameError = false;
+    std::string error;
     bool finished  = false;
     CharacterSelectionResult result;
 

@@ -57,12 +57,15 @@ void CharacterSelectionScreen::setDefaultColors() {
 void CharacterSelectionScreen::tryStart() {
     std::string n1 = nameField1->getText().empty() ? "player 1" : nameField1->getText();
     std::string n2 = nameField2->getText().empty() ? "player 2" : nameField2->getText();
-    if (n1 == n2) { nameError = true; return; }
+    if (n1 == n2) { error = "player names must be different!"; return; }
     finished = true;
     result   = { chars[selectedChar1], chars[selectedChar2], n1, n2, color1, color2 };
 }
 
 void CharacterSelectionScreen::pickColorFor(int player) {
+#ifdef __EMSCRIPTEN__
+    error = "color picking not supported in web!";
+#else
     const char* defaultHex = (player == 1) ? "#6495ED" : "#FF5050";
     unsigned char defaultRgb[3] = {
         (player == 1) ? static_cast<unsigned char>(100) : static_cast<unsigned char>(255),
@@ -79,6 +82,7 @@ void CharacterSelectionScreen::pickColorFor(int player) {
         if (player == 1) color1 = newColor;
         else             color2 = newColor;
     }
+#endif
 }
 
 void CharacterSelectionScreen::handle(const SDL_Event& e) {
@@ -115,6 +119,7 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
                 goBack();
                 break;
         }
+        error.clear();
     }
 
     if (e.type == SDL_MOUSEBUTTONDOWN && e.button.button == SDL_BUTTON_LEFT) {
@@ -134,7 +139,6 @@ void CharacterSelectionScreen::handle(const SDL_Event& e) {
         if (pointInRect(mx, my, SDL_Rect{COL2_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H})) {
             pickColorFor(2);
         }
-        nameError = false;
     }
 }
 
@@ -177,9 +181,10 @@ void CharacterSelectionScreen::render(SDL_Renderer* renderer) {
     Renderer::renderText(renderer, font, "pick color", COL1_X + 10, COLOR_BTN_Y + 12, BLACK);
     Renderer::renderText(renderer, font, "pick color", COL2_X + 10, COLOR_BTN_Y + 12, BLACK);
 
-    if (nameError) {
-        Renderer::renderText(renderer, font, "player names must be different!",
-            START_BTN_X - 60, START_BTN_Y - 40, {255, 80, 80, 255});
+    if (!error.empty()) {
+        int w; TTF_SizeText(font, error.c_str(), &w, nullptr);
+        Renderer::renderText(renderer, font, error,
+            (SW - w) / 2, START_BTN_Y - 40, RED);
     }
 
     drawWidgets(renderer, font);

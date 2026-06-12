@@ -76,8 +76,9 @@ else()
     target_link_options(super_bert_bros PRIVATE
         -sUSE_SDL=2
         -sUSE_SDL_IMAGE=2
-        -sSDL2_IMAGE_FORMATS=["png"]
+        -sSDL2_IMAGE_FORMATS=["png","jpg","bmp"]
         -sUSE_SDL_MIXER=2
+        -sSDL2_MIXER_FORMATS=["wav","mp3","ogg"]
         -sUSE_SDL_TTF=2
         $<$<BOOL:${USE_SDL2_NET}>:-sUSE_SDL_NET=2>
         -s DISABLE_DEPRECATED_FIND_EVENT_TARGET_BEHAVIOR=0
