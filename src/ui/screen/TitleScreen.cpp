@@ -6,6 +6,7 @@
 #include "misc/Renderer.h"
 
 #include <SDL2/SDL_render.h>
+#include <SDL2/SDL_ttf.h>
 
 
 TitleScreen::TitleScreen() : Screen() {
@@ -13,7 +14,13 @@ TitleScreen::TitleScreen() : Screen() {
     addWidget<ButtonWidget>(SW/2-200, SH/2, 400, 80, "local play",
                       Color{60,60,60}, WHITE, [&]{ result = TitleScreenResult::LOCAL;  finished=true; });
     addWidget<ButtonWidget>(SW/2-200, SH/2+120, 400, 80, "online play",
-                      Color{60,60,60}, WHITE, [&]{ result = TitleScreenResult::ONLINE; finished=true; });
+                        Color{60,60,60}, WHITE, 
+#ifndef __EMSCRIPTEN__
+                        [&]{ result = TitleScreenResult::ONLINE; finished=true; }
+#else
+                        [&]{ error = "online multiplayer not available on web (yet)!"; }
+#endif
+    );
     addWidget<ButtonWidget>(SW/2-200, SH/2+240, 400, 80, "quit",
                       Color{60,60,60}, WHITE, [&]{ result = TitleScreenResult::QUIT;   finished=true; });
 }
@@ -21,6 +28,7 @@ TitleScreen::TitleScreen() : Screen() {
 void TitleScreen::handle(const SDL_Event& e) {
     Screen::handle(e);
     if (e.type == SDL_KEYDOWN) {
+        error.clear();
         switch (e.key.keysym.sym) {
             case SDLK_ESCAPE:
                 requestTransition(ScreenAction::QUIT_GAME);
@@ -55,5 +63,10 @@ void TitleScreen::render(SDL_Renderer* r) {
                 Renderer::outlineRect(r, btn->getX(), btn->getY(), btn->getW(), btn->getH(), WHITE, 3);
             }
         }
+    }
+
+    if (!error.empty()) {
+        int w; TTF_SizeText(font, error.c_str(), &w, nullptr);
+        Renderer::renderText(r, font, error, (SW - w) / 2, SH - 180, RED);
     }
 }

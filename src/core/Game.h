@@ -53,6 +53,7 @@ constexpr uint64_t DISCORD_APP_ID = 1511836048005660672;
 class Game : public InputHandler {
 public:
     void init();
+    void tick();
     void run();
     void cleanup();
 

@@ -25,4 +25,5 @@ private:
     bool finished = false;
     TitleScreenResult result = TitleScreenResult::QUIT;
     int selectedIndex = 0;
+    std::string error = "";
 };

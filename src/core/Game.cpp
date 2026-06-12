@@ -20,6 +20,10 @@
 #include <SDL2/SDL_ttf.h>
 #include <SDL2/SDL_video.h>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #include <algorithm>
 #include <memory>
 
@@ -28,11 +32,65 @@
 /*               RUN               */
 /////////////////////////////////////
 
+void Game::tick() {
+    static Uint32 prevTicks  = SDL_GetTicks();
+    static float accumulator = 0.0f;
+
+    beginFrame();
+
+    Uint32 now = SDL_GetTicks();
+    float elapsed = static_cast<float>(now - prevTicks);
+    prevTicks = now;
+    accumulator += std::min(elapsed, 200.0f);
+
+    processEvents();
+
+    while (accumulator >= TICK_MS) {
+        update(TICK_SCALE);
+        accumulator -= TICK_MS;
+    }
+
+    if (!running) return;
+
+    float alpha = accumulator / TICK_MS;
+    render(TICK_SCALE, alpha);
+
+#ifdef __EMSCRIPTEN__
+    // use emscripten_sleep for frame rate capping (doesn't block the browser)
+    if (options.fpsCap != -1) {
+        static Uint32 lastFrameTime = 0;
+        Uint32 nowCap = SDL_GetTicks();
+        Uint32 targetMs = 1000u / static_cast<Uint32>(options.fpsCap);
+        Uint32 elapsedFrame = nowCap - lastFrameTime;
+        if (elapsedFrame < targetMs) {
+            emscripten_sleep(targetMs - elapsedFrame);
+        }
+        lastFrameTime = SDL_GetTicks();
+    }
+#else
+    static Uint32 lastFrameTime = 0;
+    if (options.fpsCap != -1) {
+        Uint32 nowCap = SDL_GetTicks();
+        Uint32 targetMs = 1000u / static_cast<Uint32>(options.fpsCap);
+        Uint32 elapsedFrame = nowCap - lastFrameTime;
+        if (elapsedFrame < targetMs) {
+            SDL_Delay(targetMs - elapsedFrame);
+        }
+        lastFrameTime = SDL_GetTicks();
+    }
+#endif
+}
+
 void Game::run() {
-    // start on title screen, don't play the screen change sound
+    // start on title screen
     playTitleMusic();
     screens.clearAndPush(std::make_unique<TitleScreen>(), false);
 
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop_arg([](void* arg) {
+        static_cast<Game*>(arg)->tick();
+    }, this, 0, 1);
+#else
     Uint32 prevTicks  = SDL_GetTicks();
     float accumulator = 0.0f;
 
@@ -64,6 +122,7 @@ void Game::run() {
             if (elapsed < frameMs) SDL_Delay(frameMs - elapsed);
         }
     }
+#endif
 }
 
 
