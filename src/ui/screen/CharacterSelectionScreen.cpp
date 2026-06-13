@@ -180,12 +180,12 @@ void CharacterSelectionScreen::render(SDL_Renderer* renderer) {
     Renderer::fillRect(renderer, COL2_X, COLOR_BTN_Y, COLOR_BTN_W, COLOR_BTN_H, color2);
     Renderer::renderText(renderer, font, "pick color", COL1_X + 10, COLOR_BTN_Y + 12, BLACK);
     Renderer::renderText(renderer, font, "pick color", COL2_X + 10, COLOR_BTN_Y + 12, BLACK);
+    
+    drawWidgets(renderer, font);
 
     if (!error.empty()) {
         int w; TTF_SizeText(font, error.c_str(), &w, nullptr);
         Renderer::renderText(renderer, font, error,
-            (SW - w) / 2, START_BTN_Y - 40, RED);
+            (SW - w) / 2, START_BTN_Y + 40, RED);
     }
-
-    drawWidgets(renderer, font);
 }
